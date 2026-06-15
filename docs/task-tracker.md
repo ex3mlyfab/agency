@@ -10,19 +10,19 @@ Legend:
 ---
 
 ## Phase 0 — Foundation (Pages, layout, UI patterns)
-- [ ] Create/align Inertia page structure:
+- [~] Create/align Inertia page structure:
   - [ ] Deceased register module (list + create + edit + details)
   - [ ] Chambers module (index + create/edit + delete)
   - [ ] Chamber indicator dashboard
   - [ ] Chamber occupation history
   - [ ] Transfers (move from one chamber to another)
   - [ ] Reports generation entry point
-- [ ] Ensure all pages use the app’s existing layout/shell consistently (from `resources/js/layouts/*`).
-- [ ] Implement shared UI patterns across the app:
-  - [ ] Loading state
-  - [ ] Empty state
-  - [ ] Error state
-  - [ ] Consistent card/form/table structure
+- [x] Ensure all pages use the app’s existing layout/shell consistently (from `resources/js/layouts/*`).
+- [x] Implement shared UI patterns across the app:
+  - [x] Loading state
+  - [x] Empty state
+  - [x] Error state
+  - [x] Consistent card/form/table structure
 
 **DoD**
 - Pages render without runtime errors.

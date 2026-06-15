@@ -211,3 +211,4 @@ Rules:
 - Inertia pages: `resources/js/pages/*`
 - App shell/layout: `resources/js/layouts/*`
 - Tailwind theme tokens: `resources/css/app.css`
+
