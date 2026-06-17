@@ -6,7 +6,14 @@ import { StatusChip } from '@/components/status-chip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Deceased {
@@ -80,7 +87,7 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                 {/* Table */}
                 <Card>
                     <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Records
                         </CardTitle>
                     </CardHeader>
@@ -106,14 +113,18 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-16">Picture</TableHead>
+                                        <TableHead className="w-16">
+                                            Picture
+                                        </TableHead>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Date of Death</TableHead>
                                         <TableHead>Gender</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Chamber</TableHead>
                                         <TableHead>Relative</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead className="text-right">
+                                            Actions
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -122,7 +133,11 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                                             <TableCell>
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage
-                                                        src={record.picture ? `/storage/${record.picture}` : undefined}
+                                                        src={
+                                                            record.picture
+                                                                ? `/storage/${record.picture}`
+                                                                : undefined
+                                                        }
                                                         alt={`${record.first_name} ${record.last_name}`}
                                                     />
                                                     <AvatarFallback>
@@ -132,7 +147,8 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                                                 </Avatar>
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                {record.first_name} {record.last_name}
+                                                {record.first_name}{' '}
+                                                {record.last_name}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {record.date_of_death}
@@ -141,7 +157,9 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                                                 {record.gender}
                                             </TableCell>
                                             <TableCell>
-                                                <StatusChip status={record.status} />
+                                                <StatusChip
+                                                    status={record.status}
+                                                />
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {record.chamber?.name ?? '—'}
@@ -156,9 +174,13 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                                                         variant="ghost"
                                                         size="sm"
                                                     >
-                                                        <Link href={`/deceased/${record.id}`}>
+                                                        <Link
+                                                            href={`/deceased/${record.id}`}
+                                                        >
                                                             <EyeIcon className="h-4 w-4" />
-                                                            <span className="sr-only">View</span>
+                                                            <span className="sr-only">
+                                                                View
+                                                            </span>
                                                         </Link>
                                                     </Button>
                                                     {can.edit && (
@@ -171,7 +193,9 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                                                                 href={`/deceased/${record.id}/edit`}
                                                             >
                                                                 <PencilIcon className="h-4 w-4" />
-                                                                <span className="sr-only">Edit</span>
+                                                                <span className="sr-only">
+                                                                    Edit
+                                                                </span>
                                                             </Link>
                                                         </Button>
                                                     )}
@@ -181,11 +205,15 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                                                             size="sm"
                                                             className="text-destructive hover:text-destructive"
                                                             onClick={() =>
-                                                                setDeleteTarget(record.id)
+                                                                setDeleteTarget(
+                                                                    record.id,
+                                                                )
                                                             }
                                                         >
                                                             <TrashIcon className="h-4 w-4" />
-                                                            <span className="sr-only">Delete</span>
+                                                            <span className="sr-only">
+                                                                Delete
+                                                            </span>
                                                         </Button>
                                                     )}
                                                 </div>
@@ -200,25 +228,34 @@ export default function DeceasedIndex({ deceased, can }: Props) {
                         {deceased.last_page > 1 && (
                             <div className="flex items-center justify-between border-t border-border px-6 py-4">
                                 <span className="text-sm text-muted-foreground">
-                                    Page {deceased.current_page} of {deceased.last_page}
+                                    Page {deceased.current_page} of{' '}
+                                    {deceased.last_page}
                                 </span>
                                 <div className="flex gap-2">
                                     {deceased.links.map((link) => (
                                         <Button
                                             key={link.label}
                                             asChild={!!link.url}
-                                            variant={link.active ? 'default' : 'outline'}
+                                            variant={
+                                                link.active
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
                                             size="sm"
                                             disabled={!link.url}
                                         >
                                             {link.url ? (
                                                 <Link
                                                     href={link.url}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: link.label,
+                                                    }}
                                                 />
                                             ) : (
                                                 <span
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: link.label,
+                                                    }}
                                                 />
                                             )}
                                         </Button>

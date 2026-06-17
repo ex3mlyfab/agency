@@ -4,7 +4,14 @@ import { StatusChip } from '@/components/status-chip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 interface Transfer {
     id: number;
@@ -54,7 +61,7 @@ export default function TransfersIndex({ transfers }: Props) {
 
                 <Card>
                     <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Events
                         </CardTitle>
                     </CardHeader>
@@ -64,8 +71,9 @@ export default function TransfersIndex({ transfers }: Props) {
                                 <Alert>
                                     <AlertTitle>No events yet</AlertTitle>
                                     <AlertDescription>
-                                        No transfer events have been recorded. They will appear here
-                                        when chambers receive, transfer, or release occupants.
+                                        No transfer events have been recorded.
+                                        They will appear here when chambers
+                                        receive, transfer, or release occupants.
                                     </AlertDescription>
                                 </Alert>
                             </div>
@@ -85,7 +93,9 @@ export default function TransfersIndex({ transfers }: Props) {
                                     {transfers.data.map((t) => (
                                         <TableRow key={t.id}>
                                             <TableCell>
-                                                <StatusChip status={t.event_type} />
+                                                <StatusChip
+                                                    status={t.event_type}
+                                                />
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 {t.deceased ? (
@@ -104,10 +114,12 @@ export default function TransfersIndex({ transfers }: Props) {
                                                 {t.from_chamber?.name ?? '—'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {t.to_chamber?.name ?? 'Released'}
+                                                {t.to_chamber?.name ??
+                                                    'Released'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {t.transferred_by_user?.name ?? '—'}
+                                                {t.transferred_by_user?.name ??
+                                                    '—'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {t.transferred_at}
@@ -121,25 +133,34 @@ export default function TransfersIndex({ transfers }: Props) {
                         {transfers.last_page > 1 && (
                             <div className="flex items-center justify-between border-t border-border px-6 py-4">
                                 <span className="text-sm text-muted-foreground">
-                                    Page {transfers.current_page} of {transfers.last_page}
+                                    Page {transfers.current_page} of{' '}
+                                    {transfers.last_page}
                                 </span>
                                 <div className="flex gap-2">
                                     {transfers.links.map((link) => (
                                         <Button
                                             key={link.label}
                                             asChild={!!link.url}
-                                            variant={link.active ? 'default' : 'outline'}
+                                            variant={
+                                                link.active
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
                                             size="sm"
                                             disabled={!link.url}
                                         >
                                             {link.url ? (
                                                 <Link
                                                     href={link.url}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: link.label,
+                                                    }}
                                                 />
                                             ) : (
                                                 <span
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: link.label,
+                                                    }}
                                                 />
                                             )}
                                         </Button>

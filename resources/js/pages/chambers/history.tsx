@@ -52,7 +52,7 @@ export default function ChamberHistory({ chamber, history }: Props) {
 
                 <Card>
                     <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Audit Timeline
                         </CardTitle>
                     </CardHeader>
@@ -61,23 +61,31 @@ export default function ChamberHistory({ chamber, history }: Props) {
                             <Alert>
                                 <AlertTitle>No history yet</AlertTitle>
                                 <AlertDescription>
-                                    No transfer events have been recorded for this chamber.
+                                    No transfer events have been recorded for
+                                    this chamber.
                                 </AlertDescription>
                             </Alert>
                         ) : (
-                            <ol className="relative border-l border-border pl-6 space-y-6">
+                            <ol className="relative space-y-6 border-l border-border pl-6">
                                 {history.data.map((event) => (
                                     <li key={event.id} className="relative">
-                                        <span className="absolute -left-[1.5rem] top-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" />
+                                        <span className="absolute top-0.5 -left-[1.5rem] flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" />
 
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <StatusChip status={event.event_type} />
+                                            <StatusChip
+                                                status={event.event_type}
+                                            />
                                             <span className="text-xs text-muted-foreground">
                                                 {event.transferred_at}
                                             </span>
                                             {event.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    · by {event.transferred_by_user.name}
+                                                    · by{' '}
+                                                    {
+                                                        event
+                                                            .transferred_by_user
+                                                            .name
+                                                    }
                                                 </span>
                                             )}
                                         </div>
@@ -94,11 +102,14 @@ export default function ChamberHistory({ chamber, history }: Props) {
                                             </p>
                                         )}
 
-                                        {(event.from_chamber || event.to_chamber) && (
+                                        {(event.from_chamber ||
+                                            event.to_chamber) && (
                                             <p className="mt-0.5 text-sm text-muted-foreground">
-                                                {event.from_chamber?.name ?? '—'}
+                                                {event.from_chamber?.name ??
+                                                    '—'}
                                                 {' → '}
-                                                {event.to_chamber?.name ?? 'Released'}
+                                                {event.to_chamber?.name ??
+                                                    'Released'}
                                             </p>
                                         )}
 
@@ -116,25 +127,34 @@ export default function ChamberHistory({ chamber, history }: Props) {
                         {history.last_page > 1 && (
                             <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
                                 <span className="text-sm text-muted-foreground">
-                                    Page {history.current_page} of {history.last_page}
+                                    Page {history.current_page} of{' '}
+                                    {history.last_page}
                                 </span>
                                 <div className="flex gap-2">
                                     {history.links.map((link) => (
                                         <Button
                                             key={link.label}
                                             asChild={!!link.url}
-                                            variant={link.active ? 'default' : 'outline'}
+                                            variant={
+                                                link.active
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
                                             size="sm"
                                             disabled={!link.url}
                                         >
                                             {link.url ? (
                                                 <Link
                                                     href={link.url}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: link.label,
+                                                    }}
                                                 />
                                             ) : (
                                                 <span
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: link.label,
+                                                    }}
                                                 />
                                             )}
                                         </Button>

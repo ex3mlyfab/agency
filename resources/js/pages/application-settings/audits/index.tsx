@@ -1,7 +1,14 @@
 import { useState, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationLink } from '@/components/pagination';
@@ -42,11 +49,10 @@ export default function AuditsIndex({ audits, filters }: Props) {
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
-        router.get(
-            index.url({ query: { search } }),
-            undefined,
-            { preserveState: true, replace: true }
-        );
+        router.get(index.url({ query: { search } }), undefined, {
+            preserveState: true,
+            replace: true,
+        });
     };
 
     return (
@@ -69,7 +75,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
                     </form>
                 </div>
 
-                <div className="rounded-md border flex-1 overflow-auto bg-card">
+                <div className="flex-1 overflow-auto rounded-md border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -82,7 +88,10 @@ export default function AuditsIndex({ audits, filters }: Props) {
                         <TableBody>
                             {audits.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">
+                                    <TableCell
+                                        colSpan={4}
+                                        className="text-center"
+                                    >
                                         No logs found.
                                     </TableCell>
                                 </TableRow>
@@ -90,9 +99,17 @@ export default function AuditsIndex({ audits, filters }: Props) {
                                 audits.data.map((audit) => (
                                     <TableRow key={audit.id}>
                                         <TableCell>{audit.log_name}</TableCell>
-                                        <TableCell>{audit.description}</TableCell>
-                                        <TableCell>{audit.causer?.name || 'System'}</TableCell>
-                                        <TableCell>{new Date(audit.created_at).toLocaleString()}</TableCell>
+                                        <TableCell>
+                                            {audit.description}
+                                        </TableCell>
+                                        <TableCell>
+                                            {audit.causer?.name || 'System'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {new Date(
+                                                audit.created_at,
+                                            ).toLocaleString()}
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}

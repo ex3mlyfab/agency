@@ -1,7 +1,14 @@
 import { useState, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationLink } from '@/components/pagination';
@@ -28,7 +35,10 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Application Settings', href: '#' },
-    { title: 'Permissions', href: '/settings/application-settings/permissions' },
+    {
+        title: 'Permissions',
+        href: '/settings/application-settings/permissions',
+    },
 ];
 
 export default function PermissionsIndex({ permissions, filters }: Props) {
@@ -36,11 +46,10 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
-        router.get(
-            index.url({ query: { search } }),
-            undefined,
-            { preserveState: true, replace: true }
-        );
+        router.get(index.url({ query: { search } }), undefined, {
+            preserveState: true,
+            replace: true,
+        });
     };
 
     return (
@@ -63,7 +72,7 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
                     </form>
                 </div>
 
-                <div className="rounded-md border flex-1 overflow-auto bg-card">
+                <div className="flex-1 overflow-auto rounded-md border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -76,17 +85,28 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
                         <TableBody>
                             {permissions.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">
+                                    <TableCell
+                                        colSpan={4}
+                                        className="text-center"
+                                    >
                                         No permissions found.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 permissions.data.map((permission) => (
                                     <TableRow key={permission.id}>
-                                        <TableCell className="font-mono text-xs">{permission.id}</TableCell>
+                                        <TableCell className="font-mono text-xs">
+                                            {permission.id}
+                                        </TableCell>
                                         <TableCell>{permission.name}</TableCell>
-                                        <TableCell>{permission.guard_name}</TableCell>
-                                        <TableCell>{new Date(permission.created_at).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            {permission.guard_name}
+                                        </TableCell>
+                                        <TableCell>
+                                            {new Date(
+                                                permission.created_at,
+                                            ).toLocaleDateString()}
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}

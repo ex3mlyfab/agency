@@ -1,6 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { dashboard, login } from '@/routes';
-import { register } from '@/routes';
 
 export default function Welcome() {
     const { auth } = usePage().props;
@@ -41,8 +40,7 @@ export default function Welcome() {
                                 <br />
                                 We suggest starting with the following.
                             </p>
-                            <ul className="mb-4 flex flex-col lg:mb-6">
-                            </ul>
+                            <ul className="mb-4 flex flex-col lg:mb-6"></ul>
                             <ul className="flex gap-3 text-sm leading-normal">
                                 <li>
                                     <a

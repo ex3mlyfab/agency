@@ -97,7 +97,10 @@ export default function BrandingEdit({ settings, status }: Props) {
                 <form onSubmit={handleSubmit} className="max-w-xl space-y-8">
                     {/* Application Name */}
                     <div className="space-y-2">
-                        <Label htmlFor="app_name" className="text-base font-medium">
+                        <Label
+                            htmlFor="app_name"
+                            className="text-base font-medium"
+                        >
                             Application Name
                         </Label>
                         <p className="text-sm text-muted-foreground">
@@ -118,7 +121,9 @@ export default function BrandingEdit({ settings, status }: Props) {
                     {/* Logo Upload */}
                     <div className="space-y-3">
                         <div>
-                            <Label className="text-base font-medium">Application Logo</Label>
+                            <Label className="text-base font-medium">
+                                Application Logo
+                            </Label>
                             <p className="mt-0.5 text-sm text-muted-foreground">
                                 Upload a PNG, JPG, SVG, or WebP image. Max 2MB.
                             </p>
@@ -144,11 +149,15 @@ export default function BrandingEdit({ settings, status }: Props) {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
                                     className="w-fit"
                                 >
                                     <Upload className="mr-2 h-4 w-4" />
-                                    {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                                    {logoPreview
+                                        ? 'Change Logo'
+                                        : 'Upload Logo'}
                                 </Button>
                                 {logoPreview && (
                                     <Button

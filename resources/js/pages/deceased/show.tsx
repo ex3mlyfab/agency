@@ -45,10 +45,16 @@ interface Props {
     can: { edit: boolean; delete: boolean; transfer: boolean };
 }
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({
+    label,
+    value,
+}: {
+    label: string;
+    value: string | null | undefined;
+}) {
     return (
         <div className="space-y-1">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {label}
             </dt>
             <dd className="text-sm text-foreground">{value ?? '—'}</dd>
@@ -72,12 +78,16 @@ export default function DeceasedShow({ deceased, can }: Props) {
                         </div>
                         <p className="text-sm text-muted-foreground">
                             Date of death: {deceased.date_of_death}
-                            {deceased.chamber && ` · Chamber: ${deceased.chamber.name}`}
+                            {deceased.chamber &&
+                                ` · Chamber: ${deceased.chamber.name}`}
                         </p>
                     </div>
                     <div className="flex shrink-0 gap-2">
                         {can.edit && deceased.status !== 'Released' && (
-                            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white border-none">
+                            <Button
+                                asChild
+                                className="border-none bg-emerald-600 text-white hover:bg-emerald-700"
+                            >
                                 <Link href={`/deceased/${deceased.id}/release`}>
                                     <ShieldCheckIcon className="mr-2 h-4 w-4" />
                                     Release
@@ -86,7 +96,9 @@ export default function DeceasedShow({ deceased, can }: Props) {
                         )}
                         {can.transfer && deceased.status !== 'Released' && (
                             <Button asChild variant="secondary">
-                                <Link href={`/transfers/create?deceased_id=${deceased.id}`}>
+                                <Link
+                                    href={`/transfers/create?deceased_id=${deceased.id}`}
+                                >
                                     <MoveRightIcon className="mr-2 h-4 w-4" />
                                     Transfer
                                 </Link>
@@ -107,32 +119,47 @@ export default function DeceasedShow({ deceased, can }: Props) {
                     {/* Deceased info card */}
                     <Card>
                         <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Deceased Information
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="px-6 py-6">
                             <dl className="grid grid-cols-2 gap-4">
-                                <Field label="First Name" value={deceased.first_name} />
-                                <Field label="Last Name" value={deceased.last_name} />
-                                <Field label="Date of Birth" value={deceased.date_of_birth} />
-                                <Field label="Date of Death" value={deceased.date_of_death} />
+                                <Field
+                                    label="First Name"
+                                    value={deceased.first_name}
+                                />
+                                <Field
+                                    label="Last Name"
+                                    value={deceased.last_name}
+                                />
+                                <Field
+                                    label="Date of Birth"
+                                    value={deceased.date_of_birth}
+                                />
+                                <Field
+                                    label="Date of Death"
+                                    value={deceased.date_of_death}
+                                />
                                 <Field label="Gender" value={deceased.gender} />
-                                <Field label="Cause of Death" value={deceased.cause_of_death} />
+                                <Field
+                                    label="Cause of Death"
+                                    value={deceased.cause_of_death}
+                                />
                                 <div className="col-span-2 space-y-1">
-                                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         Notes
                                     </dt>
                                     <dd className="text-sm text-foreground">
                                         {deceased.notes ?? '—'}
                                     </dd>
                                 </div>
-                                <div className="col-span-2 space-y-1 bg-secondary/10 p-3 rounded-md border border-border">
-                                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                <div className="col-span-2 space-y-1 rounded-md border border-border bg-secondary/10 p-3">
+                                    <dt className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         <ShieldCheckIcon className="h-4 w-4 text-emerald-600" />
                                         Intake Release Code
                                     </dt>
-                                    <dd className="text-sm font-mono font-semibold tracking-wide text-foreground">
+                                    <dd className="font-mono text-sm font-semibold tracking-wide text-foreground">
                                         {deceased.release_code}
                                     </dd>
                                 </div>
@@ -144,16 +171,28 @@ export default function DeceasedShow({ deceased, can }: Props) {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                                <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                                <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Relative / Bringer
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="px-6 py-6">
                                 <dl className="grid grid-cols-2 gap-4">
-                                    <Field label="Name" value={deceased.relative_name} />
-                                    <Field label="Relationship" value={deceased.relative_relationship} />
-                                    <Field label="Phone" value={deceased.relative_phone} />
-                                    <Field label="Address" value={deceased.relative_address} />
+                                    <Field
+                                        label="Name"
+                                        value={deceased.relative_name}
+                                    />
+                                    <Field
+                                        label="Relationship"
+                                        value={deceased.relative_relationship}
+                                    />
+                                    <Field
+                                        label="Phone"
+                                        value={deceased.relative_phone}
+                                    />
+                                    <Field
+                                        label="Address"
+                                        value={deceased.relative_address}
+                                    />
                                 </dl>
                             </CardContent>
                         </Card>
@@ -161,21 +200,49 @@ export default function DeceasedShow({ deceased, can }: Props) {
                         {deceased.status === 'Released' && (
                             <Card className="border border-emerald-600/30 bg-emerald-50/5">
                                 <CardHeader className="border-b border-border bg-emerald-600/5 px-6 py-4">
-                                    <CardTitle className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                                    <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
                                         <ShieldCheckIcon className="h-4 w-4" />
                                         Release Details
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-6">
                                     <dl className="grid grid-cols-2 gap-4">
-                                        <Field label="Released To" value={deceased.released_to_name} />
-                                        <Field label="Relationship" value={deceased.released_to_relationship} />
-                                        <Field label="Phone" value={deceased.released_to_phone} />
-                                        <Field label="Released At" value={deceased.released_at} />
-                                        <Field label="Verified ID Type" value={deceased.released_to_id_type} />
-                                        <Field label="Verified ID Number" value={deceased.released_to_id_number} />
+                                        <Field
+                                            label="Released To"
+                                            value={deceased.released_to_name}
+                                        />
+                                        <Field
+                                            label="Relationship"
+                                            value={
+                                                deceased.released_to_relationship
+                                            }
+                                        />
+                                        <Field
+                                            label="Phone"
+                                            value={deceased.released_to_phone}
+                                        />
+                                        <Field
+                                            label="Released At"
+                                            value={deceased.released_at}
+                                        />
+                                        <Field
+                                            label="Verified ID Type"
+                                            value={deceased.released_to_id_type}
+                                        />
+                                        <Field
+                                            label="Verified ID Number"
+                                            value={
+                                                deceased.released_to_id_number
+                                            }
+                                        />
                                         <div className="col-span-2">
-                                            <Field label="Authorized By Staff" value={deceased.released_by_user?.name} />
+                                            <Field
+                                                label="Authorized By Staff"
+                                                value={
+                                                    deceased.released_by_user
+                                                        ?.name
+                                                }
+                                            />
                                         </div>
                                     </dl>
                                 </CardContent>
@@ -187,8 +254,8 @@ export default function DeceasedShow({ deceased, can }: Props) {
                 {/* Transfer / audit history */}
                 <Card>
                     <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                           Chamber History
+                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                            Chamber History
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-6 py-6">
@@ -197,10 +264,10 @@ export default function DeceasedShow({ deceased, can }: Props) {
                                 No transfer events recorded yet.
                             </p>
                         ) : (
-                            <ol className="relative border-l border-border pl-6 space-y-6">
+                            <ol className="relative space-y-6 border-l border-border pl-6">
                                 {deceased.transfers.map((t) => (
                                     <li key={t.id} className="relative">
-                                        <span className="absolute -left-[1.5rem] top-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" />
+                                        <span className="absolute top-0.5 -left-[1.5rem] flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" />
                                         <div className="flex flex-wrap items-center gap-2">
                                             <StatusChip status={t.event_type} />
                                             <span className="text-xs text-muted-foreground">
@@ -208,7 +275,8 @@ export default function DeceasedShow({ deceased, can }: Props) {
                                             </span>
                                             {t.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    · by {t.transferred_by_user.name}
+                                                    · by{' '}
+                                                    {t.transferred_by_user.name}
                                                 </span>
                                             )}
                                         </div>
@@ -216,7 +284,8 @@ export default function DeceasedShow({ deceased, can }: Props) {
                                             <p className="mt-1 text-sm text-foreground">
                                                 {t.from_chamber?.name ?? '—'}
                                                 {' → '}
-                                                {t.to_chamber?.name ?? 'Released'}
+                                                {t.to_chamber?.name ??
+                                                    'Released'}
                                             </p>
                                         )}
                                         {t.notes && (

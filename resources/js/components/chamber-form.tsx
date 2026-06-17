@@ -27,12 +27,13 @@ export function ChamberForm({
     method = 'post',
     submitLabel = 'Save Chamber',
 }: ChamberFormProps) {
-    const { data, setData, submit, processing, errors } = useForm<ChamberFormData>({
-        name: initialValues.name ?? '',
-        location: initialValues.location ?? '',
-        capacity: initialValues.capacity ?? '1',
-        notes: initialValues.notes ?? '',
-    });
+    const { data, setData, submit, processing, errors } =
+        useForm<ChamberFormData>({
+            name: initialValues.name ?? '',
+            location: initialValues.location ?? '',
+            capacity: initialValues.capacity ?? '1',
+            notes: initialValues.notes ?? '',
+        });
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -43,7 +44,7 @@ export function ChamberForm({
         <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
                 <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                    <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Chamber Details
                     </CardTitle>
                 </CardHeader>
@@ -51,7 +52,8 @@ export function ChamberForm({
                     {/* Name */}
                     <div className="space-y-1.5">
                         <Label htmlFor="name" className="font-semibold">
-                            Chamber Name <span className="text-destructive">*</span>
+                            Chamber Name{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id="name"
@@ -72,7 +74,9 @@ export function ChamberForm({
                         <Input
                             id="location"
                             value={data.location}
-                            onChange={(e) => setData('location', e.target.value)}
+                            onChange={(e) =>
+                                setData('location', e.target.value)
+                            }
                             placeholder="e.g. Wing A, Ground Floor"
                             disabled={processing}
                         />
@@ -90,9 +94,13 @@ export function ChamberForm({
                             min={1}
                             max={10}
                             value={data.capacity}
-                            onChange={(e) => setData('capacity', e.target.value)}
+                            onChange={(e) =>
+                                setData('capacity', e.target.value)
+                            }
                             disabled={processing}
-                            className={cn(errors.capacity && 'border-destructive')}
+                            className={cn(
+                                errors.capacity && 'border-destructive',
+                            )}
                         />
                         <InputError message={errors.capacity} />
                     </div>
@@ -108,7 +116,7 @@ export function ChamberForm({
                             onChange={(e) => setData('notes', e.target.value)}
                             rows={3}
                             disabled={processing}
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <InputError message={errors.notes} />
                     </div>

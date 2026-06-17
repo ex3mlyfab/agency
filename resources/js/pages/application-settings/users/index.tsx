@@ -1,7 +1,14 @@
 import { useState, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationLink } from '@/components/pagination';
@@ -36,11 +43,10 @@ export default function UsersIndex({ users, filters }: Props) {
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
-        router.get(
-            index.url({ query: { search } }),
-            undefined,
-            { preserveState: true, replace: true }
-        );
+        router.get(index.url({ query: { search } }), undefined, {
+            preserveState: true,
+            replace: true,
+        });
     };
 
     return (
@@ -63,7 +69,7 @@ export default function UsersIndex({ users, filters }: Props) {
                     </form>
                 </div>
 
-                <div className="rounded-md border flex-1 overflow-auto bg-card">
+                <div className="flex-1 overflow-auto rounded-md border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -76,17 +82,26 @@ export default function UsersIndex({ users, filters }: Props) {
                         <TableBody>
                             {users.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">
+                                    <TableCell
+                                        colSpan={4}
+                                        className="text-center"
+                                    >
                                         No users found.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 users.data.map((user) => (
                                     <TableRow key={user.id}>
-                                        <TableCell className="font-mono text-xs">{user.id}</TableCell>
+                                        <TableCell className="font-mono text-xs">
+                                            {user.id}
+                                        </TableCell>
                                         <TableCell>{user.name}</TableCell>
                                         <TableCell>{user.email}</TableCell>
-                                        <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            {new Date(
+                                                user.created_at,
+                                            ).toLocaleDateString()}
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}

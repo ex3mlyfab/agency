@@ -20,11 +20,17 @@ export default function DeceasedCreate({ chambers }: Props) {
                         New Deceased Record
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Complete all required fields to register a new deceased record.
+                        Complete all required fields to register a new deceased
+                        record.
                     </p>
                 </div>
 
-                <DeceasedForm action="/deceased" method="post" submitLabel="Create Record" chambers={chambers} />
+                <DeceasedForm
+                    action="/deceased"
+                    method="post"
+                    submitLabel="Create Record"
+                    chambers={chambers}
+                />
             </div>
         </>
     );

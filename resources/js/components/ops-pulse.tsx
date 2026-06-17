@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-type LatestEventType = 'Entered' | 'Transferred' | 'Released' | 'Updated' | string;
+type LatestEventType =
+    | 'Entered'
+    | 'Transferred'
+    | 'Released'
+    | 'Updated'
+    | string;
 
 export interface OpsPulseLatestEvent {
     id: string;
@@ -52,7 +57,9 @@ export function OpsPulse({
             <div className="grid gap-4 md:grid-cols-3">
                 <Card className="md:col-span-1">
                     <CardHeader>
-                        <CardTitle className="text-base">Chamber occupancy</CardTitle>
+                        <CardTitle className="text-base">
+                            Chamber occupancy
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {!hasOccupancy ? (
@@ -77,7 +84,8 @@ export function OpsPulse({
                                                 <Badge variant="secondary">
                                                     {item.status}
                                                 </Badge>
-                                                {typeof item.daysInChamber === 'number' ? (
+                                                {typeof item.daysInChamber ===
+                                                'number' ? (
                                                     <span className="text-xs text-muted-foreground">
                                                         {item.daysInChamber}d
                                                     </span>
@@ -94,7 +102,11 @@ export function OpsPulse({
                             </div>
                         )}
                         {ctas?.historyHref && canViewHistory ? (
-                            <Button asChild variant="outline" className="w-full">
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
                                 <a href={ctas.historyHref}>View history</a>
                             </Button>
                         ) : null}
@@ -104,14 +116,21 @@ export function OpsPulse({
                 <Card className="md:col-span-2">
                     <CardHeader className="flex flex-row items-start justify-between gap-4">
                         <div className="space-y-1">
-                            <CardTitle className="text-base">Latest audit events</CardTitle>
+                            <CardTitle className="text-base">
+                                Latest audit events
+                            </CardTitle>
                             <div className="text-sm text-muted-foreground">
-                                A calm, chronological strip of recent operational changes.
+                                A calm, chronological strip of recent
+                                operational changes.
                             </div>
                         </div>
 
                         {ctas?.reportsHref && canViewReports ? (
-                            <Button asChild variant="secondary" className="shrink-0">
+                            <Button
+                                asChild
+                                variant="secondary"
+                                className="shrink-0"
+                            >
                                 <a href={ctas.reportsHref}>Reports</a>
                             </Button>
                         ) : null}
@@ -121,7 +140,8 @@ export function OpsPulse({
                             <Alert variant="default" className="rounded-lg">
                                 <AlertTitle>No recent events</AlertTitle>
                                 <AlertDescription>
-                                    Once operations occur, audit events will appear here.
+                                    Once operations occur, audit events will
+                                    appear here.
                                 </AlertDescription>
                             </Alert>
                         ) : (
@@ -133,7 +153,9 @@ export function OpsPulse({
                                     >
                                         <div className="min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <Badge variant="secondary">{event.type}</Badge>
+                                                <Badge variant="secondary">
+                                                    {event.type}
+                                                </Badge>
                                                 <span className="text-xs text-muted-foreground">
                                                     {event.occurredAt}
                                                 </span>

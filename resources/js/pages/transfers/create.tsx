@@ -42,7 +42,10 @@ interface Props {
     chamberOptions: ChamberOption[];
 }
 
-export default function TransferCreate({ deceasedOptions, chamberOptions }: Props) {
+export default function TransferCreate({
+    deceasedOptions,
+    chamberOptions,
+}: Props) {
     const [confirmOpen, setConfirmOpen] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<FormData>({
@@ -63,8 +66,12 @@ export default function TransferCreate({ deceasedOptions, chamberOptions }: Prop
         });
     }
 
-    const selectedDeceased = deceasedOptions.find((d) => String(d.id) === data.deceased_id);
-    const selectedChamber = chamberOptions.find((c) => String(c.id) === data.to_chamber_id);
+    const selectedDeceased = deceasedOptions.find(
+        (d) => String(d.id) === data.deceased_id,
+    );
+    const selectedChamber = chamberOptions.find(
+        (c) => String(c.id) === data.to_chamber_id,
+    );
 
     const confirmDescription =
         data.event_type === 'Released'
@@ -87,31 +94,44 @@ export default function TransferCreate({ deceasedOptions, chamberOptions }: Prop
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
                         <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Transfer Details
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                             {/* Deceased */}
                             <div className="space-y-1.5 sm:col-span-2">
-                                <Label htmlFor="deceased_id" className="font-semibold">
-                                    Deceased <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="deceased_id"
+                                    className="font-semibold"
+                                >
+                                    Deceased{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Select
                                     value={data.deceased_id}
-                                    onValueChange={(val) => setData('deceased_id', val)}
+                                    onValueChange={(val) =>
+                                        setData('deceased_id', val)
+                                    }
                                     disabled={processing}
                                 >
                                     <SelectTrigger
                                         id="deceased_id"
-                                        className={cn(errors.deceased_id && 'border-destructive')}
+                                        className={cn(
+                                            errors.deceased_id &&
+                                                'border-destructive',
+                                        )}
                                     >
                                         <SelectValue placeholder="Select deceased…" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {deceasedOptions.map((d) => (
-                                            <SelectItem key={d.id} value={String(d.id)}>
-                                                {d.first_name} {d.last_name} — {d.status}
+                                            <SelectItem
+                                                key={d.id}
+                                                value={String(d.id)}
+                                            >
+                                                {d.first_name} {d.last_name} —{' '}
+                                                {d.status}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -121,21 +141,33 @@ export default function TransferCreate({ deceasedOptions, chamberOptions }: Prop
 
                             {/* Event type */}
                             <div className="space-y-1.5">
-                                <Label htmlFor="event_type" className="font-semibold">
-                                    Event Type <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="event_type"
+                                    className="font-semibold"
+                                >
+                                    Event Type{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Select
                                     value={data.event_type}
-                                    onValueChange={(val) => setData('event_type', val)}
+                                    onValueChange={(val) =>
+                                        setData('event_type', val)
+                                    }
                                     disabled={processing}
                                 >
                                     <SelectTrigger id="event_type">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Entered">Entered</SelectItem>
-                                        <SelectItem value="Transferred">Transferred</SelectItem>
-                                        <SelectItem value="Released">Released</SelectItem>
+                                        <SelectItem value="Entered">
+                                            Entered
+                                        </SelectItem>
+                                        <SelectItem value="Transferred">
+                                            Transferred
+                                        </SelectItem>
+                                        <SelectItem value="Released">
+                                            Released
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.event_type} />
@@ -144,48 +176,66 @@ export default function TransferCreate({ deceasedOptions, chamberOptions }: Prop
                             {/* Target chamber (hidden for Released) */}
                             {data.event_type !== 'Released' && (
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="to_chamber_id" className="font-semibold">
+                                    <Label
+                                        htmlFor="to_chamber_id"
+                                        className="font-semibold"
+                                    >
                                         Target Chamber
                                     </Label>
                                     <Select
                                         value={data.to_chamber_id}
-                                        onValueChange={(val) => setData('to_chamber_id', val)}
+                                        onValueChange={(val) =>
+                                            setData('to_chamber_id', val)
+                                        }
                                         disabled={processing}
                                     >
                                         <SelectTrigger
                                             id="to_chamber_id"
                                             className={cn(
-                                                errors.to_chamber_id && 'border-destructive',
+                                                errors.to_chamber_id &&
+                                                    'border-destructive',
                                             )}
                                         >
                                             <SelectValue placeholder="Select chamber…" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {chamberOptions.map((c) => (
-                                                <SelectItem key={c.id} value={String(c.id)}>
+                                                <SelectItem
+                                                    key={c.id}
+                                                    value={String(c.id)}
+                                                >
                                                     {c.name}
-                                                    {c.location ? ` — ${c.location}` : ''}
+                                                    {c.location
+                                                        ? ` — ${c.location}`
+                                                        : ''}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <InputError message={errors.to_chamber_id} />
+                                    <InputError
+                                        message={errors.to_chamber_id}
+                                    />
                                 </div>
                             )}
 
                             {/* Notes */}
                             <div className="space-y-1.5 sm:col-span-2">
-                                <Label htmlFor="notes" className="font-semibold">
+                                <Label
+                                    htmlFor="notes"
+                                    className="font-semibold"
+                                >
                                     Notes
                                 </Label>
                                 <textarea
                                     id="notes"
                                     value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('notes', e.target.value)
+                                    }
                                     rows={3}
                                     disabled={processing}
                                     placeholder="Reason for transfer, special instructions…"
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                             </div>
                         </CardContent>
@@ -194,8 +244,9 @@ export default function TransferCreate({ deceasedOptions, chamberOptions }: Prop
                     {data.event_type === 'Released' && (
                         <Alert>
                             <AlertDescription>
-                                Selecting <strong>Released</strong> will mark the deceased as
-                                released and remove them from their current chamber.
+                                Selecting <strong>Released</strong> will mark
+                                the deceased as released and remove them from
+                                their current chamber.
                             </AlertDescription>
                         </Alert>
                     )}
@@ -207,7 +258,11 @@ export default function TransferCreate({ deceasedOptions, chamberOptions }: Prop
                         <Button
                             type="submit"
                             disabled={processing || !data.deceased_id}
-                            variant={data.event_type === 'Released' ? 'destructive' : 'default'}
+                            variant={
+                                data.event_type === 'Released'
+                                    ? 'destructive'
+                                    : 'default'
+                            }
                         >
                             Review Transfer
                         </Button>

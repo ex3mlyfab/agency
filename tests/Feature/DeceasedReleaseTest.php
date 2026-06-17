@@ -30,7 +30,7 @@ it('automatically generates a release code when a deceased record is created', f
 it('requires authentication to view release form', function () {
     $deceased = Deceased::factory()->pending()->create();
 
-    $this->get(route('deceased.release-form', $deceased))
+    $this->get(route('deceased.show-release', $deceased))
         ->assertRedirect(route('login'));
 });
 
@@ -38,7 +38,7 @@ it('allows authorized users to view release form', function () {
     $deceased = Deceased::factory()->pending()->create();
 
     $this->actingAs($this->superAdmin)
-        ->get(route('deceased.release-form', $deceased))
+        ->get(route('deceased.show-release', $deceased))
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('deceased/release'));
 });

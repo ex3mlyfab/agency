@@ -1,5 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { PlusIcon, PencilIcon, TrashIcon, ClockIcon, MoveRightIcon } from 'lucide-react';
+import {
+    PlusIcon,
+    PencilIcon,
+    TrashIcon,
+    ClockIcon,
+    MoveRightIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -79,7 +85,8 @@ export default function ChambersIndex({ chambers, can }: Props) {
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {chambers.map((chamber) => {
-                            const isOccupied = chamber.occupancy_status === 'In use';
+                            const isOccupied =
+                                chamber.occupancy_status === 'In use';
 
                             return (
                                 <Card
@@ -88,8 +95,10 @@ export default function ChambersIndex({ chambers, can }: Props) {
                                 >
                                     {/* Occupancy indicator strip */}
                                     <div
-                                        className={`absolute left-0 top-0 h-full w-1 ${
-                                            isOccupied ? 'bg-success' : 'bg-border'
+                                        className={`absolute top-0 left-0 h-full w-1 ${
+                                            isOccupied
+                                                ? 'bg-success'
+                                                : 'bg-border'
                                         }`}
                                     />
 
@@ -99,7 +108,11 @@ export default function ChambersIndex({ chambers, can }: Props) {
                                                 {chamber.name}
                                             </CardTitle>
                                             <Badge
-                                                variant={isOccupied ? 'default' : 'secondary'}
+                                                variant={
+                                                    isOccupied
+                                                        ? 'default'
+                                                        : 'secondary'
+                                                }
                                                 className="shrink-0"
                                             >
                                                 {chamber.occupancy_status}
@@ -118,8 +131,10 @@ export default function ChambersIndex({ chambers, can }: Props) {
                                             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                                 <ClockIcon className="h-3.5 w-3.5" />
                                                 <span>
-                                                    {chamber.days_in_chamber !== null
-                                                        ? chamber.days_in_chamber === 0
+                                                    {chamber.days_in_chamber !==
+                                                    null
+                                                        ? chamber.days_in_chamber ===
+                                                          0
                                                             ? 'Today'
                                                             : `${chamber.days_in_chamber} day${chamber.days_in_chamber !== 1 ? 's' : ''}`
                                                         : '—'}
@@ -130,15 +145,25 @@ export default function ChambersIndex({ chambers, can }: Props) {
                                         {/* Actions */}
                                         <div className="flex flex-wrap gap-2">
                                             {can.viewHistory && (
-                                                <Button asChild variant="outline" size="sm">
-                                                    <Link href={`/chambers/${chamber.id}/history`}>
+                                                <Button
+                                                    asChild
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    <Link
+                                                        href={`/chambers/${chamber.id}/history`}
+                                                    >
                                                         <ClockIcon className="mr-1.5 h-3.5 w-3.5" />
                                                         History
                                                     </Link>
                                                 </Button>
                                             )}
                                             {can.transfer && isOccupied && (
-                                                <Button asChild variant="outline" size="sm">
+                                                <Button
+                                                    asChild
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
                                                     <Link
                                                         href={`/transfers/create?chamber_id=${chamber.id}`}
                                                     >
@@ -148,8 +173,14 @@ export default function ChambersIndex({ chambers, can }: Props) {
                                                 </Button>
                                             )}
                                             {can.manage && (
-                                                <Button asChild variant="ghost" size="sm">
-                                                    <Link href={`/chambers/${chamber.id}/edit`}>
+                                                <Button
+                                                    asChild
+                                                    variant="ghost"
+                                                    size="sm"
+                                                >
+                                                    <Link
+                                                        href={`/chambers/${chamber.id}/edit`}
+                                                    >
                                                         <PencilIcon className="h-3.5 w-3.5" />
                                                     </Link>
                                                 </Button>
@@ -159,7 +190,11 @@ export default function ChambersIndex({ chambers, can }: Props) {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="text-destructive hover:text-destructive"
-                                                    onClick={() => setDeleteTarget(chamber.id)}
+                                                    onClick={() =>
+                                                        setDeleteTarget(
+                                                            chamber.id,
+                                                        )
+                                                    }
                                                 >
                                                     <TrashIcon className="h-3.5 w-3.5" />
                                                 </Button>

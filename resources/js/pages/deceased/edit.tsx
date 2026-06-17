@@ -31,7 +31,9 @@ interface Props {
 export default function DeceasedEdit({ deceased, chambers }: Props) {
     return (
         <>
-            <Head title={`Edit — ${deceased.first_name} ${deceased.last_name}`} />
+            <Head
+                title={`Edit — ${deceased.first_name} ${deceased.last_name}`}
+            />
             <div className="space-y-6 p-6">
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">

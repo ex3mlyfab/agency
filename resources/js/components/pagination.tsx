@@ -12,9 +12,11 @@ export function Pagination({ links }: { links: PaginationLink[] }) {
     if (links.length <= 3) return null;
 
     return (
-        <div className="flex flex-wrap items-center justify-center gap-1 mt-4">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
             {links.map((link, i) => {
-                const label = link.label.replace('&laquo;', '«').replace('&raquo;', '»');
+                const label = link.label
+                    .replace('&laquo;', '«')
+                    .replace('&raquo;', '»');
                 return link.url ? (
                     <Button
                         key={i}
@@ -23,10 +25,13 @@ export function Pagination({ links }: { links: PaginationLink[] }) {
                         size="sm"
                         className={cn(
                             'min-w-8 px-2',
-                            link.active ? 'pointer-events-none' : ''
+                            link.active ? 'pointer-events-none' : '',
                         )}
                     >
-                        <Link href={link.url} dangerouslySetInnerHTML={{ __html: label }} />
+                        <Link
+                            href={link.url}
+                            dangerouslySetInnerHTML={{ __html: label }}
+                        />
                     </Button>
                 ) : (
                     <Button

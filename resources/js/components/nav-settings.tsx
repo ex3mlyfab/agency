@@ -1,5 +1,12 @@
 import { Link } from '@inertiajs/react';
-import { Settings2, Shield, UserCog, Users, History, Paintbrush } from 'lucide-react';
+import {
+    Settings2,
+    Shield,
+    UserCog,
+    Users,
+    History,
+    Paintbrush,
+} from 'lucide-react';
 import {
     Collapsible,
     CollapsibleContent,
@@ -22,12 +29,17 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
 
     // Note: We're checking permissions to conditionally render items
     // In a real scenario, use actual permissions like 'users.view', 'roles.view', etc.
-    const showSettings = can['users.view'] !== false || can['roles.view'] !== false || can['permissions.view'] !== false || can['audits.view'] !== false || can['branding.manage'] !== false;
+    const showSettings =
+        can['users.view'] !== false ||
+        can['roles.view'] !== false ||
+        can['permissions.view'] !== false ||
+        can['audits.view'] !== false ||
+        can['branding.manage'] !== false;
 
     if (!showSettings) return null;
 
     return (
-        <SidebarGroup className="px-2 py-0 mt-4">
+        <SidebarGroup className="mt-4 px-2 py-0">
             <SidebarGroupLabel>Configuration</SidebarGroupLabel>
             <SidebarMenu>
                 <Collapsible asChild defaultOpen className="group/collapsible">
@@ -58,7 +70,12 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                             <SidebarMenuSub>
                                 {can['users.view'] !== false && (
                                     <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isCurrentUrl('/settings/application-settings/users')}>
+                                        <SidebarMenuSubButton
+                                            asChild
+                                            isActive={isCurrentUrl(
+                                                '/settings/application-settings/users',
+                                            )}
+                                        >
                                             <Link href="/settings/application-settings/users">
                                                 <Users className="h-4 w-4" />
                                                 <span>User Management</span>
@@ -68,7 +85,12 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                 )}
                                 {can['roles.view'] !== false && (
                                     <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isCurrentUrl('/settings/application-settings/roles')}>
+                                        <SidebarMenuSubButton
+                                            asChild
+                                            isActive={isCurrentUrl(
+                                                '/settings/application-settings/roles',
+                                            )}
+                                        >
                                             <Link href="/settings/application-settings/roles">
                                                 <UserCog className="h-4 w-4" />
                                                 <span>Roles</span>
@@ -78,7 +100,12 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                 )}
                                 {can['permissions.view'] !== false && (
                                     <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isCurrentUrl('/settings/application-settings/permissions')}>
+                                        <SidebarMenuSubButton
+                                            asChild
+                                            isActive={isCurrentUrl(
+                                                '/settings/application-settings/permissions',
+                                            )}
+                                        >
                                             <Link href="/settings/application-settings/permissions">
                                                 <Shield className="h-4 w-4" />
                                                 <span>Permissions</span>
@@ -88,7 +115,12 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                 )}
                                 {can['audits.view'] !== false && (
                                     <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isCurrentUrl('/settings/application-settings/audits')}>
+                                        <SidebarMenuSubButton
+                                            asChild
+                                            isActive={isCurrentUrl(
+                                                '/settings/application-settings/audits',
+                                            )}
+                                        >
                                             <Link href="/settings/application-settings/audits">
                                                 <History className="h-4 w-4" />
                                                 <span>Audits</span>
@@ -98,7 +130,12 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                 )}
                                 {can['branding.manage'] !== false && (
                                     <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild isActive={isCurrentUrl('/settings/application-settings/branding')}>
+                                        <SidebarMenuSubButton
+                                            asChild
+                                            isActive={isCurrentUrl(
+                                                '/settings/application-settings/branding',
+                                            )}
+                                        >
                                             <Link href="/settings/application-settings/branding">
                                                 <Paintbrush className="h-4 w-4" />
                                                 <span>Branding</span>

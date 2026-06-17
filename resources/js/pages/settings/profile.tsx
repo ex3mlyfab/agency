@@ -122,7 +122,6 @@ export default function Profile({
                     )}
                 </Form>
             </div>
-
         </>
     );
 }

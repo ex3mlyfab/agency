@@ -14,7 +14,11 @@ export default function ChamberCreate() {
                         Register a new chamber in the mortuary.
                     </p>
                 </div>
-                <ChamberForm action="/chambers" method="post" submitLabel="Create Chamber" />
+                <ChamberForm
+                    action="/chambers"
+                    method="post"
+                    submitLabel="Create Chamber"
+                />
             </div>
         </>
     );

@@ -29,7 +29,8 @@ const reportTypes = [
     {
         value: 'deceased_summary',
         label: 'Deceased Summary',
-        description: 'All deceased records with status, chamber assignment, and relative info.',
+        description:
+            'All deceased records with status, chamber assignment, and relative info.',
     },
     {
         value: 'chamber_occupancy',
@@ -39,16 +40,18 @@ const reportTypes = [
     {
         value: 'transfer_log',
         label: 'Transfer Log',
-        description: 'Full history of all chamber entry, transfer, and release events.',
+        description:
+            'Full history of all chamber entry, transfer, and release events.',
     },
 ];
 
 export default function ReportsIndex({ can }: Props) {
-    const { data, setData, post, processing, errors, wasSuccessful } = useForm<FormData>({
-        report_type: 'deceased_summary',
-        date_from: '',
-        date_to: '',
-    });
+    const { data, setData, post, processing, errors, wasSuccessful } =
+        useForm<FormData>({
+            report_type: 'deceased_summary',
+            date_from: '',
+            date_to: '',
+        });
 
     const needsDateRange = data.report_type !== 'chamber_occupancy';
 
@@ -96,7 +99,8 @@ export default function ReportsIndex({ can }: Props) {
                         Reports
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Generate and download operational reports for the mortuary.
+                        Generate and download operational reports for the
+                        mortuary.
                     </p>
                 </div>
 
@@ -111,27 +115,38 @@ export default function ReportsIndex({ can }: Props) {
                     <form onSubmit={handleGenerate} className="space-y-6">
                         <Card>
                             <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                                <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                                <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Report Configuration
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                                 {/* Report type */}
                                 <div className="space-y-1.5 sm:col-span-2">
-                                    <Label htmlFor="report_type" className="font-semibold">
+                                    <Label
+                                        htmlFor="report_type"
+                                        className="font-semibold"
+                                    >
                                         Report Type
                                     </Label>
                                     <Select
                                         value={data.report_type}
-                                        onValueChange={(val) => setData('report_type', val)}
+                                        onValueChange={(val) =>
+                                            setData('report_type', val)
+                                        }
                                         disabled={processing}
                                     >
-                                        <SelectTrigger id="report_type" className="sm:max-w-sm">
+                                        <SelectTrigger
+                                            id="report_type"
+                                            className="sm:max-w-sm"
+                                        >
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {reportTypes.map((r) => (
-                                                <SelectItem key={r.value} value={r.value}>
+                                                <SelectItem
+                                                    key={r.value}
+                                                    value={r.value}
+                                                >
                                                     {r.label}
                                                 </SelectItem>
                                             ))}
@@ -149,7 +164,10 @@ export default function ReportsIndex({ can }: Props) {
                                 {needsDateRange && (
                                     <>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="date_from" className="font-semibold">
+                                            <Label
+                                                htmlFor="date_from"
+                                                className="font-semibold"
+                                            >
                                                 Date From
                                             </Label>
                                             <Input
@@ -157,15 +175,23 @@ export default function ReportsIndex({ can }: Props) {
                                                 type="date"
                                                 value={data.date_from}
                                                 onChange={(e) =>
-                                                    setData('date_from', e.target.value)
+                                                    setData(
+                                                        'date_from',
+                                                        e.target.value,
+                                                    )
                                                 }
                                                 disabled={processing}
                                             />
-                                            <InputError message={errors.date_from} />
+                                            <InputError
+                                                message={errors.date_from}
+                                            />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="date_to" className="font-semibold">
+                                            <Label
+                                                htmlFor="date_to"
+                                                className="font-semibold"
+                                            >
                                                 Date To
                                             </Label>
                                             <Input
@@ -173,11 +199,16 @@ export default function ReportsIndex({ can }: Props) {
                                                 type="date"
                                                 value={data.date_to}
                                                 onChange={(e) =>
-                                                    setData('date_to', e.target.value)
+                                                    setData(
+                                                        'date_to',
+                                                        e.target.value,
+                                                    )
                                                 }
                                                 disabled={processing}
                                             />
-                                            <InputError message={errors.date_to} />
+                                            <InputError
+                                                message={errors.date_to}
+                                            />
                                         </div>
                                     </>
                                 )}
@@ -190,7 +221,9 @@ export default function ReportsIndex({ can }: Props) {
                                 <button
                                     key={r.value}
                                     type="button"
-                                    onClick={() => setData('report_type', r.value)}
+                                    onClick={() =>
+                                        setData('report_type', r.value)
+                                    }
                                     className={`rounded-lg border p-4 text-left transition-colors hover:bg-accent ${
                                         data.report_type === r.value
                                             ? 'border-primary bg-accent'
@@ -199,15 +232,23 @@ export default function ReportsIndex({ can }: Props) {
                                 >
                                     <div className="mb-2 flex items-center gap-2">
                                         <FileTextIcon className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-semibold">{r.label}</span>
+                                        <span className="text-sm font-semibold">
+                                            {r.label}
+                                        </span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">{r.description}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {r.description}
+                                    </p>
                                 </button>
                             ))}
                         </div>
 
                         <div className="flex items-center justify-end">
-                            <Button type="submit" disabled={processing} size="lg">
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                size="lg"
+                            >
                                 <DownloadIcon className="mr-2 h-4 w-4" />
                                 {processing ? 'Generating…' : 'Generate Report'}
                             </Button>
