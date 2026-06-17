@@ -1,6 +1,22 @@
 import type { SVGAttributes } from 'react';
+import { usePage } from '@inertiajs/react';
 
 export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
+    const { branding } = usePage().props as any;
+    const logo = branding?.logo || null;
+    const name = branding?.name || 'Laravel';
+
+    if (logo) {
+        return (
+            <img
+                src={logo}
+                alt={name}
+                className={props.className}
+                style={props.style as any}
+            />
+        );
+    }
+
     return (
         <svg {...props} viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
             <path

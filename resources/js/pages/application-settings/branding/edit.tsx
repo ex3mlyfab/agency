@@ -1,0 +1,196 @@
+import { useRef, useState, FormEvent } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Paintbrush, Upload, X, ImageIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { type BreadcrumbItem } from '@/types';
+import { update } from '@/routes/application-settings/branding';
+
+interface Props {
+    settings: {
+        app_name: string;
+        app_logo: string | null;
+    };
+    status?: string;
+}
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Application Settings', href: '#' },
+    { title: 'Branding', href: '/settings/application-settings/branding' },
+];
+
+export default function BrandingEdit({ settings, status }: Props) {
+    const [appName, setAppName] = useState(settings.app_name);
+    const [logoPreview, setLogoPreview] = useState<string | null>(
+        settings.app_logo ? `/storage/${settings.app_logo}` : null,
+    );
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [removeLogo, setRemoveLogo] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setLogoFile(file);
+        setRemoveLogo(false);
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoPreview(reader.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveLogo = () => {
+        setLogoFile(null);
+        setLogoPreview(null);
+        setRemoveLogo(true);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        setProcessing(true);
+
+        const formData = new FormData();
+        formData.append('app_name', appName);
+        if (logoFile) {
+            formData.append('logo', logoFile);
+        }
+        if (removeLogo) {
+            formData.append('remove_logo', '1');
+        }
+
+        router.post(update.url(), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => setProcessing(false),
+        });
+    };
+
+    return (
+        <>
+            <Head title="Branding" />
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Paintbrush className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold">Branding</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Customize your application name and logo
+                        </p>
+                    </div>
+                </div>
+
+                <Separator />
+
+                {status === 'branding-updated' && (
+                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                        Branding settings saved successfully.
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="max-w-xl space-y-8">
+                    {/* Application Name */}
+                    <div className="space-y-2">
+                        <Label htmlFor="app_name" className="text-base font-medium">
+                            Application Name
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                            This name is displayed throughout the application.
+                        </p>
+                        <Input
+                            id="app_name"
+                            value={appName}
+                            onChange={(e) => setAppName(e.target.value)}
+                            placeholder="My Application"
+                            required
+                            className="max-w-sm"
+                        />
+                    </div>
+
+                    <Separator />
+
+                    {/* Logo Upload */}
+                    <div className="space-y-3">
+                        <div>
+                            <Label className="text-base font-medium">Application Logo</Label>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                Upload a PNG, JPG, SVG, or WebP image. Max 2MB.
+                            </p>
+                        </div>
+
+                        <div className="flex items-start gap-6">
+                            {/* Preview */}
+                            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted">
+                                {logoPreview ? (
+                                    <img
+                                        src={logoPreview}
+                                        alt="Logo preview"
+                                        className="h-full w-full object-contain p-1"
+                                    />
+                                ) : (
+                                    <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-col gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-fit"
+                                >
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                                </Button>
+                                {logoPreview && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleRemoveLogo}
+                                        className="w-fit text-destructive hover:text-destructive"
+                                    >
+                                        <X className="mr-2 h-4 w-4" />
+                                        Remove Logo
+                                    </Button>
+                                )}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                                    className="hidden"
+                                    onChange={handleLogoChange}
+                                />
+                                {logoFile && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Selected: {logoFile.name}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-center gap-3">
+                        <Button type="submit" disabled={processing}>
+                            {processing ? 'Saving…' : 'Save Branding'}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </>
+    );
+}
+
+BrandingEdit.layout = {
+    breadcrumbs,
+};

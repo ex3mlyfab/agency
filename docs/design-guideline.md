@@ -32,9 +32,10 @@ The app should behave as a semantic design system (use Shadcn’s semantic Tailw
 
 Use these anchors (from your palette) conceptually:
 
-- Primary anchor: **Deep Charcoal** `#162839` (dominant for headers + primary actions)
-- Secondary anchor: **Slate Blue** `#5D6D7E` (supporting UI structure / outlines)
-- Success/calm accent: **Deep Emerald** `#1E3A34` (sparingly)
+- Primary anchor: **Dark Blue-Grey** `#2C3E50` (dominant for headers + primary actions)
+- Secondary anchor: **Slate Blue** `#34495E` (supporting UI structure / outlines)
+- Tertiary/Accent: **Deep Emerald** `#1E3A34` (sparingly)
+- Neutral background: **Off-White** `#F8F9FA`
 - Error: muted burgundy `#ba1a1a` (avoid bright red intensity)
 
 ### Practical Shadcn rule
@@ -50,12 +51,12 @@ Avoid hardcoding hex colors directly in React unless the token mapping is not av
 
 ## 3) Typography & Readability
 
-Font: **Inter** (project already wires “Instrument Sans” in Vite; use existing actual font rendering as the baseline, but follow the intended hierarchy).
+Font: **Inter** (Use Inter across all typography including Headline, Body, and Label text).
 
 Hierarchy intent:
-- Headlines are semibold/medium with tighter letter spacing
-- Body text is comfortable for long records
-- Labels should be semibold, persistent, and never placeholder-only
+- Headlines (Inter): semibold/medium with tighter letter spacing
+- Body (Inter): comfortable for long records
+- Labels (Inter): semibold, persistent, and never placeholder-only
 
 ### Form label rule
 - Labels live above inputs (`label` element + Shadcn input)
@@ -108,14 +109,17 @@ Rounded corners:
 ## 7) Component Behavior Guidelines (Shadcn-first)
 
 ### 7.1 Buttons
-- Primary: Deep Charcoal / “strong action” emphasis
-- Secondary: outline or quiet fill
+- Primary: Dark Blue-Grey (`#2C3E50`) / “strong action” emphasis
+- Secondary: quiet fill (`#34495E`)
+- Inverted: dark background with light text
+- Outlined: clear background with border
 - Hover: subtle luminosity shift, not an aggressive hue change
 - Destructive: only for confirmed operations
 
 Shadcn usage:
 - `variant="default"` for primary
-- `variant="secondary"` / `variant="outline"` for secondary actions
+- `variant="secondary"` for secondary actions
+- `variant="outline"` for outlined buttons
 - `variant="destructive"` for destructive only
 
 ### 7.2 Input Fields

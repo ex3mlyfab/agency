@@ -31,8 +31,8 @@ Legend:
 ---
 
 ## Phase 1 — RBAC (Permission-aware UI)
-- [ ] Navigation/menu items reflect permissions.
-- [ ] Action buttons per page reflect permissions (not just disabled—hidden where required).
+- [~] Navigation/menu items reflect permissions.
+- [x] Action buttons per page reflect permissions (not just disabled—hidden where required).
 - [ ] Verify the UI never exposes restricted destructive operations (where role disallows).
 
 **DoD**
@@ -44,13 +44,13 @@ Legend:
 ---
 
 ## Phase 2 — Deceased Register (CRUD)
-- [ ] Deceased listing:
+- [~] Deceased listing:
   - [ ] Table with sticky headers + zebra striping
   - [ ] Actions column (permission-aware)
-- [ ] Deceased create:
+- [~] Deceased create:
   - [ ] Form sections (deceased info + relative info)
   - [ ] Validation errors displayed inline
-- [ ] Deceased edit:
+- [~] Deceased edit:
   - [ ] Pre-filled form + update flow
 - [ ] Deceased details:
   - [ ] Show deceased info

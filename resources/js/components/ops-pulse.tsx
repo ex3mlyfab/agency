@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,8 +38,14 @@ export function OpsPulse({
     ctas?: OpsPulseCtas | null;
     className?: string;
 }) {
+    const { props } = usePage();
+    const can = (props as { can?: Record<string, boolean> }).can;
+
     const hasEvents = Boolean(latestEvents && latestEvents.length > 0);
     const hasOccupancy = Boolean(occupancy && occupancy.length > 0);
+
+    const canViewHistory = can?.['history.view'] ?? false;
+    const canViewReports = can?.['reports.view'] ?? false;
 
     return (
         <div className={cn('flex h-full flex-col gap-4', className)}>
@@ -87,7 +93,7 @@ export function OpsPulse({
                                 ) : null}
                             </div>
                         )}
-                        {ctas?.historyHref ? (
+                        {ctas?.historyHref && canViewHistory ? (
                             <Button asChild variant="outline" className="w-full">
                                 <a href={ctas.historyHref}>View history</a>
                             </Button>
@@ -104,7 +110,7 @@ export function OpsPulse({
                             </div>
                         </div>
 
-                        {ctas?.reportsHref ? (
+                        {ctas?.reportsHref && canViewReports ? (
                             <Button asChild variant="secondary" className="shrink-0">
                                 <a href={ctas.reportsHref}>Reports</a>
                             </Button>

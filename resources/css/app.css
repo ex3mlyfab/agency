@@ -9,7 +9,7 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Inter', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -41,6 +41,9 @@
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
 
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
@@ -59,42 +62,67 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --background: #F8F9FA;
+    --foreground: #2C3E50;
+    --card: #F8F9FA;
+    --card-foreground: #2C3E50;
+    --popover: #F8F9FA;
+    --popover-foreground: #2C3E50;
+    /* MMA — Serene Oversight palette anchors */
+    /* Primary anchor: Dark Blue-Grey #2C3E50 */
+    --primary: #2C3E50;
+    --primary-foreground: #ffffff;
+
+    /* Secondary anchor: Slate Blue #34495E */
+    --secondary: #34495E;
+    --secondary-foreground: #ffffff;
+
+    --muted: #e2e8f0;
+    --muted-foreground: #64748b;
+
+    /* Accent/Tertiary: Deep Emerald #1E3A34 */
+    --accent: #1E3A34;
+    --accent-foreground: #ffffff;
+
+    /* Error: muted burgundy #ba1a1a */
+    --destructive: oklch(0.47 0.19 27);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    /* Success: emerald green */
+    --success: oklch(0.6 0.15 160);
+    --success-foreground: oklch(0.985 0 0);
+
+    /* Outlines / focus */
+    --border: oklch(0.83 0.01 210);
+    --input: oklch(0.83 0.01 210);
+    --ring: oklch(0.55 0.05 243);
+
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
+
+    /* ~10px radius feel */
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--secondary);
+    --sidebar-accent-foreground: var(--secondary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
 }
 
 .dark {
@@ -104,19 +132,31 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.145 0 0);
     --popover-foreground: oklch(0.985 0 0);
+    /* Primary: Deep Charcoal for readability */
     --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
+    --primary-foreground: oklch(0.168 0.02 243);
+
+    /* Secondary: Slate-blue low surface */
+    --secondary: oklch(0.269 0.02 210);
     --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
+
+    --muted: oklch(0.269 0.02 210);
     --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
+
+    --accent: oklch(0.269 0.02 210);
     --accent-foreground: oklch(0.985 0 0);
+
+    /* Error: muted burgundy */
     --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    /* Success: emerald green */
+    --success: oklch(0.5 0.12 160);
+    --success-foreground: oklch(0.985 0 0);
+
+    --border: oklch(0.269 0.02 210);
+    --input: oklch(0.269 0.02 210);
+    --ring: oklch(0.55 0.05 243);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -141,3 +181,146 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* =========================================================
+   MMA — Serene Oversight utilities
+   Status chips: semibold text + 10% opacity bg (design guideline §7.5)
+   Table rows: extremely low-contrast zebra (design guideline §7.4)
+   ========================================================= */
+@layer utilities {
+    /* Zebra striping — extremely low contrast for data tables */
+    .mma-zebra tr:nth-child(even) td {
+        background-color: oklch(0.97 0.005 210);
+    }
+    .dark .mma-zebra tr:nth-child(even) td {
+        background-color: oklch(0.18 0.01 210);
+    }
+
+    /* Base status chip — use alongside a color modifier class */
+    .mma-chip {
+        display: inline-flex;
+        align-items: center;
+        padding-inline: 0.5rem;
+        padding-block: 0.125rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.5;
+        white-space: nowrap;
+    }
+
+    /* Deceased status chips */
+    .mma-chip-pending {
+        background-color: oklch(0.92 0.02 210 / 0.6);
+        color: oklch(0.168 0.02 243);
+    }
+    .dark .mma-chip-pending {
+        background-color: oklch(0.269 0.02 210 / 0.5);
+        color: oklch(0.85 0.01 210);
+    }
+
+    .mma-chip-in-chamber {
+        background-color: oklch(0.6 0.15 160 / 0.12);
+        color: oklch(0.28 0.1 160);
+    }
+    .dark .mma-chip-in-chamber {
+        background-color: oklch(0.5 0.12 160 / 0.2);
+        color: oklch(0.7 0.1 160);
+    }
+
+    .mma-chip-released {
+        background-color: oklch(0.44 0.015 210 / 0.1);
+        color: oklch(0.44 0.015 210);
+    }
+    .dark .mma-chip-released {
+        background-color: oklch(0.708 0 0 / 0.1);
+        color: oklch(0.708 0 0);
+    }
+
+    /* Audit / transfer event chips */
+    .mma-chip-entered {
+        background-color: oklch(0.6 0.15 160 / 0.12);
+        color: oklch(0.28 0.1 160);
+    }
+    .dark .mma-chip-entered {
+        background-color: oklch(0.5 0.12 160 / 0.2);
+        color: oklch(0.7 0.1 160);
+    }
+
+    .mma-chip-transferred {
+        background-color: oklch(0.55 0.05 243 / 0.12);
+        color: oklch(0.168 0.02 243);
+    }
+    .dark .mma-chip-transferred {
+        background-color: oklch(0.55 0.05 243 / 0.2);
+        color: oklch(0.75 0.04 243);
+    }
+
+    .mma-chip-completed {
+        background-color: oklch(0.44 0.015 210 / 0.1);
+        color: oklch(0.44 0.015 210);
+    }
+    .dark .mma-chip-completed {
+        background-color: oklch(0.708 0 0 / 0.1);
+        color: oklch(0.708 0 0);
+    }
+}
+
+@keyframes gradient-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes float-particle {
+    0% {
+        transform: translateY(105%) translateX(0) scale(0.6);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-10%) translateX(var(--drift-x, 40px)) scale(1.2);
+        opacity: 0;
+    }
+}
+
+@keyframes twinkle-particle {
+    0%, 100% {
+        opacity: 0.2;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-gradient-slow {
+    background-size: 200% 200%;
+    animation: gradient-flow 20s ease infinite;
+}
+
