@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApplicationSettings\AuditController;
 use App\Http\Controllers\ApplicationSettings\BrandingController;
+use App\Http\Controllers\ApplicationSettings\PaymentModeController;
 use App\Http\Controllers\ApplicationSettings\PermissionController;
 use App\Http\Controllers\ApplicationSettings\RoleController;
 use App\Http\Controllers\ApplicationSettings\UserController;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('audits', [AuditController::class, 'index'])->name('audits.index');
         Route::get('branding', [BrandingController::class, 'edit'])->name('branding.edit');
         Route::post('branding', [BrandingController::class, 'update'])->name('branding.update');
+        Route::resource('payment-modes', PaymentModeController::class);
     });
 });
 

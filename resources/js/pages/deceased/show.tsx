@@ -1,8 +1,20 @@
-import { Head, Link } from '@inertiajs/react';
-import { PencilIcon, MoveRightIcon, ShieldCheckIcon } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { InputError } from '@/components/input-error';
 
 interface Transfer {
     id: number;
@@ -12,6 +24,53 @@ interface Transfer {
     from_chamber: { name: string } | null;
     to_chamber: { name: string } | null;
     transferred_by_user: { name: string } | null;
+}
+
+interface Service {
+    id: number;
+    name: string;
+}
+
+interface InvoiceItem {
+    id: string;
+    invoice_id: string;
+    service_id: number;
+    name: string;
+    unit_price: number;
+    quantity: number;
+    total_price: number;
+    service: Service | null;
+}
+
+interface Invoice {
+    id: string;
+    deceased_id: number;
+    invoice_number: string;
+    subtotal: number;
+    discount: number;
+    tax: number;
+    total_amount: number;
+    paid_amount: number;
+    status: string;
+    notes: string | null;
+    invoice_items?: InvoiceItem[];
+}
+
+interface Payment {
+    id: string;
+    receipt_number: string;
+    amount: number;
+    payment_method: string;
+    transaction_reference: string | null;
+    payment_date: string;
+    notes: string | null;
+    received_by_user?: { name: string } | null;
+}
+
+interface AvailableService {
+    service_id: number;
+    name: string;
+    price: number;
 }
 
 interface Deceased {
@@ -24,7 +83,7 @@ interface Deceased {
     cause_of_death: string | null;
     notes: string | null;
     status: 'Pending' | 'InChamber' | 'Released';
-    chamber: { id: number; name: string } | null;
+    chamber: { id: number; name: string; service_id?: string | null } | null;
     relative_name: string;
     relative_phone: string;
     relative_relationship: string;
@@ -38,12 +97,24 @@ interface Deceased {
     released_to_id_number: string | null;
     released_at: string | null;
     released_by_user: { name: string } | null;
+    invoice?: Invoice | null;
+    payments?: Payment[];
+    days_in_storage: number;
+    days_paid: number;
+}
+
+interface PaymentMode {
+    id: string;
+    name: string;
 }
 
 interface Props {
     deceased: Deceased;
-    can: { edit: boolean; delete: boolean; transfer: boolean };
+    availableServices: AvailableService[];
+    paymentModes: PaymentMode[];
+    can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean };
 }
+
 
 function Field({
     label,
@@ -62,7 +133,103 @@ function Field({
     );
 }
 
-export default function DeceasedShow({ deceased, can }: Props) {
+export default function DeceasedShow({ deceased, availableServices, paymentModes, can }: Props) {
+    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+
+    const paymentForm = useForm({
+        deceased_id: deceased.id,
+        invoice_id: deceased.invoice?.id || '',
+        payment_mode_id: '',
+        amount: '',
+        transaction_reference: '',
+        payment_date: new Date().toISOString().split('T')[0],
+        notes: '',
+    });
+
+    const submitPayment = (e: React.FormEvent) => {
+        e.preventDefault();
+        paymentForm.post('/payments', {
+            onSuccess: () => {
+                setIsPaymentOpen(false);
+                paymentForm.reset({
+                    deceased_id: deceased.id,
+                    invoice_id: deceased.invoice?.id || '',
+                    payment_mode_id: '',
+                    amount: '',
+                    transaction_reference: '',
+                    payment_date: new Date().toISOString().split('T')[0],
+                    notes: '',
+                });
+            },
+        });
+    };
+
+    const { data, setData, post, processing, errors } = useForm<{
+        items: { service_id: string | number; quantity: number }[];
+        notes: string;
+    }>({
+        items: [],
+        notes: '',
+    });
+
+    const openInvoiceModal = () => {
+        if (deceased.invoice && deceased.invoice.invoice_items) {
+            setData({
+                items: deceased.invoice.invoice_items.map(item => ({
+                    service_id: item.service_id,
+                    quantity: item.quantity,
+                })),
+                notes: deceased.invoice.notes ?? '',
+            });
+        } else {
+            setData({
+                items: [{ service_id: availableServices[0]?.service_id ?? '', quantity: 1 }],
+                notes: '',
+            });
+        }
+        setIsInvoiceOpen(true);
+    };
+
+    const handleAddItem = () => {
+        setData('items', [
+            ...data.items,
+            { service_id: availableServices[0]?.service_id ?? '', quantity: 1 },
+        ]);
+    };
+
+    const handleRemoveItem = (index: number) => {
+        const newItems = [...data.items];
+        newItems.splice(index, 1);
+        setData('items', newItems);
+    };
+
+    const handleItemChange = (index: number, field: 'service_id' | 'quantity', value: any) => {
+        const newItems = [...data.items];
+        newItems[index] = {
+            ...newItems[index],
+            [field]: value,
+        };
+        setData('items', newItems);
+    };
+
+    const submitInvoice = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(`/deceased/${deceased.id}/invoice`, {
+            onSuccess: () => setIsInvoiceOpen(false),
+        });
+    };
+
+    const calculatedTotal = data.items.reduce((sum, item) => {
+        const service = availableServices.find(s => String(s.service_id) === String(item.service_id));
+        const price = service ? service.price : 0;
+        return sum + (price * Number(item.quantity || 0));
+    }, 0);
+
+    const totalBilled = deceased.invoice?.total_amount || 0;
+    const totalPaid = deceased.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    const ledgerBalance = totalBilled - totalPaid;
+
     return (
         <>
             <Head title={`${deceased.first_name} ${deceased.last_name}`} />
@@ -250,6 +417,488 @@ export default function DeceasedShow({ deceased, can }: Props) {
                         )}
                     </div>
                 </div>
+
+                {/* Storage Duration & Payment Tracker */}
+                <Card className="overflow-hidden border border-border">
+                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                            <ClockIcon className="h-4 w-4 text-primary" />
+                            Storage Tracker
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-6 py-6">
+                        <div className="grid gap-6 md:grid-cols-3 items-center">
+                            {/* Days Spent */}
+                            <div className="space-y-2 rounded-lg border border-border bg-secondary/10 p-4 text-center">
+                                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Days Spent in Storage
+                                </div>
+                                <div className="flex justify-center items-baseline gap-1 text-3xl font-extrabold text-foreground">
+                                    {deceased.days_in_storage}
+                                    <span className="text-sm font-medium text-muted-foreground">days</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                                    <CalendarIcon className="h-3 w-3" />
+                                    Since placement in chamber
+                                </p>
+                            </div>
+
+                            {/* Days Paid */}
+                            <div className="space-y-2 rounded-lg border border-border bg-secondary/10 p-4 text-center">
+                                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Days Paid For
+                                </div>
+                                <div className="flex justify-center items-baseline gap-1 text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                                    {deceased.days_paid}
+                                    <span className="text-sm font-medium text-muted-foreground">days</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Determined from settled invoice details
+                                </p>
+                            </div>
+
+                            {/* Status & Action */}
+                            <div className="space-y-3">
+                                <div>
+                                    <div className="flex justify-between text-xs font-semibold mb-1">
+                                        <span className="text-muted-foreground">Coverage Progress</span>
+                                        <span className={deceased.days_paid >= deceased.days_in_storage ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
+                                            {deceased.days_in_storage > 0 
+                                                ? Math.min(100, Math.round((deceased.days_paid / deceased.days_in_storage) * 100))
+                                                : 100}%
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
+                                        <div 
+                                            className={`h-2.5 rounded-full ${
+                                                deceased.days_paid >= deceased.days_in_storage 
+                                                    ? 'bg-emerald-500' 
+                                                    : 'bg-amber-500'
+                                            }`}
+                                            style={{ 
+                                                width: `${deceased.days_in_storage > 0 
+                                                    ? Math.min(100, (deceased.days_paid / deceased.days_in_storage) * 100) 
+                                                    : 100}%` 
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {deceased.days_in_storage > deceased.days_paid ? (
+                                    <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-800 dark:text-amber-400">
+                                        <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-semibold">Unpaid Storage:</span> {deceased.days_in_storage - deceased.days_paid} day(s) outstanding. Update the invoice to ensure full billing.
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-xs text-emerald-800 dark:text-emerald-400">
+                                        <ShieldCheckIcon className="h-4 w-4 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-semibold">Fully Covered:</span> All storage days spent are currently covered by payments.
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Service Invoicing Card */}
+                    <Card>
+                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between">
+                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                                <ReceiptIcon className="h-4 w-4" />
+                                Service Billing / Invoicing
+                            </CardTitle>
+                            {deceased.invoice && (
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${
+                                    deceased.invoice.status === 'Paid' 
+                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' 
+                                        : deceased.invoice.status === 'Partially Paid'
+                                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                                        : 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
+                                }`}>
+                                    {deceased.invoice.status}
+                                </span>
+                            )}
+                        </CardHeader>
+                        <CardContent className="px-6 py-6 space-y-6">
+                            {!deceased.invoice ? (
+                                <div className="text-center py-6">
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        No invoice has been created for this record yet. Configure the invoice to add services and rates.
+                                    </p>
+                                    {can.edit && (
+                                        <Button onClick={openInvoiceModal} size="sm">
+                                            <PlusIcon className="mr-2 h-4 w-4" />
+                                            Configure Invoice
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                                        <span className="font-mono text-muted-foreground font-semibold">
+                                            Invoice #: {deceased.invoice.invoice_number}
+                                        </span>
+                                        {can.edit && (
+                                            <Button onClick={openInvoiceModal} variant="outline" size="sm">
+                                                <PencilIcon className="mr-2.5 h-3.5 w-3.5" />
+                                                Edit Invoice
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead>
+                                                <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
+                                                    <th className="py-2 font-semibold">Service</th>
+                                                    <th className="py-2 text-right font-semibold">Rate</th>
+                                                    <th className="py-2 text-center font-semibold">Qty</th>
+                                                    <th className="py-2 text-right font-semibold">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {deceased.invoice.invoice_items?.map((item) => (
+                                                    <tr key={item.id} className="border-b border-border/50">
+                                                        <td className="py-2 font-medium text-foreground">{item.name}</td>
+                                                        <td className="py-2 text-right">₦{Number(item.unit_price).toLocaleString()}</td>
+                                                        <td className="py-2 text-center">{item.quantity}</td>
+                                                        <td className="py-2 text-right font-semibold">₦{Number(item.total_price).toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {deceased.invoice.notes && (
+                                        <div className="text-xs bg-secondary/20 border border-border/50 rounded-md p-3">
+                                            <div className="font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes:</div>
+                                            <p className="text-foreground">{deceased.invoice.notes}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="border-t border-border pt-4 space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Subtotal:</span>
+                                            <span className="font-medium text-foreground">₦{Number(deceased.invoice.subtotal).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Total Billed:</span>
+                                            <span className="font-semibold text-foreground">₦{Number(deceased.invoice.total_amount).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Total Settled:</span>
+                                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">₦{totalPaid.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between border-t border-border/60 pt-2 text-base font-bold">
+                                            <span className="text-foreground">Ledger Balance:</span>
+                                            <span className={ledgerBalance > 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}>
+                                                ₦{ledgerBalance.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Payment History Card */}
+                    <Card>
+                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between">
+                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                                <CreditCardIcon className="h-4 w-4" />
+                                Payment & Settled Receipts
+                            </CardTitle>
+                            {(can.managePayments || can.edit) && (
+                                <Button size="sm" onClick={() => setIsPaymentOpen(true)} className="h-8 flex items-center gap-1">
+                                    <PlusIcon className="h-3.5 w-3.5" />
+                                    Record Payment
+                                </Button>
+                            )}
+                        </CardHeader>
+                        <CardContent className="px-6 py-6">
+                            {!deceased.payments || deceased.payments.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-6">
+                                    No payments settled on this record yet.
+                                </p>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead>
+                                                <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
+                                                    <th className="py-2 font-semibold">Receipt #</th>
+                                                    <th className="py-2 font-semibold">Date</th>
+                                                    <th className="py-2 font-semibold">Method</th>
+                                                    <th className="py-2 font-semibold">Ref</th>
+                                                    <th className="py-2 text-right font-semibold">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {deceased.payments.map((payment) => (
+                                                    <tr key={payment.id} className="border-b border-border/50">
+                                                        <td className="py-2 font-medium text-foreground">{payment.receipt_number}</td>
+                                                        <td className="py-2 text-muted-foreground">
+                                                            {new Date(payment.payment_date).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="py-2 text-foreground">{payment.payment_method}</td>
+                                                        <td className="py-2 font-mono text-xs text-muted-foreground">
+                                                            {payment.transaction_reference || '—'}
+                                                        </td>
+                                                        <td className="py-2 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                                                            ₦{Number(payment.amount).toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="border-t border-border pt-4 flex justify-between items-center text-sm">
+                                        <span className="font-semibold text-muted-foreground">Total Payments:</span>
+                                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                                            ₦{totalPaid.toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Configure Invoice Dialog */}
+                <Dialog open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen}>
+                    <DialogContent className="max-w-2xl bg-card border border-border">
+                        <DialogHeader>
+                            <DialogTitle>Configure Service Invoice</DialogTitle>
+                            <DialogDescription>
+                                Add services and quantities to generate or update the invoice. Rates correspond to the service category assigned to the deceased record.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form onSubmit={submitInvoice} className="space-y-4">
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                                <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider pb-1 border-b border-border/50">
+                                    <div className="col-span-6">Service</div>
+                                    <div className="col-span-2 text-right">Price</div>
+                                    <div className="col-span-2 text-center">Qty</div>
+                                    <div className="col-span-2 text-right">Action</div>
+                                </div>
+
+                                {data.items.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                        No services added yet. Add a service to begin.
+                                    </p>
+                                ) : (
+                                    data.items.map((item, index) => {
+                                        const selectedService = availableServices.find(
+                                            (s) => String(s.service_id) === String(item.service_id)
+                                        );
+                                        const price = selectedService ? selectedService.price : 0;
+
+                                        return (
+                                            <div key={index} className="grid grid-cols-12 gap-2 items-center py-1">
+                                                <div className="col-span-6">
+                                                    <select
+                                                        value={item.service_id}
+                                                        onChange={(e) =>
+                                                            handleItemChange(index, 'service_id', e.target.value)
+                                                        }
+                                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        required
+                                                    >
+                                                        <option value="" disabled>-- Select Service --</option>
+                                                        {availableServices.map((s) => (
+                                                            <option key={s.service_id} value={s.service_id}>
+                                                                {s.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="col-span-2 text-right text-sm font-medium text-muted-foreground">
+                                                    ₦{price.toLocaleString()}
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) =>
+                                                            handleItemChange(
+                                                                index,
+                                                                'quantity',
+                                                                Math.max(1, parseInt(e.target.value) || 1)
+                                                            )
+                                                        }
+                                                        className="text-center h-9"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="col-span-2 text-right">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleRemoveItem(index)}
+                                                        className="text-destructive hover:bg-destructive/10 h-9 w-9"
+                                                    >
+                                                        <Trash2Icon className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            <div className="flex justify-between items-center border-t border-border pt-3">
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                    Add Service Line
+                                </Button>
+                                <div className="text-sm font-semibold">
+                                    Total Estimate: <span className="text-primary font-bold text-base">₦{calculatedTotal.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="notes">Invoice Notes (Optional)</Label>
+                                <textarea
+                                    id="notes"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    rows={2}
+                                    placeholder="Add any instructions, terms, or remarks..."
+                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                <InputError message={errors.notes} />
+                                {errors.items && <InputError message={errors.items} />}
+                            </div>
+
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setIsInvoiceOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={processing || data.items.length === 0}>
+                                    {processing ? 'Saving...' : 'Save Invoice'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Record Payment Dialog */}
+                <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Record Payment / Deposit</DialogTitle>
+                            <DialogDescription>
+                                Add a payment receipt to reduce this record's outstanding ledger balance.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={submitPayment} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="payment_type">Apply To</Label>
+                                <select
+                                    id="payment_type"
+                                    value={paymentForm.data.invoice_id ? 'invoice' : 'general'}
+                                    onChange={(e) => {
+                                        if (e.target.value === 'general') {
+                                            paymentForm.setData('invoice_id', '');
+                                        } else {
+                                            paymentForm.setData('invoice_id', deceased.invoice?.id || '');
+                                        }
+                                    }}
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                    {deceased.invoice && (
+                                        <option value="invoice">Invoice ({deceased.invoice.invoice_number})</option>
+                                    )}
+                                    <option value="general">General Account Deposit (Ledger)</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="payment_mode_id">Payment Mode</Label>
+                                <select
+                                    id="payment_mode_id"
+                                    value={paymentForm.data.payment_mode_id}
+                                    onChange={(e) => paymentForm.setData('payment_mode_id', e.target.value)}
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    required
+                                >
+                                    <option value="" disabled>Select payment mode</option>
+                                    {paymentModes.map((mode) => (
+                                        <option key={mode.id} value={mode.id}>{mode.name}</option>
+                                    ))}
+                                </select>
+                                <InputError message={paymentForm.errors.payment_mode_id} />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="amount">Amount (₦)</Label>
+                                <Input
+                                    id="amount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    value={paymentForm.data.amount}
+                                    onChange={(e) => paymentForm.setData('amount', e.target.value)}
+                                    placeholder="Enter amount"
+                                    required
+                                />
+                                <InputError message={paymentForm.errors.amount} />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="transaction_reference">Transaction Reference (Optional)</Label>
+                                <Input
+                                    id="transaction_reference"
+                                    value={paymentForm.data.transaction_reference}
+                                    onChange={(e) => paymentForm.setData('transaction_reference', e.target.value)}
+                                    placeholder="Reference or bank code"
+                                />
+                                <InputError message={paymentForm.errors.transaction_reference} />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="payment_date">Payment Date</Label>
+                                <Input
+                                    id="payment_date"
+                                    type="date"
+                                    value={paymentForm.data.payment_date}
+                                    onChange={(e) => paymentForm.setData('payment_date', e.target.value)}
+                                    required
+                                />
+                                <InputError message={paymentForm.errors.payment_date} />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="payment_notes">Notes (Optional)</Label>
+                                <textarea
+                                    id="payment_notes"
+                                    value={paymentForm.data.notes}
+                                    onChange={(e) => paymentForm.setData('notes', e.target.value)}
+                                    rows={2}
+                                    placeholder="Any additional remarks..."
+                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                                <InputError message={paymentForm.errors.notes} />
+                            </div>
+
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={paymentForm.processing}>
+                                    {paymentForm.processing ? 'Recording...' : 'Record Payment'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
 
                 {/* Transfer / audit history */}
                 <Card>

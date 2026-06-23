@@ -48,6 +48,11 @@ class HandleInertiaRequests extends Middleware
             'can' => [
                 'history.view' => $user ? $user->can('history.view') : false,
                 'reports.view' => $user ? $user->can('reports.view') : false,
+                'service_categories.view' => $user ? $user->can('service_categories.view') : false,
+                'services.view' => $user ? $user->can('services.view') : false,
+                'service_prices.view' => $user ? $user->can('service_prices.view') : false,
+                'invoices.view' => $user ? $user->can('invoices.view') : false,
+                'payments.view' => $user ? $user->can('payments.view') : false,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => [

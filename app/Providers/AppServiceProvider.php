@@ -5,6 +5,7 @@ namespace App\Providers;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +25,20 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureSuperAdminBypass();
+    }
+
+    /**
+     * Grant the 'super admin' role unconditional access to every Gate ability,
+     * following Spatie's recommended super-admin bypass pattern.
+     *
+     * @see https://spatie.be/docs/laravel-permission/basic-usage/super-admin
+     */
+    protected function configureSuperAdminBypass(): void
+    {
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('super admin') ? true : null;
+        });
     }
 
     /**

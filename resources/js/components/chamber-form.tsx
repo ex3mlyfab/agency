@@ -11,11 +11,13 @@ interface ChamberFormData {
     location: string;
     capacity: string;
     notes: string;
+    service_id: string;
     [key: string]: string;
 }
 
 interface ChamberFormProps {
     initialValues?: Partial<ChamberFormData>;
+    services?: { id: string; name: string }[];
     action: string;
     method?: 'post' | 'put' | 'patch';
     submitLabel?: string;
@@ -23,6 +25,7 @@ interface ChamberFormProps {
 
 export function ChamberForm({
     initialValues = {},
+    services = [],
     action,
     method = 'post',
     submitLabel = 'Save Chamber',
@@ -33,6 +36,7 @@ export function ChamberForm({
             location: initialValues.location ?? '',
             capacity: initialValues.capacity ?? '1',
             notes: initialValues.notes ?? '',
+            service_id: initialValues.service_id ?? '',
         });
 
     function handleSubmit(e: React.FormEvent) {
@@ -103,6 +107,28 @@ export function ChamberForm({
                             )}
                         />
                         <InputError message={errors.capacity} />
+                    </div>
+
+                    {/* Storage Service */}
+                    <div className="space-y-1.5">
+                        <Label htmlFor="service_id" className="font-semibold">
+                            Storage Service
+                        </Label>
+                        <select
+                            id="service_id"
+                            value={data.service_id}
+                            onChange={(e) => setData('service_id', e.target.value)}
+                            disabled={processing}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="">-- None (No Storage Service) --</option>
+                            {services.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {s.name}
+                                </option>
+                            ))}
+                        </select>
+                        <InputError message={errors.service_id} />
                     </div>
 
                     {/* Notes */}

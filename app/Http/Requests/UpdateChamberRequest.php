@@ -28,6 +28,7 @@ class UpdateChamberRequest extends FormRequest
             'location' => ['nullable', 'string', 'max:150'],
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'service_id' => ['nullable', 'exists:services,id'],
         ];
     }
 }

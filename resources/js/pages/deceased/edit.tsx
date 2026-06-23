@@ -16,6 +16,8 @@ interface Deceased {
     relative_relationship: string;
     relative_address: string | null;
     chamber_id: string | null;
+    service_category_id: string | null;
+    source: string | null;
 }
 
 interface Chamber {
@@ -23,12 +25,18 @@ interface Chamber {
     name: string;
 }
 
+interface ServiceCategory {
+    id: string;
+    name: string;
+}
+
 interface Props {
     deceased: Deceased;
     chambers: Chamber[];
+    serviceCategories: ServiceCategory[];
 }
 
-export default function DeceasedEdit({ deceased, chambers }: Props) {
+export default function DeceasedEdit({ deceased, chambers, serviceCategories }: Props) {
     return (
         <>
             <Head
@@ -62,8 +70,11 @@ export default function DeceasedEdit({ deceased, chambers }: Props) {
                         relative_relationship: deceased.relative_relationship,
                         relative_address: deceased.relative_address ?? '',
                         chamber_id: deceased.chamber_id ?? '',
+                        service_category_id: deceased.service_category_id ?? '',
+                        source: deceased.source ?? '',
                     }}
                     chambers={chambers}
+                    serviceCategories={serviceCategories}
                 />
             </div>
         </>

@@ -7,13 +7,15 @@ interface Chamber {
     location: string | null;
     capacity: number;
     notes: string | null;
+    service_id: string | null;
 }
 
 interface Props {
     chamber: Chamber;
+    services: { id: string; name: string }[];
 }
 
-export default function ChamberEdit({ chamber }: Props) {
+export default function ChamberEdit({ chamber, services }: Props) {
     return (
         <>
             <Head title={`Edit — ${chamber.name}`} />
@@ -29,12 +31,14 @@ export default function ChamberEdit({ chamber }: Props) {
                 <ChamberForm
                     action={`/chambers/${chamber.id}`}
                     method="put"
+                    services={services}
                     submitLabel="Save Changes"
                     initialValues={{
                         name: chamber.name,
                         location: chamber.location ?? '',
                         capacity: String(chamber.capacity),
                         notes: chamber.notes ?? '',
+                        service_id: chamber.service_id ?? '',
                     }}
                 />
             </div>

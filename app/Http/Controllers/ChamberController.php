@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreChamberRequest;
 use App\Http\Requests\UpdateChamberRequest;
 use App\Models\Chamber;
+use App\Models\Service;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -19,7 +20,7 @@ class ChamberController extends Controller
     {
         Gate::authorize('chambers.view');
 
-        $chambers = Chamber::withCount(['occupants'])
+        $chambers = Chamber::with(['service'])->withCount(['occupants'])
             ->get()
             ->map(function (Chamber $chamber) {
                 return [
@@ -30,6 +31,8 @@ class ChamberController extends Controller
                     'occupants_count' => $chamber->occupants_count,
                     'occupancy_status' => $chamber->occupancy_status,
                     'days_in_chamber' => $chamber->days_in_chamber,
+                    'service_id' => $chamber->service_id,
+                    'service' => $chamber->service ? ['id' => $chamber->service->id, 'name' => $chamber->service->name] : null,
                 ];
             });
 
@@ -50,7 +53,9 @@ class ChamberController extends Controller
     {
         Gate::authorize('chambers.manage');
 
-        return Inertia::render('chambers/create');
+        return Inertia::render('chambers/create', [
+            'services' => Service::orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     /**
@@ -73,6 +78,7 @@ class ChamberController extends Controller
 
         return Inertia::render('chambers/edit', [
             'chamber' => $chamber,
+            'services' => Service::orderBy('name')->get(['id', 'name']),
         ]);
     }
 

@@ -6,11 +6,17 @@ interface Chamber {
     name: string;
 }
 
-interface Props {
-    chambers: Chamber[];
+interface ServiceCategory {
+    id: string;
+    name: string;
 }
 
-export default function DeceasedCreate({ chambers }: Props) {
+interface Props {
+    chambers: Chamber[];
+    serviceCategories: ServiceCategory[];
+}
+
+export default function DeceasedCreate({ chambers, serviceCategories }: Props) {
     return (
         <>
             <Head title="New Deceased Record" />
@@ -30,6 +36,7 @@ export default function DeceasedCreate({ chambers }: Props) {
                     method="post"
                     submitLabel="Create Record"
                     chambers={chambers}
+                    serviceCategories={serviceCategories}
                 />
             </div>
         </>

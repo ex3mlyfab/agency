@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Deceased;
+use App\Models\ServiceCategory;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -16,6 +17,7 @@ beforeEach(function () {
     $this->superAdmin->assignRole($role);
 
     $this->user = User::factory()->create();
+    $this->category = ServiceCategory::factory()->create();
 });
 
 it('requires authentication to view deceased register', function () {
@@ -54,6 +56,8 @@ it('can create a new deceased record', function () {
             'relative_name' => 'Jane Doe',
             'relative_phone' => '555-1234',
             'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
         ])
         ->assertRedirect(route('deceased.index'));
 
@@ -61,6 +65,8 @@ it('can create a new deceased record', function () {
         'first_name' => 'John',
         'last_name' => 'Doe',
         'status' => 'Pending',
+        'service_category_id' => $this->category->id,
+        'source' => 'In Hospital',
     ]);
 });
 
@@ -76,6 +82,8 @@ it('can update a deceased record', function () {
             'relative_name' => 'John Smith',
             'relative_phone' => '555-4321',
             'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'Outside Hospital',
         ])
         ->assertRedirect(route('deceased.show', $deceased));
 
@@ -83,6 +91,8 @@ it('can update a deceased record', function () {
         'id' => $deceased->id,
         'first_name' => 'Jane',
         'last_name' => 'Smith',
+        'service_category_id' => $this->category->id,
+        'source' => 'Outside Hospital',
     ]);
 });
 

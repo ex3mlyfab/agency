@@ -38,6 +38,8 @@ class UpdateDeceasedRequest extends FormRequest
             'relative_address' => ['nullable', 'string', 'max:255'],
             'chamber_id' => ['nullable', 'exists:chambers,id'],
             'stored_at' => ['nullable', 'date', 'required_with:chamber_id'],
+            'service_category_id' => ['required', 'exists:service_categories,id'],
+            'source' => ['required', 'string', 'in:In Hospital,Outside Hospital'],
         ];
     }
 }

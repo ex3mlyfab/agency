@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Chamber;
 use App\Models\Deceased;
+use App\Models\ServiceCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -44,6 +45,8 @@ class DeceasedFactory extends Factory
                 'Friend',
             ]),
             'relative_address' => fake()->optional()->address(),
+            'service_category_id' => ServiceCategory::factory(),
+            'source' => fake()->randomElement(['In Hospital', 'Outside Hospital']),
         ];
     }
 

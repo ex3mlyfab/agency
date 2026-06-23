@@ -32,6 +32,8 @@ interface DeceasedFormData {
     relative_address: string;
     chamber_id: string;
     stored_at: string;
+    service_category_id: string;
+    source: string;
     picture?: File | null | string;
     [key: string]: string | File | null | undefined;
 }
@@ -43,6 +45,7 @@ interface DeceasedFormProps {
     submitLabel?: string;
     cancelHref?: string;
     chambers?: { id: string; name: string }[];
+    serviceCategories?: { id: string; name: string }[];
 }
 
 export function DeceasedForm({
@@ -52,6 +55,7 @@ export function DeceasedForm({
     submitLabel = 'Save Record',
     cancelHref = '/deceased',
     chambers = [],
+    serviceCategories = [],
 }: DeceasedFormProps) {
     const { data, setData, submit, processing, errors } =
         useForm<DeceasedFormData>({
@@ -68,6 +72,8 @@ export function DeceasedForm({
             relative_address: initialValues.relative_address ?? '',
             chamber_id: initialValues.chamber_id ?? '',
             stored_at: initialValues.stored_at ?? '',
+            service_category_id: initialValues.service_category_id ?? '',
+            source: initialValues.source ?? '',
             picture: null,
         });
 
@@ -249,6 +255,61 @@ export function DeceasedForm({
                             disabled={processing}
                         />
                         <InputError message={errors.cause_of_death} />
+                    </div>
+
+                    {/* Service Category */}
+                    <div className="space-y-1.5">
+                        <Label htmlFor="service_category_id" className="font-semibold">
+                            Service Category <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            value={data.service_category_id}
+                            onValueChange={(val) => setData('service_category_id', val)}
+                            disabled={processing}
+                        >
+                            <SelectTrigger
+                                id="service_category_id"
+                                className={cn(
+                                    errors.service_category_id && 'border-destructive',
+                                )}
+                            >
+                                <SelectValue placeholder="-- Choose Category --" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {serviceCategories.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.service_category_id} />
+                    </div>
+
+                    {/* Source */}
+                    <div className="space-y-1.5">
+                        <Label htmlFor="source" className="font-semibold">
+                            Source of Deceased <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            value={data.source}
+                            onValueChange={(val) => setData('source', val)}
+                            disabled={processing}
+                        >
+                            <SelectTrigger
+                                id="source"
+                                className={cn(
+                                    errors.source && 'border-destructive',
+                                )}
+                            >
+                                <SelectValue placeholder="-- Choose Source --" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="In Hospital">In Hospital</SelectItem>
+                                <SelectItem value="Outside Hospital">Outside Hospital</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.source} />
                     </div>
 
                     {/* Picture Upload */}

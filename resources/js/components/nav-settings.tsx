@@ -6,6 +6,7 @@ import {
     Users,
     History,
     Paintbrush,
+    CreditCard,
 } from 'lucide-react';
 import {
     Collapsible,
@@ -143,6 +144,19 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                 )}
+                                <SidebarMenuSubItem>
+                                    <SidebarMenuSubButton
+                                        asChild
+                                        isActive={isCurrentUrl(
+                                            '/settings/application-settings/payment-modes',
+                                        )}
+                                    >
+                                        <Link href="/settings/application-settings/payment-modes">
+                                            <CreditCard className="h-4 w-4" />
+                                            <span>Payment Modes</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
                             </SidebarMenuSub>
                         </CollapsibleContent>
                     </SidebarMenuItem>

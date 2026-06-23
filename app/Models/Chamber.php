@@ -6,6 +6,7 @@ use Database\Factories\ChamberFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -28,6 +29,7 @@ class Chamber extends Model
         'location',
         'capacity',
         'notes',
+        'service_id',
     ];
 
     /**
@@ -36,6 +38,14 @@ class Chamber extends Model
     public function occupants(): HasMany
     {
         return $this->hasMany(Deceased::class)->where('status', 'InChamber');
+    }
+
+    /**
+     * The storage service attached to this chamber.
+     */
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 
     /**

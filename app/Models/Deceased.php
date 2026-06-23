@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -59,6 +60,8 @@ class Deceased extends Model
         'released_to_id_number',
         'released_at',
         'released_by',
+        'service_category_id',
+        'source',
     ];
 
     /**
@@ -68,6 +71,18 @@ class Deceased extends Model
         'date_of_birth' => 'date',
         'date_of_death' => 'date',
         'released_at' => 'datetime',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = [
+        'full_name',
+        'total_billed',
+        'total_paid',
+        'ledger_balance',
+        'days_in_storage',
+        'days_paid',
     ];
 
     /**
@@ -100,5 +115,119 @@ class Deceased extends Model
     public function transfers(): HasMany
     {
         return $this->hasMany(Transfer::class)->latest('transferred_at');
+    }
+
+    /**
+     * Get the service category for the deceased.
+     */
+    public function serviceCategory(): BelongsTo
+    {
+        return $this->belongsTo(ServiceCategory::class);
+    }
+
+    /**
+     * The invoice associated with the deceased.
+     */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class);
+    }
+
+    /**
+     * All payments / deposits recorded for this deceased.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the total invoice amount for this deceased person.
+     */
+    public function getTotalBilledAttribute(): float
+    {
+        return (float) ($this->invoice?->total_amount ?? 0.0);
+    }
+
+    /**
+     * Get the total deposits/payments made for this deceased person.
+     */
+    public function getTotalPaidAttribute(): float
+    {
+        return (float) $this->payments()->sum('amount');
+    }
+
+    /**
+     * Get the outstanding ledger balance.
+     * Positive value means outstanding debt. Negative or zero means paid/surplus.
+     */
+    public function getLedgerBalanceAttribute(): float
+    {
+        return $this->total_billed - $this->total_paid;
+    }
+
+    /**
+     * Check if the bill is settled.
+     */
+    public function isBillSettled(): bool
+    {
+        return $this->ledger_balance <= 0.0;
+    }
+
+    /**
+     * Get the total days spent in storage.
+     */
+    public function getDaysInStorageAttribute(): int
+    {
+        $firstEntry = $this->transfers()
+            ->where('event_type', 'Entered')
+            ->oldest('transferred_at')
+            ->first();
+
+        if (! $firstEntry) {
+            return 0;
+        }
+
+        $endDate = $this->status === 'Released' && $this->released_at
+            ? $this->released_at
+            : now();
+
+        return (int) $firstEntry->transferred_at->diffInDays($endDate);
+    }
+
+    /**
+     * Get the number of storage days paid for.
+     */
+    public function getDaysPaidAttribute(): int
+    {
+        if (! $this->invoice) {
+            return 0;
+        }
+
+        $storageServiceId = $this->chamber?->service_id;
+
+        $storageItem = $this->invoice->invoiceItems
+            ->first(function ($item) use ($storageServiceId) {
+                if ($storageServiceId) {
+                    return $item->service_id === $storageServiceId;
+                }
+
+                return stripos($item->name, 'storage') !== false;
+            });
+
+        if (! $storageItem || $storageItem->quantity <= 0) {
+            return 0;
+        }
+
+        $totalPaid = $this->total_paid;
+        $totalBilled = $this->total_billed;
+
+        if ($totalBilled <= 0) {
+            return 0;
+        }
+
+        $proportion = min(1.0, $totalPaid / $totalBilled);
+
+        return (int) round($proportion * $storageItem->quantity);
     }
 }

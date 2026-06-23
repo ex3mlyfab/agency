@@ -1,7 +1,11 @@
 import { Head } from '@inertiajs/react';
 import { ChamberForm } from '@/components/chamber-form';
 
-export default function ChamberCreate() {
+interface Props {
+    services: { id: string; name: string }[];
+}
+
+export default function ChamberCreate({ services }: Props) {
     return (
         <>
             <Head title="Add Chamber" />
@@ -17,6 +21,7 @@ export default function ChamberCreate() {
                 <ChamberForm
                     action="/chambers"
                     method="post"
+                    services={services}
                     submitLabel="Create Chamber"
                 />
             </div>

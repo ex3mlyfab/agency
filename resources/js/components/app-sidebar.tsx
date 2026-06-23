@@ -12,6 +12,7 @@ import {
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
+import { NavAccounts } from '@/components/nav-accounts';
 import { NavSettings } from '@/components/nav-settings';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -101,6 +102,7 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                <NavAccounts can={can} />
                 <NavSettings can={can} />
             </SidebarContent>
 
