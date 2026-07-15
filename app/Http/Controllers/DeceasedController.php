@@ -287,29 +287,31 @@ class DeceasedController extends Controller
             'release_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $oldChamberId = $deceased->chamber_id;
+        DB::transaction(function () use ($deceased, $validated): void {
+            $oldChamberId = $deceased->chamber_id;
 
-        $deceased->update([
-            'status' => 'Released',
-            'chamber_id' => null,
-            'released_to_name' => $validated['released_to_name'],
-            'released_to_phone' => $validated['released_to_phone'],
-            'released_to_relationship' => $validated['released_to_relationship'],
-            'released_to_id_type' => $validated['released_to_id_type'],
-            'released_to_id_number' => $validated['released_to_id_number'],
-            'released_at' => now(),
-            'released_by' => auth()->id(),
-        ]);
+            $deceased->update([
+                'status' => 'Released',
+                'chamber_id' => null,
+                'released_to_name' => $validated['released_to_name'],
+                'released_to_phone' => $validated['released_to_phone'],
+                'released_to_relationship' => $validated['released_to_relationship'],
+                'released_to_id_type' => $validated['released_to_id_type'],
+                'released_to_id_number' => $validated['released_to_id_number'],
+                'released_at' => now(),
+                'released_by' => auth()->id(),
+            ]);
 
-        Transfer::create([
-            'deceased_id' => $deceased->id,
-            'from_chamber_id' => $oldChamberId,
-            'to_chamber_id' => null,
-            'transferred_by' => auth()->id(),
-            'event_type' => 'Released',
-            'notes' => $validated['release_notes'] ?? ('Released to '.$validated['released_to_name'].' ('.$validated['released_to_relationship'].')'),
-            'transferred_at' => now(),
-        ]);
+            Transfer::create([
+                'deceased_id' => $deceased->id,
+                'from_chamber_id' => $oldChamberId,
+                'to_chamber_id' => null,
+                'transferred_by' => auth()->id(),
+                'event_type' => 'Released',
+                'notes' => $validated['release_notes'] ?? ('Released to '.$validated['released_to_name'].' ('.$validated['released_to_relationship'].')'),
+                'transferred_at' => now(),
+            ]);
+        });
 
         return redirect()->route('deceased.show', $deceased)
             ->with('flash', [

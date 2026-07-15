@@ -60,6 +60,7 @@ class HandleInertiaRequests extends Middleware
                 'logo' => ApplicationSetting::get('app_logo')
                     ? Storage::disk('public')->url(ApplicationSetting::get('app_logo'))
                     : null,
+                'currency_symbol' => ApplicationSetting::get('currency_symbol', '₦'),
             ],
         ];
     }

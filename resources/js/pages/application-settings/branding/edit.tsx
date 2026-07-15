@@ -1,6 +1,6 @@
 import { useRef, useState, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { Paintbrush, Upload, X, ImageIcon } from 'lucide-react';
+import { Paintbrush, Upload, X, ImageIcon, CoinsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ interface Props {
     settings: {
         app_name: string;
         app_logo: string | null;
+        currency_symbol: string;
     };
     status?: string;
 }
@@ -21,8 +22,23 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Branding', href: '/settings/application-settings/branding' },
 ];
 
+/** Common world currency symbols for the quick-pick palette */
+const COMMON_SYMBOLS = [
+    { symbol: '₦', label: 'NGN – Naira' },
+    { symbol: '$', label: 'USD – Dollar' },
+    { symbol: '£', label: 'GBP – Pound' },
+    { symbol: '€', label: 'EUR – Euro' },
+    { symbol: '¥', label: 'JPY – Yen' },
+    { symbol: '₹', label: 'INR – Rupee' },
+    { symbol: 'R', label: 'ZAR – Rand' },
+    { symbol: 'KSh', label: 'KES – Shilling' },
+    { symbol: 'GH₵', label: 'GHS – Cedi' },
+    { symbol: 'FCFA', label: 'XOF – Franc' },
+];
+
 export default function BrandingEdit({ settings, status }: Props) {
     const [appName, setAppName] = useState(settings.app_name);
+    const [currencySymbol, setCurrencySymbol] = useState(settings.currency_symbol || '₦');
     const [logoPreview, setLogoPreview] = useState<string | null>(
         settings.app_logo ? `/storage/${settings.app_logo}` : null,
     );
@@ -54,6 +70,7 @@ export default function BrandingEdit({ settings, status }: Props) {
 
         const formData = new FormData();
         formData.append('app_name', appName);
+        formData.append('currency_symbol', currencySymbol);
         if (logoFile) {
             formData.append('logo', logoFile);
         }
@@ -81,7 +98,7 @@ export default function BrandingEdit({ settings, status }: Props) {
                     <div>
                         <h1 className="text-xl font-semibold">Branding</h1>
                         <p className="text-sm text-muted-foreground">
-                            Customize your application name and logo
+                            Customize your application name, logo, and currency symbol
                         </p>
                     </div>
                 </div>
@@ -97,10 +114,7 @@ export default function BrandingEdit({ settings, status }: Props) {
                 <form onSubmit={handleSubmit} className="max-w-xl space-y-8">
                     {/* Application Name */}
                     <div className="space-y-2">
-                        <Label
-                            htmlFor="app_name"
-                            className="text-base font-medium"
-                        >
+                        <Label htmlFor="app_name" className="text-base font-medium">
                             Application Name
                         </Label>
                         <p className="text-sm text-muted-foreground">
@@ -114,6 +128,66 @@ export default function BrandingEdit({ settings, status }: Props) {
                             required
                             className="max-w-sm"
                         />
+                    </div>
+
+                    <Separator />
+
+                    {/* Currency Symbol */}
+                    <div className="space-y-3">
+                        <div>
+                            <Label htmlFor="currency_symbol" className="text-base font-medium flex items-center gap-2">
+                                <CoinsIcon className="h-4 w-4 text-muted-foreground" />
+                                Currency Symbol
+                            </Label>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                This symbol is used on all invoices, payments, and financial figures across the application.
+                            </p>
+                        </div>
+
+                        {/* Quick-pick palette */}
+                        <div className="flex flex-wrap gap-2">
+                            {COMMON_SYMBOLS.map(({ symbol, label }) => (
+                                <button
+                                    key={symbol}
+                                    type="button"
+                                    title={label}
+                                    onClick={() => setCurrencySymbol(symbol)}
+                                    className={`inline-flex h-9 min-w-[2.75rem] items-center justify-center rounded-md border px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                        currencySymbol === symbol
+                                            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                            : 'border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground'
+                                    }`}
+                                >
+                                    {symbol}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Custom / manual input with live preview */}
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <Input
+                                    id="currency_symbol"
+                                    value={currencySymbol}
+                                    onChange={(e) => setCurrencySymbol(e.target.value)}
+                                    placeholder="₦"
+                                    maxLength={10}
+                                    required
+                                    className="w-28 pr-10 font-mono text-base"
+                                />
+                            </div>
+                            {/* Live preview */}
+                            <div className="flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+                                <span className="text-muted-foreground">Preview:</span>
+                                <span className="font-semibold text-foreground">
+                                    {currencySymbol || '₦'}1,500.00
+                                </span>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                            Select a preset above or type a custom symbol (e.g. <code className="font-mono">Fr</code>, <code className="font-mono">Br</code>, <code className="font-mono">лв</code>). Max 10 characters.
+                        </p>
                     </div>
 
                     <Separator />
@@ -149,15 +223,11 @@ export default function BrandingEdit({ settings, status }: Props) {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                        fileInputRef.current?.click()
-                                    }
+                                    onClick={() => fileInputRef.current?.click()}
                                     className="w-fit"
                                 >
                                     <Upload className="mr-2 h-4 w-4" />
-                                    {logoPreview
-                                        ? 'Change Logo'
-                                        : 'Upload Logo'}
+                                    {logoPreview ? 'Change Logo' : 'Upload Logo'}
                                 </Button>
                                 {logoPreview && (
                                     <Button

@@ -21,8 +21,8 @@ class DashboardController extends Controller
         $totalCapacity = Chamber::sum('capacity');
 
         $occupiedChambers = Deceased::where('status', 'InChamber')->count();
-        $emptyChambers = Chamber::withCount(['occupants'])
-            ->get()
+        $chambers = Chamber::withCount(['occupants'])->get();
+        $emptyChambers = $chambers
             ->filter(fn (Chamber $c) => $c->occupants_count === 0)
             ->count();
 
@@ -34,8 +34,7 @@ class DashboardController extends Controller
         $totalReleases = Deceased::where('status', 'Released')->count();
 
         // 2. Chamber occupancy snapshot
-        $occupancy = Chamber::withCount(['occupants'])
-            ->get()
+        $occupancy = $chambers
             ->map(function (Chamber $chamber) {
                 return [
                     'chamberId' => $chamber->id,
@@ -75,25 +74,28 @@ class DashboardController extends Controller
             ->toArray();
 
         // 4. Daily admissions & releases over the last 7 days
+        $trendCounts = Transfer::query()
+            ->selectRaw('DATE(transferred_at) as date')
+            ->selectRaw("SUM(CASE WHEN event_type = 'Entered' THEN 1 ELSE 0 END) as admissions")
+            ->selectRaw("SUM(CASE WHEN event_type = 'Released' THEN 1 ELSE 0 END) as releases")
+            ->whereBetween('transferred_at', [now()->subDays(6)->startOfDay(), now()->endOfDay()])
+            ->groupBy('date')
+            ->get()
+            ->keyBy('date');
+
         $trendData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $dateString = $date->format('Y-m-d');
             $displayLabel = $date->format('M d');
 
-            $admissions = Transfer::where('event_type', 'Entered')
-                ->whereDate('transferred_at', $dateString)
-                ->count();
-
-            $releases = Transfer::where('event_type', 'Released')
-                ->whereDate('transferred_at', $dateString)
-                ->count();
+            $counts = $trendCounts->get($dateString);
 
             $trendData[] = [
                 'date' => $dateString,
                 'label' => $displayLabel,
-                'admissions' => $admissions,
-                'releases' => $releases,
+                'admissions' => (int) ($counts?->admissions ?? 0),
+                'releases' => (int) ($counts?->releases ?? 0),
             ];
         }
 

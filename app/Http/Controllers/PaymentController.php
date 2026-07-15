@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
+use App\Actions\RecordPayment;
+use App\Http\Requests\StorePaymentRequest;
 use App\Models\Payment;
-use App\Models\PaymentMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -123,64 +122,9 @@ class PaymentController extends Controller
     /**
      * Store a newly created payment in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StorePaymentRequest $request, RecordPayment $recordPayment): RedirectResponse
     {
-        Gate::authorize('payments.manage');
-
-        $validated = $request->validate([
-            'deceased_id' => ['required', 'exists:deceased,id'],
-            'invoice_id' => ['nullable', 'exists:invoices,id'],
-            'payment_mode_id' => ['required', 'exists:payment_modes,id'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'transaction_reference' => ['nullable', 'string', 'max:100'],
-            'payment_date' => ['required', 'date'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
-
-        // Get the payment mode name as fallback/legacy support for the payment_method column
-        $paymentMode = PaymentMode::findOrFail($validated['payment_mode_id']);
-
-        DB::transaction(function () use ($validated, $paymentMode) {
-            // Generate unique receipt number
-            $receiptNumber = 'REC-'.strtoupper(Str::random(8));
-            while (Payment::where('receipt_number', $receiptNumber)->exists()) {
-                $receiptNumber = 'REC-'.strtoupper(Str::random(8));
-            }
-
-            // Create Payment
-            $payment = Payment::create([
-                'deceased_id' => $validated['deceased_id'],
-                'invoice_id' => $validated['invoice_id'] ?? null,
-                'payment_mode_id' => $validated['payment_mode_id'],
-                'payment_method' => $paymentMode->name, // Keep sync for legacy payment_method column
-                'receipt_number' => $receiptNumber,
-                'amount' => $validated['amount'],
-                'transaction_reference' => $validated['transaction_reference'] ?? null,
-                'payment_date' => $validated['payment_date'],
-                'notes' => $validated['notes'] ?? null,
-                'received_by' => auth()->id(),
-            ]);
-
-            // If linked to an invoice, update invoice paid amount and status
-            if (! empty($validated['invoice_id'])) {
-                $invoice = Invoice::findOrFail($validated['invoice_id']);
-
-                // Recalculate total paid on the invoice
-                $totalPaidOnInvoice = $invoice->payments()->sum('amount');
-                $invoice->paid_amount = $totalPaidOnInvoice;
-
-                // Adjust status based on new paid amount
-                if ($invoice->paid_amount >= $invoice->total_amount) {
-                    $invoice->status = 'Paid';
-                } elseif ($invoice->paid_amount > 0) {
-                    $invoice->status = 'Partially Paid';
-                } else {
-                    $invoice->status = 'Unpaid';
-                }
-
-                $invoice->save();
-            }
-        });
+        $recordPayment->handle($request->validated(), (string) $request->user()->id);
 
         return back()->with('flash', ['type' => 'success', 'message' => 'Payment recorded successfully.']);
     }

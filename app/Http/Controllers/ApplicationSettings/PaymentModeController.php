@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,6 +17,7 @@ class PaymentModeController extends Controller
      */
     public function index(Request $request): Response
     {
+        Gate::authorize('payment-modes.view');
         $search = $request->input('search');
 
         $paymentModes = PaymentMode::query()
@@ -37,6 +39,7 @@ class PaymentModeController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('payment-modes.manage');
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:payment_modes,name'],
             'is_active' => ['required', 'boolean'],
@@ -53,6 +56,7 @@ class PaymentModeController extends Controller
      */
     public function update(Request $request, PaymentMode $paymentMode): RedirectResponse
     {
+        Gate::authorize('payment-modes.manage');
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:payment_modes,name,'.$paymentMode->id],
             'is_active' => ['required', 'boolean'],
@@ -69,6 +73,7 @@ class PaymentModeController extends Controller
      */
     public function destroy(PaymentMode $paymentMode): RedirectResponse
     {
+        Gate::authorize('payment-modes.manage');
         // Check if payments are using this payment mode
         if ($paymentMode->payments()->exists()) {
             return back()->with('flash', [

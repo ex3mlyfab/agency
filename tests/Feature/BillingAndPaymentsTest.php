@@ -23,6 +23,8 @@ beforeEach(function () {
     Permission::firstOrCreate(['name' => 'deceased.bypass-billing']);
     Permission::firstOrCreate(['name' => 'payments.view']);
     Permission::firstOrCreate(['name' => 'payments.manage']);
+    Permission::firstOrCreate(['name' => 'payment-modes.view']);
+    Permission::firstOrCreate(['name' => 'payment-modes.manage']);
     $role->givePermissionTo([
         'deceased.view',
         'deceased.edit',
@@ -30,6 +32,8 @@ beforeEach(function () {
         'deceased.bypass-billing',
         'payments.view',
         'payments.manage',
+        'payment-modes.view',
+        'payment-modes.manage',
     ]);
     $this->superAdmin->assignRole($role);
 
@@ -632,4 +636,17 @@ it('can record an invoice payment and update invoice status', function () {
 
     expect($invoice->fresh()->paid_amount)->toEqual(10000.00);
     expect($invoice->fresh()->status)->toEqual('Paid');
+});
+
+it('rejects a payment linked to another deceased record invoice', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+    $otherDeceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+    $invoice = Invoice::create(['deceased_id' => $otherDeceased->id, 'invoice_number' => 'INV-OTHER-01', 'total_amount' => 100, 'created_by' => $this->superAdmin->id]);
+    $mode = PaymentMode::first();
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.store'), ['deceased_id' => $deceased->id, 'invoice_id' => $invoice->id, 'payment_mode_id' => $mode->id, 'amount' => 10, 'payment_date' => now()->toDateString()])
+        ->assertSessionHasErrors('invoice_id');
+
+    expect(Payment::count())->toBe(0);
 });

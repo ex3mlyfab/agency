@@ -43,6 +43,10 @@ class Deceased extends Model
         'picture',
         'date_of_birth',
         'date_of_death',
+        'body_tag_number',
+        'body_condition',
+        'place_of_death',
+        'hospital_number',
         'gender',
         'cause_of_death',
         'notes',
@@ -69,7 +73,7 @@ class Deceased extends Model
      */
     protected $casts = [
         'date_of_birth' => 'date',
-        'date_of_death' => 'date',
+        'date_of_death' => 'datetime',
         'released_at' => 'datetime',
     ];
 

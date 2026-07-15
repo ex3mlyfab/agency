@@ -1,20 +1,10 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
-
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationLink } from '@/components/pagination';
-import { Search } from 'lucide-react';
+import { Search, Shield, ChevronRight } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
-import { index } from '@/routes/application-settings/permissions';
 
 interface Permission {
     id: number | string;
@@ -27,6 +17,9 @@ interface Props {
     permissions: {
         data: Permission[];
         links: PaginationLink[];
+        total: number;
+        from: number;
+        to: number;
     };
     filters: {
         search?: string;
@@ -35,10 +28,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Application Settings', href: '#' },
-    {
-        title: 'Permissions',
-        href: '/settings/application-settings/permissions',
-    },
+    { title: 'Permissions', href: '/settings/application-settings/permissions' },
 ];
 
 export default function PermissionsIndex({ permissions, filters }: Props) {
@@ -46,18 +36,43 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
-        router.get(index.url({ query: { search } }), undefined, {
+        router.get('/settings/application-settings/permissions', { search }, {
             preserveState: true,
             replace: true,
         });
     };
 
+    // Group permissions by prefix for better display
+    const groupedPermissions = useMemo(() => {
+        const groups: Record<string, Permission[]> = {};
+        
+        permissions.data.forEach((permission) => {
+            const parts = permission.name.split('.');
+            const moduleName = parts.length > 1 ? parts[0] : 'general';
+            
+            if (!groups[moduleName]) {
+                groups[moduleName] = [];
+            }
+            groups[moduleName].push(permission);
+        });
+        
+        return groups;
+    }, [permissions.data]);
+
     return (
         <>
-            <Head title="Permissions" />
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold">Permissions</h1>
+            <Head title="System Permissions" />
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-xl font-semibold flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-primary" />
+                            System Permissions
+                        </h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Read-only list of all available system permissions. To assign these, edit a Role.
+                        </p>
+                    </div>
                     <form onSubmit={handleSearch} className="flex gap-2">
                         <Input
                             type="text"
@@ -72,53 +87,55 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
                     </form>
                 </div>
 
-                <div className="flex-1 overflow-auto rounded-md border bg-card">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>ID</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Guard</TableHead>
-                                <TableHead>Created At</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {permissions.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={4}
-                                        className="text-center"
-                                    >
-                                        No permissions found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                permissions.data.map((permission) => (
-                                    <TableRow key={permission.id}>
-                                        <TableCell className="font-mono text-xs">
-                                            {permission.id}
-                                        </TableCell>
-                                        <TableCell>{permission.name}</TableCell>
-                                        <TableCell>
-                                            {permission.guard_name}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(
-                                                permission.created_at,
-                                            ).toLocaleDateString()}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                <div className="flex-1 space-y-6">
+                    {Object.keys(groupedPermissions).length === 0 ? (
+                        <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-border bg-card">
+                            <p className="text-sm text-muted-foreground">No permissions found.</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                            {Object.entries(groupedPermissions).map(([module, perms]) => (
+                                <div key={module} className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
+                                    <div className="bg-secondary/30 px-4 py-3 border-b border-border flex items-center justify-between">
+                                        <h3 className="font-semibold text-foreground capitalize tracking-wide text-sm flex items-center gap-2">
+                                            {module.replace('_', ' ')}
+                                            <span className="bg-background text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full border border-border">
+                                                {perms.length}
+                                            </span>
+                                        </h3>
+                                    </div>
+                                    <div className="p-2">
+                                        <ul className="space-y-1">
+                                            {perms.map((p) => {
+                                                const action = p.name.split('.')[1] || p.name;
+                                                return (
+                                                    <li key={p.id} className="flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-secondary/50 transition-colors">
+                                                        <div className="flex items-center gap-2">
+                                                            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                                                            <span className="font-medium text-foreground">{action}</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                                            {p.name}
+                                                        </span>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <Pagination links={permissions.links} />
+
+                {permissions.total > permissions.data.length && (
+                    <div className="mt-4 flex justify-center">
+                        <Pagination links={permissions.links} />
+                    </div>
+                )}
             </div>
         </>
     );
 }
 
-PermissionsIndex.layout = {
-    breadcrumbs,
-};
+PermissionsIndex.layout = { breadcrumbs };

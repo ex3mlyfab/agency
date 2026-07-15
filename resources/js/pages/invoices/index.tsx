@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { EyeIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Pagination } from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export default function InvoicesIndex({ invoices, filters }: Props) {
+    const symbol = useCurrency();
     const [search, setSearch] = useState(filters.search || '');
 
     function handleSearch(e: React.FormEvent) {
@@ -153,13 +155,13 @@ export default function InvoicesIndex({ invoices, filters }: Props) {
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-foreground">
-                                                        ${total.toFixed(2)}
+                                                        {fmtCurrency(total, symbol)}
                                                     </TableCell>
                                                     <TableCell className="text-emerald-600 dark:text-emerald-400">
-                                                        ${paid.toFixed(2)}
+                                                        {fmtCurrency(paid, symbol)}
                                                     </TableCell>
                                                     <TableCell className="font-medium text-destructive">
-                                                        ${balance.toFixed(2)}
+                                                        {fmtCurrency(balance, symbol)}
                                                     </TableCell>
                                                     <TableCell>
                                                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(invoice.status)}`}>

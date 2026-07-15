@@ -12,6 +12,7 @@ import {
     WalletIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Pagination } from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -112,9 +113,6 @@ type SortKey = 'payment_date' | 'amount' | 'receipt_number' | 'payment_method';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmt(amount: number) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-}
 
 function topMethod(byMethod: Record<string, number>): string | null {
     const entries = Object.entries(byMethod);
@@ -175,6 +173,7 @@ function SortIcon({ column, active, dir }: { column: SortKey; active: SortKey; d
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PaymentsIndex({ payments, filters, stats, paymentMethods }: Props) {
+    const symbol = useCurrency();
     const [search, setSearch] = useState(filters.search ?? '');
     const [period, setPeriod] = useState(filters.period ?? 'all');
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
@@ -292,7 +291,7 @@ export default function PaymentsIndex({ payments, filters, stats, paymentMethods
                         accent="emerald"
                         icon={<BanknoteIcon className="h-5 w-5" />}
                         label="Total Collected"
-                        value={fmt(stats.total_amount)}
+                        value={fmtCurrency(stats.total_amount, symbol)}
                         sub={`${stats.total_count} payment${stats.total_count !== 1 ? 's' : ''}`}
                     />
                     <StatCard
@@ -314,7 +313,7 @@ export default function PaymentsIndex({ payments, filters, stats, paymentMethods
                         icon={<CreditCardIcon className="h-5 w-5" />}
                         label="Top Method"
                         value={topMethodName ?? '—'}
-                        sub={topMethodName ? fmt(stats.by_method[topMethodName]) : 'no data'}
+                        sub={topMethodName ? fmtCurrency(stats.by_method[topMethodName], symbol) : 'no data'}
                     />
                 </div>
 
@@ -575,7 +574,7 @@ export default function PaymentsIndex({ payments, filters, stats, paymentMethods
 
                                                 {/* Amount */}
                                                 <TableCell className="text-right font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                                                    {fmt(parseFloat(payment.amount as string))}
+                                                    {fmtCurrency(parseFloat(payment.amount as string), symbol)}
                                                 </TableCell>
 
                                                 {/* Actions */}

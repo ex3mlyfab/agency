@@ -33,8 +33,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Application Settings
     Route::group(['prefix' => 'settings/application-settings', 'as' => 'application-settings.'], function () {
-        Route::get('users', [UserController::class, 'index'])->name('users.index');
-        Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::resource('users', UserController::class)->except(['show']);
+        Route::resource('roles', RoleController::class)->except(['show']);
         Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::get('audits', [AuditController::class, 'index'])->name('audits.index');
         Route::get('branding', [BrandingController::class, 'edit'])->name('branding.edit');

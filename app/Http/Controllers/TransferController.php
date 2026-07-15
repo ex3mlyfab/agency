@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordTransfer;
 use App\Http\Requests\StoreTransferRequest;
 use App\Models\Chamber;
 use App\Models\Deceased;
@@ -57,32 +58,9 @@ class TransferController extends Controller
     /**
      * Store a new transfer event.
      */
-    public function store(StoreTransferRequest $request): RedirectResponse
+    public function store(StoreTransferRequest $request, RecordTransfer $recordTransfer): RedirectResponse
     {
-        $deceased = Deceased::findOrFail($request->deceased_id);
-        $validated = $request->validated();
-
-        $transfer = Transfer::create([
-            'deceased_id' => $deceased->id,
-            'from_chamber_id' => $deceased->chamber_id,
-            'to_chamber_id' => $validated['to_chamber_id'] ?? null,
-            'transferred_by' => $request->user()->id,
-            'event_type' => $validated['event_type'],
-            'notes' => $validated['notes'] ?? null,
-            'transferred_at' => now(),
-        ]);
-
-        // Update deceased status and chamber assignment
-        $newStatus = match ($validated['event_type']) {
-            'Entered', 'Transferred' => 'InChamber',
-            'Released' => 'Released',
-            default => $deceased->status,
-        };
-
-        $deceased->update([
-            'status' => $newStatus,
-            'chamber_id' => $validated['to_chamber_id'] ?? null,
-        ]);
+        $deceased = $recordTransfer->handle($request->validated(), (string) $request->user()->id);
 
         return redirect()->route('deceased.show', $deceased)
             ->with('flash', ['type' => 'success', 'message' => 'Transfer recorded successfully.']);

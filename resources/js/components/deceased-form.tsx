@@ -23,6 +23,10 @@ interface DeceasedFormData {
     last_name: string;
     date_of_birth: string;
     date_of_death: string;
+    body_tag_number: string;
+    body_condition: string;
+    place_of_death: string;
+    hospital_number: string;
     gender: string;
     cause_of_death: string;
     notes: string;
@@ -63,6 +67,10 @@ export function DeceasedForm({
             last_name: initialValues.last_name ?? '',
             date_of_birth: initialValues.date_of_birth ?? '',
             date_of_death: initialValues.date_of_death ?? '',
+            body_tag_number: initialValues.body_tag_number ?? '',
+            body_condition: initialValues.body_condition ?? '',
+            place_of_death: initialValues.place_of_death ?? '',
+            hospital_number: initialValues.hospital_number ?? '',
             gender: initialValues.gender ?? 'Male',
             cause_of_death: initialValues.cause_of_death ?? '',
             notes: initialValues.notes ?? '',
@@ -190,17 +198,12 @@ export function DeceasedForm({
                             Date of Death{' '}
                             <span className="text-destructive">*</span>
                         </Label>
-                        <DatePicker
-                            value={
-                                data.date_of_death
-                                    ? parseISO(data.date_of_death)
-                                    : undefined
-                            }
-                            onChange={(date) =>
-                                setData(
-                                    'date_of_death',
-                                    date ? format(date, 'yyyy-MM-dd') : '',
-                                )
+                        <Input
+                            id="date_of_death"
+                            type="datetime-local"
+                            value={data.date_of_death ? data.date_of_death.slice(0, 16) : ''}
+                            onChange={(e) =>
+                                setData('date_of_death', e.target.value)
                             }
                             disabled={processing}
                             className={cn(
@@ -208,6 +211,98 @@ export function DeceasedForm({
                             )}
                         />
                         <InputError message={errors.date_of_death} />
+                    </div>
+
+                    {/* Place of Death */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="place_of_death"
+                            className="font-semibold"
+                        >
+                            Place of Death
+                        </Label>
+                        <Input
+                            id="place_of_death"
+                            value={data.place_of_death}
+                            onChange={(e) =>
+                                setData('place_of_death', e.target.value)
+                            }
+                            placeholder="e.g. Home, Hospital"
+                            disabled={processing}
+                            className={cn(
+                                errors.place_of_death && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.place_of_death} />
+                    </div>
+
+                    {/* Hospital Number */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="hospital_number"
+                            className="font-semibold"
+                        >
+                            Hospital Number
+                        </Label>
+                        <Input
+                            id="hospital_number"
+                            value={data.hospital_number}
+                            onChange={(e) =>
+                                setData('hospital_number', e.target.value)
+                            }
+                            placeholder="e.g. HN-12345"
+                            disabled={processing}
+                            className={cn(
+                                errors.hospital_number && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.hospital_number} />
+                    </div>
+
+                    {/* Body Tag Number */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="body_tag_number"
+                            className="font-semibold"
+                        >
+                            Body Tag Number
+                        </Label>
+                        <Input
+                            id="body_tag_number"
+                            value={data.body_tag_number}
+                            onChange={(e) =>
+                                setData('body_tag_number', e.target.value)
+                            }
+                            placeholder="e.g. TAG-001"
+                            disabled={processing}
+                            className={cn(
+                                errors.body_tag_number && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.body_tag_number} />
+                    </div>
+
+                    {/* Body Condition */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="body_condition"
+                            className="font-semibold"
+                        >
+                            Body Condition
+                        </Label>
+                        <Input
+                            id="body_condition"
+                            value={data.body_condition}
+                            onChange={(e) =>
+                                setData('body_condition', e.target.value)
+                            }
+                            placeholder="e.g. Intact"
+                            disabled={processing}
+                            className={cn(
+                                errors.body_condition && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.body_condition} />
                     </div>
 
                     {/* Gender */}

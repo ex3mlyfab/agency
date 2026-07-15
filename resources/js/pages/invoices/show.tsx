@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon } from 'lucide-react';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, FormEvent } from 'react';
@@ -87,6 +88,7 @@ interface Props {
 }
 
 export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) {
+    const symbol = useCurrency();
     const total = parseFloat(invoice.total_amount as string);
     const paid = parseFloat(invoice.paid_amount as string);
     const balance = total - paid;
@@ -203,13 +205,13 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-right text-foreground">
-                                                    ₦{parseFloat(item.unit_price as string).toLocaleString()}
+                                                    {fmtCurrency(parseFloat(item.unit_price as string), symbol)}
                                                 </TableCell>
                                                 <TableCell className="text-center text-foreground">
                                                     {item.quantity}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium text-foreground">
-                                                    ₦{parseFloat(item.total_price as string).toLocaleString()}
+                                                    {fmtCurrency(parseFloat(item.total_price as string), symbol)}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -222,31 +224,31 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                                 <div className="w-80 space-y-2 border-t border-border pt-4 text-sm">
                                     <div className="flex justify-between text-muted-foreground">
                                         <span>Subtotal</span>
-                                        <span>₦{parseFloat(invoice.subtotal as string).toLocaleString()}</span>
+                                        <span>{fmtCurrency(parseFloat(invoice.subtotal as string), symbol)}</span>
                                     </div>
                                     {parseFloat(invoice.discount as string) > 0 && (
                                         <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                                             <span>Discount</span>
-                                            <span>-₦{parseFloat(invoice.discount as string).toLocaleString()}</span>
+                                            <span>-{fmtCurrency(parseFloat(invoice.discount as string), symbol)}</span>
                                         </div>
                                     )}
                                     {parseFloat(invoice.tax as string) > 0 && (
                                         <div className="flex justify-between text-muted-foreground">
                                             <span>Tax</span>
-                                            <span>+₦{parseFloat(invoice.tax as string).toLocaleString()}</span>
+                                            <span>+{fmtCurrency(parseFloat(invoice.tax as string), symbol)}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between font-semibold text-foreground text-base border-t border-border pt-2">
                                         <span>Total Amount</span>
-                                        <span>₦{total.toLocaleString()}</span>
+                                        <span>{fmtCurrency(total, symbol)}</span>
                                     </div>
                                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                                         <span>Paid to Date</span>
-                                        <span>₦{paid.toLocaleString()}</span>
+                                        <span>{fmtCurrency(paid, symbol)}</span>
                                     </div>
                                     <div className="flex justify-between font-bold text-destructive text-base border-t border-dashed border-border pt-2">
                                         <span>Outstanding Balance</span>
-                                        <span>₦{balance.toLocaleString()}</span>
+                                        <span>{fmtCurrency(balance, symbol)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -362,7 +364,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                                                 {new Date(payment.payment_date).toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">
-                                                ₦{parseFloat(payment.amount as string).toLocaleString()}
+                                                {fmtCurrency(parseFloat(payment.amount as string), symbol)}
                                             </TableCell>
                                         </TableRow>
                                     ))}

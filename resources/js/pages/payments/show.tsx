@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeftIcon, CreditCardIcon, UserIcon, CalendarIcon, FileTextIcon } from 'lucide-react';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export default function PaymentShow({ payment }: Props) {
+    const symbol = useCurrency();
     return (
         <>
             <Head title={`Receipt ${payment.receipt_number}`} />
@@ -104,7 +106,7 @@ export default function PaymentShow({ payment }: Props) {
                                     Total Amount Credited
                                 </span>
                                 <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                                    ${parseFloat(payment.amount as string).toFixed(2)}
+                                    {fmtCurrency(parseFloat(payment.amount as string), symbol)}
                                 </span>
                             </div>
 
@@ -178,8 +180,8 @@ export default function PaymentShow({ payment }: Props) {
                                         <div>
                                             <span className="text-xs text-muted-foreground block">Invoice Total</span>
                                             <span className="font-semibold text-foreground text-sm">
-                                                ${parseFloat(payment.invoice.total_amount as string).toFixed(2)}
-                                            </span>
+                                            {fmtCurrency(parseFloat(payment.invoice.total_amount as string), symbol)}
+                                        </span>
                                         </div>
                                         <div>
                                             <span className="text-xs text-muted-foreground block">Invoice Status</span>
