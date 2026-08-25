@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeftIcon, CreditCardIcon, UserIcon, CalendarIcon, FileTextIcon } from 'lucide-react';
-import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 
 interface Deceased {
     id: string;
@@ -42,6 +42,7 @@ interface Props {
 
 export default function PaymentShow({ payment }: Props) {
     const symbol = useCurrency();
+
     return (
         <>
             <Head title={`Receipt ${payment.receipt_number}`} />

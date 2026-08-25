@@ -37,7 +37,9 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
         can['invoices.view'] !== false ||
         can['payments.view'] !== false;
 
-    if (!showAccounts && !showBilling) return null;
+    if (!showAccounts && !showBilling) {
+return null;
+}
 
     return (
         <SidebarGroup className="mt-4 px-2 py-0">

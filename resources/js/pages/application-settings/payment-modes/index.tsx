@@ -1,18 +1,11 @@
-import { useState, FormEvent } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Pagination, PaginationLink } from '@/components/pagination';
 import { Search, Plus, Edit2, Trash2, ShieldCheck, ShieldAlert } from 'lucide-react';
-import { type BreadcrumbItem } from '@/types';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { InputError } from '@/components/input-error';
+import type { PaginationLink } from '@/components/pagination';
+import { Pagination } from '@/components/pagination';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -21,8 +14,17 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InputError } from '@/components/input-error';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import type {BreadcrumbItem} from '@/types';
 
 interface PaymentMode {
     id: string;
@@ -91,7 +93,11 @@ export default function PaymentModesIndex({ paymentModes, filters }: Props) {
 
     const handleEditSubmit = (e: FormEvent) => {
         e.preventDefault();
-        if (!selectedMode) return;
+
+        if (!selectedMode) {
+return;
+}
+
         editForm.put(`/settings/application-settings/payment-modes/${selectedMode.id}`, {
             onSuccess: () => {
                 setIsEditOpen(false);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { StatusChip } from '@/components/status-chip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -14,7 +15,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Deceased {
     id: number;
@@ -48,7 +48,10 @@ export default function DeceasedIndex({ deceased, can }: Props) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     function handleDelete() {
-        if (!deleteTarget) return;
+        if (!deleteTarget) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/deceased/${deleteTarget}`, {
             onFinish: () => {

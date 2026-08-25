@@ -1,10 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { InputError } from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { InputError } from '@/components/input-error';
 import { Label } from '@/components/ui/label';
 import {
     Select,

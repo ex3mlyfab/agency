@@ -1,6 +1,12 @@
-import { useState, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
+import { Search } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 
+import type { PaginationLink } from '@/components/pagination';
+import { Pagination } from '@/components/pagination';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -9,12 +15,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Pagination, PaginationLink } from '@/components/pagination';
-import { Search } from 'lucide-react';
-import { type BreadcrumbItem } from '@/types';
 import { index } from '@/routes/application-settings/audits';
+import type {BreadcrumbItem} from '@/types';
 
 interface Audit {
     id: number;

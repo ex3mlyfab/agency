@@ -1,11 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
+import { PlusIcon, TrashIcon } from 'lucide-react';
+import { useState } from 'react';
+import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InputError } from '@/components/input-error';
-import { PlusIcon, TrashIcon } from 'lucide-react';
-import { useState } from 'react';
 
 interface SimpleItem {
     id: string;
@@ -55,6 +55,7 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
 
     function handleToggleTiers(checked: boolean) {
         setEnableTiers(checked);
+
         if (checked) {
             if (data.tiers.length === 0) {
                 setData('tiers', [{ start_day: 1, end_day: null, price: '' }]);
@@ -83,6 +84,7 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
             if (i === index) {
                 return { ...tier, [field]: value };
             }
+
             return tier;
         });
         setData('tiers', updated);

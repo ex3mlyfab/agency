@@ -1,18 +1,16 @@
 import { usePage, Link } from '@inertiajs/react';
 import {
-    BookOpen,
     Building2,
     ClipboardList,
-    FolderGit2,
     LayoutGrid,
     MoveRight,
     ScrollText,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { NavAccounts } from '@/components/nav-accounts';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
-import { NavAccounts } from '@/components/nav-accounts';
 import { NavSettings } from '@/components/nav-settings';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -25,6 +23,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as auditsIndex } from '@/routes/application-settings/audits';
 import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [];
@@ -70,7 +69,7 @@ export function AppSidebar() {
             ? [
                   {
                       title: 'History',
-                      href: '/transfers',
+                      href: auditsIndex.url(),
                       icon: ClipboardList,
                   },
               ]

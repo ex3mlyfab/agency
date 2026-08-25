@@ -1,9 +1,14 @@
 import { useForm } from '@inertiajs/react';
+import { format, parseISO } from 'date-fns';
+import { CameraIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { InputError } from '@/components/input-error';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InputError } from '@/components/input-error';
 import {
     Select,
     SelectContent,
@@ -11,12 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CameraIcon } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
 
 interface DeceasedFormData {
     first_name: string;
@@ -101,6 +101,7 @@ export function DeceasedForm({
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+
         // If updating and there's a file, we might need to spoof PUT
         if (method === 'put' || method === 'patch') {
             submit('post', `${action}?_method=${method.toUpperCase()}`);
@@ -432,6 +433,7 @@ export function DeceasedForm({
                                         const file =
                                             e.target.files?.[0] || null;
                                         setData('picture', file);
+
                                         if (file) {
                                             setPreviewUrl(
                                                 URL.createObjectURL(file),

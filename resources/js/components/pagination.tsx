@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface PaginationLink {
     url: string | null;
@@ -9,7 +9,9 @@ export interface PaginationLink {
 }
 
 export function Pagination({ links }: { links: PaginationLink[] }) {
-    if (links.length <= 3) return null;
+    if (links.length <= 3) {
+return null;
+}
 
     return (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
@@ -17,6 +19,7 @@ export function Pagination({ links }: { links: PaginationLink[] }) {
                 const label = link.label
                     .replace('&laquo;', '«')
                     .replace('&raquo;', '»');
+
                 return link.url ? (
                     <Button
                         key={i}

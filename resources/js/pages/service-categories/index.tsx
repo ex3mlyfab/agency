@@ -41,7 +41,10 @@ export default function ServiceCategoriesIndex({ serviceCategories, can }: Props
     const [isDeleting, setIsDeleting] = useState(false);
 
     function handleDelete() {
-        if (!deleteTarget) return;
+        if (!deleteTarget) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/service-categories/${deleteTarget}`, {
             onFinish: () => {

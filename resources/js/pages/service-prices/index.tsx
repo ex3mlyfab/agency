@@ -10,7 +10,6 @@ import {
     TrashIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Pagination } from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -27,6 +26,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 
 interface SimpleItem {
     id: string;
@@ -78,7 +78,10 @@ const PER_PAGE_OPTIONS = [
 type SortKey = 'service' | 'category' | 'source' | 'price' | 'created_at';
 
 function SortIcon({ column, active, dir }: { column: SortKey; active: SortKey; dir: string }) {
-    if (column !== active) return <ArrowUpDownIcon className="ml-1 inline h-3.5 w-3.5 text-muted-foreground/50" />;
+    if (column !== active) {
+return <ArrowUpDownIcon className="ml-1 inline h-3.5 w-3.5 text-muted-foreground/50" />;
+}
+
     return dir === 'asc'
         ? <ArrowUpIcon className="ml-1 inline h-3.5 w-3.5 text-primary" />
         : <ArrowDownIcon className="ml-1 inline h-3.5 w-3.5 text-primary" />;
@@ -108,12 +111,29 @@ export default function ServicePricesIndex({ servicePrices, services, serviceCat
             const sb = overrides.sort_by ?? sortBy;
             const sd = overrides.sort_dir ?? sortDir;
 
-            if (s) params.search = s;
-            if (sid && sid !== 'all') params.service_id = sid;
-            if (scid && scid !== 'all') params.service_category_id = scid;
-            if (pp && pp !== '15') params.per_page = pp;
-            if (sb) params.sort_by = sb;
-            if (sd) params.sort_dir = sd;
+            if (s) {
+params.search = s;
+}
+
+            if (sid && sid !== 'all') {
+params.service_id = sid;
+}
+
+            if (scid && scid !== 'all') {
+params.service_category_id = scid;
+}
+
+            if (pp && pp !== '15') {
+params.per_page = pp;
+}
+
+            if (sb) {
+params.sort_by = sb;
+}
+
+            if (sd) {
+params.sort_dir = sd;
+}
 
             router.get('/service-prices', params, { preserveState: true, replace: true });
         },
@@ -122,10 +142,16 @@ export default function ServicePricesIndex({ servicePrices, services, serviceCat
 
     // Debounced search
     useEffect(() => {
-        if (searchTimer.current) clearTimeout(searchTimer.current);
+        if (searchTimer.current) {
+clearTimeout(searchTimer.current);
+}
+
         searchTimer.current = setTimeout(() => applyFilters({ search }), 400);
+
         return () => {
-            if (searchTimer.current) clearTimeout(searchTimer.current);
+            if (searchTimer.current) {
+clearTimeout(searchTimer.current);
+}
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
@@ -163,7 +189,10 @@ export default function ServicePricesIndex({ servicePrices, services, serviceCat
     }
 
     function handleDelete() {
-        if (!deleteTarget) return;
+        if (!deleteTarget) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/service-prices/${deleteTarget}`, {
             onFinish: () => {
@@ -355,6 +384,7 @@ export default function ServicePricesIndex({ servicePrices, services, serviceCat
                                     <TableBody>
                                         {servicePrices.data.map((item) => {
                                             const category = item.service_category || (item as any).serviceCategory;
+
                                             return (
                                                 <TableRow key={item.id}>
                                                     <TableCell className="font-medium text-foreground">

@@ -1,20 +1,20 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
 import {
     Building2,
     Users,
-    MoveRight,
     ScrollText,
     ClipboardList,
     PlusCircle,
-    UserPlus,
     ArrowRightLeft,
     CheckCircle2,
     Clock,
     AlertCircle,
-    Activity,
-    ArrowUpRight,
 } from 'lucide-react';
+
+import { useState } from 'react';
+import { OpsPulse } from '@/components/ops-pulse';
+
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -22,9 +22,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { OpsPulse } from '@/components/ops-pulse';
 import { dashboard } from '@/routes';
 
 interface DashboardStats {
@@ -375,6 +372,7 @@ export default function Dashboard({
                                     {/* Gridlines */}
                                     {gridLineValues.map((val, idx) => {
                                         const y = getY(val);
+
                                         return (
                                             <g
                                                 key={idx}

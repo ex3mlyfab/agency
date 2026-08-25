@@ -1,11 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
 import { DownloadIcon, FileTextIcon } from 'lucide-react';
+import { InputError } from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { InputError } from '@/components/input-error';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -46,8 +46,9 @@ const reportTypes = [
 ];
 
 export default function ReportsIndex({ can }: Props) {
-    const { data, setData, post, processing, errors, wasSuccessful } =
+    const { data, setData, processing, errors } =
         useForm<FormData>({
+
             report_type: 'deceased_summary',
             date_from: '',
             date_to: '',
@@ -65,6 +66,7 @@ export default function ReportsIndex({ can }: Props) {
         const csrfToken = document
             .querySelector('meta[name="csrf-token"]')
             ?.getAttribute('content');
+
         if (csrfToken) {
             const csrf = document.createElement('input');
             csrf.type = 'hidden';

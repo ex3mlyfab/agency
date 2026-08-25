@@ -93,9 +93,14 @@
     --accent: #1e3a34;
     --accent-foreground: #ffffff;
 
-    /* Error: muted burgundy #ba1a1a */
+    /* Error: muted burgundy (error emphasis without harsh red intensity)
+       Guideline anchor: #ba1a1a */
     --destructive: oklch(0.47 0.19 27);
+
+    /* Ensure destructive text is readable on the destructive surface in BOTH themes.
+       Keep it as near-white for light mode. */
     --destructive-foreground: oklch(0.985 0 0);
+
 
     /* Success: emerald green */
     --success: oklch(0.6 0.15 160);

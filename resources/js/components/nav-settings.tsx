@@ -37,7 +37,9 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
         can['audits.view'] !== false ||
         can['branding.manage'] !== false;
 
-    if (!showSettings) return null;
+    if (!showSettings) {
+return null;
+}
 
     return (
         <SidebarGroup className="mt-4 px-2 py-0">

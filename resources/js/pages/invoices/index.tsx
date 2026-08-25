@@ -1,7 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { EyeIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
-import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Pagination } from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 
 interface Deceased {
     id: string;

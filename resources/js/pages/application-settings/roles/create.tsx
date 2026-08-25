@@ -1,11 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Shield } from 'lucide-react';
+import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InputError } from '@/components/input-error';
-import { type BreadcrumbItem } from '@/types';
-import { Shield } from 'lucide-react';
+import type {BreadcrumbItem} from '@/types';
 
 interface Props {
     allPermissions: Record<string, string[]>;
@@ -121,7 +121,9 @@ export default function RoleCreate({ allPermissions }: Props) {
                                                         type="checkbox"
                                                         checked={allSelected}
                                                         ref={(input) => {
-                                                            if (input) input.indeterminate = someSelected;
+                                                            if (input) {
+input.indeterminate = someSelected;
+}
                                                         }}
                                                         onChange={() => toggleModule(permissions)}
                                                         className="h-4 w-4 rounded border-input text-primary focus:ring-ring cursor-pointer"

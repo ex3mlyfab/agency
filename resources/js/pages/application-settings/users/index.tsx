@@ -1,5 +1,12 @@
-import { useState, FormEvent } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
+import { Search, Plus, PencilIcon, TrashIcon } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import type { PaginationLink } from '@/components/pagination';
+import { Pagination } from '@/components/pagination';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -8,12 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Pagination, PaginationLink } from '@/components/pagination';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Search, Plus, PencilIcon, TrashIcon } from 'lucide-react';
-import { type BreadcrumbItem } from '@/types';
+import type {BreadcrumbItem} from '@/types';
 
 interface User {
     id: string;
@@ -54,7 +56,10 @@ export default function UsersIndex({ users, filters, can }: Props) {
     };
 
     function handleDelete() {
-        if (!deleteTarget) return;
+        if (!deleteTarget) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/settings/application-settings/users/${deleteTarget}`, {
             onFinish: () => {

@@ -14,7 +14,8 @@ export default function MagicalBackground() {
     const [particles, setParticles] = useState<Particle[]>([]);
 
     useEffect(() => {
-        // Generate stable particles after mounting to avoid SSR mismatch
+        // Generate stable particles after mounting.
+        // Avoid calling setState synchronously in the effect body.
         const generated: Particle[] = Array.from({ length: 25 }).map(
             (_, i) => ({
                 id: i,
@@ -26,8 +27,15 @@ export default function MagicalBackground() {
                 twinkleDuration: Math.random() * 4 + 2, // 2s to 6s
             }),
         );
-        setParticles(generated);
+
+        // Schedule state update for the next tick.
+        const t = window.setTimeout(() => {
+            setParticles(generated);
+        }, 0);
+
+        return () => window.clearTimeout(t);
     }, []);
+
 
     return (
         <div className="animate-gradient-slow absolute inset-0 overflow-hidden bg-slate-950">

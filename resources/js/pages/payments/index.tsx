@@ -12,7 +12,6 @@ import {
     WalletIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useCurrency, fmtCurrency } from '@/lib/currency';
 import { Pagination } from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +27,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,7 +116,11 @@ type SortKey = 'payment_date' | 'amount' | 'receipt_number' | 'payment_method';
 
 function topMethod(byMethod: Record<string, number>): string | null {
     const entries = Object.entries(byMethod);
-    if (!entries.length) return null;
+
+    if (!entries.length) {
+return null;
+}
+
     return entries.sort((a, b) => b[1] - a[1])[0][0];
 }
 
@@ -164,7 +168,10 @@ function StatCard({
 // ─── Sort Icon ────────────────────────────────────────────────────────────────
 
 function SortIcon({ column, active, dir }: { column: SortKey; active: SortKey; dir: string }) {
-    if (column !== active) return <ArrowUpDownIcon className="ml-1 inline h-3.5 w-3.5 text-muted-foreground/50" />;
+    if (column !== active) {
+return <ArrowUpDownIcon className="ml-1 inline h-3.5 w-3.5 text-muted-foreground/50" />;
+}
+
     return dir === 'asc'
         ? <ArrowUpIcon className="ml-1 inline h-3.5 w-3.5 text-primary" />
         : <ArrowDownIcon className="ml-1 inline h-3.5 w-3.5 text-primary" />;
@@ -198,14 +205,37 @@ export default function PaymentsIndex({ payments, filters, stats, paymentMethods
             const sb = overrides.sort_by ?? sortBy;
             const sd = overrides.sort_dir ?? sortDir;
 
-            if (s) params.search = s;
-            if (p && p !== 'all') params.period = p;
-            if ((p === 'custom' || !p || p === 'all') && df) params.date_from = df;
-            if ((p === 'custom' || !p || p === 'all') && dt) params.date_to = dt;
-            if (pm && pm !== 'all') params.payment_method = pm;
-            if (pp && pp !== '15') params.per_page = pp;
-            if (sb) params.sort_by = sb;
-            if (sd) params.sort_dir = sd;
+            if (s) {
+params.search = s;
+}
+
+            if (p && p !== 'all') {
+params.period = p;
+}
+
+            if ((p === 'custom' || !p || p === 'all') && df) {
+params.date_from = df;
+}
+
+            if ((p === 'custom' || !p || p === 'all') && dt) {
+params.date_to = dt;
+}
+
+            if (pm && pm !== 'all') {
+params.payment_method = pm;
+}
+
+            if (pp && pp !== '15') {
+params.per_page = pp;
+}
+
+            if (sb) {
+params.sort_by = sb;
+}
+
+            if (sd) {
+params.sort_dir = sd;
+}
 
             router.get('/payments', params, { preserveState: true, replace: true });
         },
@@ -214,10 +244,16 @@ export default function PaymentsIndex({ payments, filters, stats, paymentMethods
 
     // Debounced search
     useEffect(() => {
-        if (searchTimer.current) clearTimeout(searchTimer.current);
+        if (searchTimer.current) {
+clearTimeout(searchTimer.current);
+}
+
         searchTimer.current = setTimeout(() => applyFilters({ search }), 400);
+
         return () => {
-            if (searchTimer.current) clearTimeout(searchTimer.current);
+            if (searchTimer.current) {
+clearTimeout(searchTimer.current);
+}
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
@@ -231,6 +267,7 @@ export default function PaymentsIndex({ payments, filters, stats, paymentMethods
 
     function handlePeriodChange(val: string) {
         setPeriod(val);
+
         if (val !== 'custom') {
             setDateFrom('');
             setDateTo('');

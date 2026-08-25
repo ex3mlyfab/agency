@@ -6,6 +6,7 @@ import { usePage } from '@inertiajs/react';
  */
 export function useCurrency(): string {
     const { branding } = usePage().props as any;
+
     return branding?.currency_symbol || '₦';
 }
 

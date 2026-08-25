@@ -1,12 +1,13 @@
-import { useRef, useState, FormEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { Paintbrush, Upload, X, ImageIcon, CoinsIcon } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { type BreadcrumbItem } from '@/types';
 import { update } from '@/routes/application-settings/branding';
+import type {BreadcrumbItem} from '@/types';
 
 interface Props {
     settings: {
@@ -49,7 +50,11 @@ export default function BrandingEdit({ settings, status }: Props) {
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
+
         setLogoFile(file);
         setRemoveLogo(false);
         const reader = new FileReader();
@@ -61,7 +66,10 @@ export default function BrandingEdit({ settings, status }: Props) {
         setLogoFile(null);
         setLogoPreview(null);
         setRemoveLogo(true);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        if (fileInputRef.current) {
+fileInputRef.current.value = '';
+}
     };
 
     const handleSubmit = (e: FormEvent) => {
@@ -71,9 +79,11 @@ export default function BrandingEdit({ settings, status }: Props) {
         const formData = new FormData();
         formData.append('app_name', appName);
         formData.append('currency_symbol', currencySymbol);
+
         if (logoFile) {
             formData.append('logo', logoFile);
         }
+
         if (removeLogo) {
             formData.append('remove_logo', '1');
         }

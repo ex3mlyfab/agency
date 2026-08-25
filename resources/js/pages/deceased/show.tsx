@@ -1,9 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react';
+import { useState } from 'react';
+import { InputError } from '@/components/input-error';
 import { StatusChip } from '@/components/status-chip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InputError } from '@/components/input-error';
 
 interface Transfer {
     id: number;
@@ -152,15 +152,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
         paymentForm.post('/payments', {
             onSuccess: () => {
                 setIsPaymentOpen(false);
-                paymentForm.reset({
-                    deceased_id: deceased.id,
-                    invoice_id: deceased.invoice?.id || '',
-                    payment_mode_id: '',
-                    amount: '',
-                    transaction_reference: '',
-                    payment_date: new Date().toISOString().split('T')[0],
-                    notes: '',
-                });
+                paymentForm.reset();
             },
         });
     };
@@ -188,6 +180,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                 notes: '',
             });
         }
+
         setIsInvoiceOpen(true);
     };
 
@@ -223,6 +216,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
     const calculatedTotal = data.items.reduce((sum, item) => {
         const service = availableServices.find(s => String(s.service_id) === String(item.service_id));
         const price = service ? service.price : 0;
+
         return sum + (price * Number(item.quantity || 0));
     }, 0);
 

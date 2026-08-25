@@ -41,7 +41,10 @@ export default function ServicesIndex({ services, can }: Props) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     function handleDelete() {
-        if (!deleteTarget) return;
+        if (!deleteTarget) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/services/${deleteTarget}`, {
             onFinish: () => {

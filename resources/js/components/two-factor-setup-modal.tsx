@@ -149,9 +149,11 @@ function TwoFactorVerificationStep({
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setTimeout(() => {
+        const timeoutId = window.setTimeout(() => {
             pinInputContainerRef.current?.querySelector('input')?.focus();
         }, 0);
+
+        return () => window.clearTimeout(timeoutId);
     }, []);
 
     return (
@@ -313,10 +315,10 @@ export default function TwoFactorSetupModal({
     }, [fetchSetupData]);
 
     useEffect(() => {
-        if (isOpen && !qrCodeSvg) {
+        if (isOpen && (!qrCodeSvg || !manualSetupKey)) {
             fetchSetupDataRef.current();
         }
-    }, [isOpen, qrCodeSvg]);
+    }, [isOpen, manualSetupKey, qrCodeSvg]);
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>

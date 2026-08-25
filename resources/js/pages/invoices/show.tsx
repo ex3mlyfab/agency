@@ -1,17 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon } from 'lucide-react';
-import { useCurrency, fmtCurrency } from '@/lib/currency';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState, FormEvent } from 'react';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import {
     Dialog,
     DialogContent,
@@ -20,9 +13,17 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { InputError } from '@/components/input-error';
+import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { useCurrency, fmtCurrency } from '@/lib/currency';
 
 interface Deceased {
     id: string;
@@ -111,15 +112,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
         paymentForm.post('/payments', {
             onSuccess: () => {
                 setIsPaymentOpen(false);
-                paymentForm.reset({
-                    deceased_id: invoice.deceased?.id || '',
-                    invoice_id: invoice.id,
-                    payment_mode_id: '',
-                    amount: balance.toFixed(2),
-                    transaction_reference: '',
-                    payment_date: new Date().toISOString().split('T')[0],
-                    notes: '',
-                });
+                paymentForm.reset();
             },
         });
     };

@@ -1,10 +1,12 @@
-import { useState, FormEvent, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Pagination, PaginationLink } from '@/components/pagination';
 import { Search, Shield, ChevronRight } from 'lucide-react';
-import { type BreadcrumbItem } from '@/types';
+import type { FormEvent} from 'react';
+import { useState, useMemo } from 'react';
+import type { PaginationLink } from '@/components/pagination';
+import { Pagination } from '@/components/pagination';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import type {BreadcrumbItem} from '@/types';
 
 interface Permission {
     id: number | string;
@@ -53,6 +55,7 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
             if (!groups[moduleName]) {
                 groups[moduleName] = [];
             }
+
             groups[moduleName].push(permission);
         });
         
@@ -108,6 +111,7 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
                                         <ul className="space-y-1">
                                             {perms.map((p) => {
                                                 const action = p.name.split('.')[1] || p.name;
+
                                                 return (
                                                     <li key={p.id} className="flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-secondary/50 transition-colors">
                                                         <div className="flex items-center gap-2">
