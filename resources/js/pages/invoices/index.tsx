@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { EyeIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Pagination } from '@/components/pagination';
@@ -82,7 +82,7 @@ export default function InvoicesIndex({ invoices, filters }: Props) {
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {invoices.total > 0
-                                ? `Showing ${invoices.from}–${invoices.to} of ${invoices.total} invoices`
+                                ? `Showing ${invoices.from}â€“${invoices.to} of ${invoices.total} invoices`
                                 : 'No invoices found'}
                         </p>
                     </div>
@@ -101,7 +101,7 @@ export default function InvoicesIndex({ invoices, filters }: Props) {
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                    <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Billing Ledger
                         </CardTitle>
@@ -190,7 +190,7 @@ export default function InvoicesIndex({ invoices, filters }: Props) {
                         )}
 
                         {invoices.last_page > 1 && (
-                            <div className="border-t border-border px-6 py-4">
+                            <div className="border-t border-border px-6 py-3">
                                 <Pagination links={invoices.links} />
                             </div>
                         )}

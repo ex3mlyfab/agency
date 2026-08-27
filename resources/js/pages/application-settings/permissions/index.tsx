@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+﻿import { Head, router } from '@inertiajs/react';
 import { Search, Shield, ChevronRight } from 'lucide-react';
 import type { FormEvent} from 'react';
 import { useState, useMemo } from 'react';
@@ -99,7 +99,7 @@ export default function PermissionsIndex({ permissions, filters }: Props) {
                         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                             {Object.entries(groupedPermissions).map(([module, perms]) => (
                                 <div key={module} className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
-                                    <div className="bg-secondary/30 px-4 py-3 border-b border-border flex items-center justify-between">
+                                    <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                                         <h3 className="font-semibold text-foreground capitalize tracking-wide text-sm flex items-center gap-2">
                                             {module.replace('_', ' ')}
                                             <span className="bg-background text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full border border-border">

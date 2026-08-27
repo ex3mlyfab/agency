@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm } from '@inertiajs/react';
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
@@ -95,7 +95,7 @@ export default function ServicePriceCreate({ services, serviceCategories }: Prop
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Price Details
                             </CardTitle>
@@ -170,7 +170,7 @@ export default function ServicePriceCreate({ services, serviceCategories }: Prop
                             {/* Base Price */}
                             <div className="space-y-1.5 sm:col-span-2">
                                 <Label htmlFor="price" className="font-semibold">
-                                    Base Price (₦) <span className="text-destructive">*</span>
+                                    Base Price (â‚¦) <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="price"
@@ -204,7 +204,7 @@ export default function ServicePriceCreate({ services, serviceCategories }: Prop
                     {/* Tier Builder */}
                     {enableTiers && (
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between">
+                            <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
                                 <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Pricing Tiers
                                 </CardTitle>
@@ -242,7 +242,7 @@ export default function ServicePriceCreate({ services, serviceCategories }: Prop
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="font-semibold">Rate Per Day (₦)</Label>
+                                            <Label className="font-semibold">Rate Per Day (â‚¦)</Label>
                                             <Input
                                                 type="number"
                                                 step="0.01"

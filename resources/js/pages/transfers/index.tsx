@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+﻿import { Head } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import { StatusChip } from '@/components/status-chip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -50,7 +50,7 @@ export default function TransfersIndex({ transfers }: Props) {
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {transfers.total > 0
-                                ? `Showing ${transfers.from}–${transfers.to} of ${transfers.total} events`
+                                ? `Showing ${transfers.from}â€“${transfers.to} of ${transfers.total} events`
                                 : 'No transfer events recorded'}
                         </p>
                     </div>
@@ -60,8 +60,8 @@ export default function TransfersIndex({ transfers }: Props) {
                 </div>
 
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                    <CardHeader className="border-b border-border px-6 py-3">
+                        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Events
                         </CardTitle>
                     </CardHeader>
@@ -107,11 +107,11 @@ export default function TransfersIndex({ transfers }: Props) {
                                                         {t.deceased.last_name}
                                                     </Link>
                                                 ) : (
-                                                    '—'
+                                                    'â€”'
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {t.from_chamber?.name ?? '—'}
+                                                {t.from_chamber?.name ?? 'â€”'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {t.to_chamber?.name ??
@@ -119,7 +119,7 @@ export default function TransfersIndex({ transfers }: Props) {
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {t.transferred_by_user?.name ??
-                                                    '—'}
+                                                    'â€”'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {t.transferred_at}
@@ -131,7 +131,7 @@ export default function TransfersIndex({ transfers }: Props) {
                         )}
 
                         {transfers.last_page > 1 && (
-                            <div className="flex items-center justify-between border-t border-border px-6 py-4">
+                            <div className="flex items-center justify-between border-t border-border px-6 py-3">
                                 <span className="text-sm text-muted-foreground">
                                     Page {transfers.current_page} of{' '}
                                     {transfers.last_page}

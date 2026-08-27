@@ -1,6 +1,6 @@
-import { useForm } from '@inertiajs/react';
+﻿import { useForm } from '@inertiajs/react';
 import { format, parseISO } from 'date-fns';
-import { CameraIcon } from 'lucide-react';
+import { CameraIcon, TriangleAlertIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { InputError } from '@/components/input-error';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
 interface DeceasedFormData {
@@ -48,7 +49,7 @@ interface DeceasedFormProps {
     method?: 'post' | 'put' | 'patch';
     submitLabel?: string;
     cancelHref?: string;
-    chambers?: { id: string; name: string }[];
+    chambers?: { id: string; name: string; available_spaces: number; is_current?: boolean }[];
     serviceCategories?: { id: string; name: string }[];
 }
 
@@ -114,7 +115,7 @@ export function DeceasedForm({
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Section 1: Deceased identity */}
             <Card>
-                <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                <CardHeader className="border-b border-border px-6 py-3">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Deceased Information
                     </CardTitle>
@@ -122,7 +123,7 @@ export function DeceasedForm({
                 <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                     {/* First Name */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="first_name" className="font-semibold">
+                        <Label htmlFor="first_name" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             First Name{' '}
                             <span className="text-destructive">*</span>
                         </Label>
@@ -143,7 +144,7 @@ export function DeceasedForm({
 
                     {/* Last Name */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="last_name" className="font-semibold">
+                        <Label htmlFor="last_name" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Last Name{' '}
                             <span className="text-destructive">*</span>
                         </Label>
@@ -166,7 +167,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="date_of_birth"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Date of Birth
                         </Label>
@@ -194,7 +195,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="date_of_death"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Date of Death{' '}
                             <span className="text-destructive">*</span>
@@ -218,7 +219,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="place_of_death"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Place of Death
                         </Label>
@@ -241,7 +242,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="hospital_number"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Hospital Number
                         </Label>
@@ -264,7 +265,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="body_tag_number"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Body Tag Number
                         </Label>
@@ -287,7 +288,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="body_condition"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Body Condition
                         </Label>
@@ -308,7 +309,7 @@ export function DeceasedForm({
 
                     {/* Gender */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="gender" className="font-semibold">
+                        <Label htmlFor="gender" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Gender <span className="text-destructive">*</span>
                         </Label>
                         <Select
@@ -337,7 +338,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="cause_of_death"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Cause of Death
                         </Label>
@@ -355,7 +356,7 @@ export function DeceasedForm({
 
                     {/* Service Category */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="service_category_id" className="font-semibold">
+                        <Label htmlFor="service_category_id" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Service Category <span className="text-destructive">*</span>
                         </Label>
                         <Select
@@ -384,7 +385,7 @@ export function DeceasedForm({
 
                     {/* Source */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="source" className="font-semibold">
+                        <Label htmlFor="source" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Source of Deceased <span className="text-destructive">*</span>
                         </Label>
                         <Select
@@ -410,7 +411,7 @@ export function DeceasedForm({
 
                     {/* Picture Upload */}
                     <div className="space-y-1.5 sm:col-span-2">
-                        <Label htmlFor="picture" className="font-semibold">
+                        <Label htmlFor="picture" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Picture
                         </Label>
                         <div className="mt-2 flex items-center gap-4">
@@ -472,7 +473,18 @@ export function DeceasedForm({
 
                     {/* Chamber Selection */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="chamber_id" className="font-semibold">
+                        {chambers?.length === 0 && (
+                            <Alert variant="destructive" className="mb-3">
+                                <TriangleAlertIcon />
+                                <AlertTitle>No chambers available</AlertTitle>
+                                <AlertDescription>
+                                    All chambers are at full capacity. Please
+                                    release a deceased or add a new chamber to
+                                    continue.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                        <Label htmlFor="chamber_id" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Chamber Assignment
                         </Label>
                         <Select
@@ -498,6 +510,11 @@ export function DeceasedForm({
                                         value={chamber.id}
                                     >
                                         {chamber.name}
+                                        {!chamber.is_current && (
+                                            <span className="ml-2 text-xs text-muted-foreground">
+                                                ({chamber.available_spaces} left)
+                                            </span>
+                                        )}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -507,7 +524,7 @@ export function DeceasedForm({
 
                     {/* Stored At Date */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="stored_at" className="font-semibold">
+                        <Label htmlFor="stored_at" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Storage Date
                         </Label>
                         <DatePicker
@@ -535,7 +552,7 @@ export function DeceasedForm({
 
                     {/* Notes */}
                     <div className="space-y-1.5 sm:col-span-2">
-                        <Label htmlFor="notes" className="font-semibold">
+                        <Label htmlFor="notes" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Notes
                         </Label>
                         <textarea
@@ -543,7 +560,7 @@ export function DeceasedForm({
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                             rows={3}
-                            placeholder="Additional observations or context…"
+                            placeholder="Additional observations or contextâ€¦"
                             disabled={processing}
                             className={cn(
                                 'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
@@ -556,7 +573,7 @@ export function DeceasedForm({
 
             {/* Section 2: Relative / bringer information */}
             <Card>
-                <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                <CardHeader className="border-b border-border px-6 py-3">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Relative / Bringer Information
                     </CardTitle>
@@ -566,7 +583,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="relative_name"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Relative Name{' '}
                             <span className="text-destructive">*</span>
@@ -589,7 +606,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="relative_phone"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Phone Number{' '}
                             <span className="text-destructive">*</span>
@@ -613,7 +630,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="relative_relationship"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Relationship{' '}
                             <span className="text-destructive">*</span>
@@ -638,7 +655,7 @@ export function DeceasedForm({
                     <div className="space-y-1.5">
                         <Label
                             htmlFor="relative_address"
-                            className="font-semibold"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Address
                         </Label>
@@ -661,7 +678,7 @@ export function DeceasedForm({
                     <a href={cancelHref}>Cancel</a>
                 </Button>
                 <Button type="submit" disabled={processing}>
-                    {processing ? 'Saving…' : submitLabel}
+                    {processing ? 'Savingâ€¦' : submitLabel}
                 </Button>
             </div>
         </form>

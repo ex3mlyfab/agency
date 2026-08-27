@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm } from '@inertiajs/react';
 import { DownloadIcon, FileTextIcon } from 'lucide-react';
 import { InputError } from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -6,13 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 interface FormData {
     report_type: string;
@@ -48,7 +41,6 @@ const reportTypes = [
 export default function ReportsIndex({ can }: Props) {
     const { data, setData, processing, errors } =
         useForm<FormData>({
-
             report_type: 'deceased_summary',
             date_from: '',
             date_to: '',
@@ -58,7 +50,6 @@ export default function ReportsIndex({ can }: Props) {
 
     function handleGenerate(e: React.FormEvent) {
         e.preventDefault();
-        // POST to generate endpoint — which returns a streamed CSV download
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/reports/generate';
@@ -90,8 +81,6 @@ export default function ReportsIndex({ can }: Props) {
         document.body.removeChild(form);
     }
 
-    const selectedType = reportTypes.find((r) => r.value === data.report_type);
-
     return (
         <>
             <Head title="Reports" />
@@ -116,59 +105,64 @@ export default function ReportsIndex({ can }: Props) {
                 ) : (
                     <form onSubmit={handleGenerate} className="space-y-6">
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                                <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                            <CardHeader className="border-b border-border px-6 py-3">
+                                <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     Report Configuration
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
-                                {/* Report type */}
-                                <div className="space-y-1.5 sm:col-span-2">
-                                    <Label
-                                        htmlFor="report_type"
-                                        className="font-semibold"
-                                    >
-                                        Report Type
-                                    </Label>
-                                    <Select
-                                        value={data.report_type}
-                                        onValueChange={(val) =>
-                                            setData('report_type', val)
-                                        }
-                                        disabled={processing}
-                                    >
-                                        <SelectTrigger
-                                            id="report_type"
-                                            className="sm:max-w-sm"
+                            <CardContent className="px-6 py-6">
+                                {/* Report type cards */}
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    {reportTypes.map((r) => (
+                                        <button
+                                            key={r.value}
+                                            type="button"
+                                            onClick={() =>
+                                                !processing &&
+                                                setData('report_type', r.value)
+                                            }
+                                            className={`rounded-lg border p-4 text-left transition-all hover:border-primary/40 ${
+                                                data.report_type === r.value
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-border hover:bg-muted/50'
+                                            } ${
+                                                processing
+                                                    ? 'cursor-not-allowed opacity-60'
+                                                    : ''
+                                            }`}
                                         >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {reportTypes.map((r) => (
-                                                <SelectItem
-                                                    key={r.value}
-                                                    value={r.value}
-                                                >
+                                            <div className="mb-2 flex items-center gap-2">
+                                                <FileTextIcon
+                                                    className={`h-4 w-4 ${
+                                                        data.report_type ===
+                                                        r.value
+                                                            ? 'text-primary'
+                                                            : 'text-muted-foreground'
+                                                    }`}
+                                                />
+                                                <span className="text-sm font-semibold">
                                                     {r.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {selectedType && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {selectedType.description}
-                                        </p>
-                                    )}
-                                    <InputError message={errors.report_type} />
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                {r.description}
+                                            </p>
+                                            {data.report_type === r.value && (
+                                                <div className="mt-2 text-xs font-medium text-primary">
+                                                    Selected
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
                                 </div>
 
                                 {/* Date range (conditional) */}
                                 {needsDateRange && (
-                                    <>
+                                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
                                         <div className="space-y-1.5">
                                             <Label
                                                 htmlFor="date_from"
-                                                className="font-semibold"
+                                                className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                             >
                                                 Date From
                                             </Label>
@@ -188,11 +182,10 @@ export default function ReportsIndex({ can }: Props) {
                                                 message={errors.date_from}
                                             />
                                         </div>
-
                                         <div className="space-y-1.5">
                                             <Label
                                                 htmlFor="date_to"
-                                                className="font-semibold"
+                                                className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                             >
                                                 Date To
                                             </Label>
@@ -212,49 +205,23 @@ export default function ReportsIndex({ can }: Props) {
                                                 message={errors.date_to}
                                             />
                                         </div>
-                                    </>
+                                    </div>
                                 )}
+
+                                <div className="mt-6 flex items-center justify-end">
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        size="lg"
+                                    >
+                                        <DownloadIcon className="mr-2 h-4 w-4" />
+                                        {processing
+                                            ? 'Generating…'
+                                            : 'Generate Report'}
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
-
-                        {/* Report type cards */}
-                        <div className="grid gap-4 sm:grid-cols-3">
-                            {reportTypes.map((r) => (
-                                <button
-                                    key={r.value}
-                                    type="button"
-                                    onClick={() =>
-                                        setData('report_type', r.value)
-                                    }
-                                    className={`rounded-lg border p-4 text-left transition-colors hover:bg-accent ${
-                                        data.report_type === r.value
-                                            ? 'border-primary bg-accent'
-                                            : 'border-border'
-                                    }`}
-                                >
-                                    <div className="mb-2 flex items-center gap-2">
-                                        <FileTextIcon className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-semibold">
-                                            {r.label}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {r.description}
-                                    </p>
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="flex items-center justify-end">
-                            <Button
-                                type="submit"
-                                disabled={processing}
-                                size="lg"
-                            >
-                                <DownloadIcon className="mr-2 h-4 w-4" />
-                                {processing ? 'Generating…' : 'Generate Report'}
-                            </Button>
-                        </div>
                     </form>
                 )}
             </div>

@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import { ArrowLeftIcon, CreditCardIcon, UserIcon, CalendarIcon, FileTextIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +61,7 @@ export default function PaymentShow({ payment }: Props) {
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Payment details */}
                     <Card className="md:col-span-2">
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
                                     <CreditCardIcon className="h-5 w-5 text-muted-foreground" />
@@ -126,7 +126,7 @@ export default function PaymentShow({ payment }: Props) {
                     <div className="space-y-6">
                         {/* Deceased info card */}
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                            <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />
                                     Deceased Details
@@ -160,7 +160,7 @@ export default function PaymentShow({ payment }: Props) {
 
                         {/* Invoice Info */}
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                            <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <FileTextIcon className="h-4 w-4 text-muted-foreground" />
                                     Applied Invoice

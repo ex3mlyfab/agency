@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+﻿import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
@@ -160,7 +160,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Invoice details */}
                     <Card className="md:col-span-2">
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
                                     <FileTextIcon className="h-5 w-5 text-muted-foreground" />
@@ -252,7 +252,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                     <div className="space-y-6">
                         {/* Deceased info card */}
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                            <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />
                                     Deceased Details
@@ -286,7 +286,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
 
                         {/* Audit Details */}
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                            <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <DollarSignIcon className="h-4 w-4 text-muted-foreground" />
                                     Payment Meta
@@ -314,7 +314,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
 
                 {/* Payments History section */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between">
+                    <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
                         <CardTitle className="text-sm font-semibold text-foreground">
                             Associated Payments & Transactions
                         </CardTitle>
@@ -374,7 +374,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                     <DialogHeader>
                         <DialogTitle>Record Payment for Invoice {invoice.invoice_number}</DialogTitle>
                         <DialogDescription>
-                            Apply a payment receipt to this invoice. Outstanding balance: ₦{balance.toLocaleString()}.
+                            Apply a payment receipt to this invoice. Outstanding balance: â‚¦{balance.toLocaleString()}.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitPayment} className="space-y-4">
@@ -396,7 +396,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="amount">Amount (₦)</Label>
+                            <Label htmlFor="amount">Amount (â‚¦)</Label>
                             <Input
                                 id="amount"
                                 type="number"

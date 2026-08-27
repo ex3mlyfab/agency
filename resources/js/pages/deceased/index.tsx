@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -20,6 +20,7 @@ interface Deceased {
     id: number;
     first_name: string;
     last_name: string;
+    date_of_birth: string | null;
     date_of_death: string;
     gender: string;
     status: 'Pending' | 'InChamber' | 'Released';
@@ -41,6 +42,27 @@ interface PaginatedDeceased {
 interface Props {
     deceased: PaginatedDeceased;
     can: { create: boolean; edit: boolean; delete: boolean };
+}
+
+function formatAge(dateOfBirth: string | null): string {
+    if (!dateOfBirth) return '—';
+    const birth = new Date(dateOfBirth);
+    const today = new Date();
+    let years = today.getFullYear() - birth.getFullYear();
+    let months = today.getMonth() - birth.getMonth();
+    let days = today.getDate() - birth.getDate();
+    if (days < 0) {
+        months--;
+        const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        days += prevMonth.getDate();
+    }
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+    if (years > 0) return `${years}y ${months}m ${days}d`;
+    if (months > 0) return `${months}m ${days}d`;
+    return `${days}d`;
 }
 
 export default function DeceasedIndex({ deceased, can }: Props) {
@@ -73,7 +95,7 @@ return;
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {deceased.total > 0
-                                ? `Showing ${deceased.from}–${deceased.to} of ${deceased.total} records`
+                                ? `Showing ${deceased.from}â€“${deceased.to} of ${deceased.total} records`
                                 : 'No records on file'}
                         </p>
                     </div>
@@ -89,8 +111,8 @@ return;
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                    <CardHeader className="border-b border-border px-6 py-3">
+                        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Records
                         </CardTitle>
                     </CardHeader>
@@ -120,6 +142,7 @@ return;
                                             Picture
                                         </TableHead>
                                         <TableHead>Name</TableHead>
+                                        <TableHead>Age</TableHead>
                                         <TableHead>Date of Death</TableHead>
                                         <TableHead>Gender</TableHead>
                                         <TableHead>Status</TableHead>
@@ -154,6 +177,9 @@ return;
                                                 {record.last_name}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
+                                                {formatAge(record.date_of_birth)}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
                                                 {record.date_of_death}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
@@ -165,7 +191,7 @@ return;
                                                 />
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {record.chamber?.name ?? '—'}
+                                                {record.chamber?.name ?? 'â€”'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {record.relative_name}
@@ -229,7 +255,7 @@ return;
 
                         {/* Pagination */}
                         {deceased.last_page > 1 && (
-                            <div className="flex items-center justify-between border-t border-border px-6 py-4">
+                            <div className="flex items-center justify-between border-t border-border px-6 py-3">
                                 <span className="text-sm text-muted-foreground">
                                     Page {deceased.current_page} of{' '}
                                     {deceased.last_page}

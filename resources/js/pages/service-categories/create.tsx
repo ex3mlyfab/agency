@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm } from '@inertiajs/react';
 import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,7 @@ export default function ServiceCategoryCreate() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Category Details
                             </CardTitle>

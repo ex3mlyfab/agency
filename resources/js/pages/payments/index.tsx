@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowDownIcon,
     ArrowUpIcon,
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/table';
 import { useCurrency, fmtCurrency } from '@/lib/currency';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface Deceased {
     id: string;
@@ -89,7 +89,7 @@ interface Props {
     paymentMethods: string[];
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PERIOD_OPTIONS = [
     { value: 'all', label: 'All Time' },
@@ -111,7 +111,7 @@ const PER_PAGE_OPTIONS = [
 
 type SortKey = 'payment_date' | 'amount' | 'receipt_number' | 'payment_method';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 function topMethod(byMethod: Record<string, number>): string | null {
@@ -124,7 +124,7 @@ return null;
     return entries.sort((a, b) => b[1] - a[1])[0][0];
 }
 
-// ─── Snapshot Card ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Snapshot Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StatCard({
     icon,
@@ -165,7 +165,7 @@ function StatCard({
     );
 }
 
-// ─── Sort Icon ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sort Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SortIcon({ column, active, dir }: { column: SortKey; active: SortKey; dir: string }) {
     if (column !== active) {
@@ -177,7 +177,7 @@ return <ArrowUpDownIcon className="ml-1 inline h-3.5 w-3.5 text-muted-foreground
         : <ArrowDownIcon className="ml-1 inline h-3.5 w-3.5 text-primary" />;
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function PaymentsIndex({ payments, filters, stats, paymentMethods }: Props) {
     const symbol = useCurrency();
@@ -312,17 +312,17 @@ clearTimeout(searchTimer.current);
             <Head title="Payments" />
             <div className="space-y-6 p-6">
 
-                {/* ── Page Header ───────────────────────────────────────── */}
+                {/* â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div className="flex flex-col gap-1">
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">Payments</h1>
                     <p className="text-sm text-muted-foreground">
                         {payments.total > 0
-                            ? `Showing ${payments.from}–${payments.to} of ${payments.total} payments`
+                            ? `Showing ${payments.from}â€“${payments.to} of ${payments.total} payments`
                             : 'No payments match the current filters'}
                     </p>
                 </div>
 
-                {/* ── Snapshot Cards ────────────────────────────────────── */}
+                {/* â”€â”€ Snapshot Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard
                         accent="emerald"
@@ -349,12 +349,12 @@ clearTimeout(searchTimer.current);
                         accent="amber"
                         icon={<CreditCardIcon className="h-5 w-5" />}
                         label="Top Method"
-                        value={topMethodName ?? '—'}
+                        value={topMethodName ?? 'â€”'}
                         sub={topMethodName ? fmtCurrency(stats.by_method[topMethodName], symbol) : 'no data'}
                     />
                 </div>
 
-                {/* ── Filter Bar ────────────────────────────────────────── */}
+                {/* â”€â”€ Filter Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <Card className="border-border/60">
                     <CardContent className="p-4">
                         <div className="flex flex-wrap items-end gap-3">
@@ -362,7 +362,7 @@ clearTimeout(searchTimer.current);
                             <div className="relative min-w-[200px] flex-1">
                                 <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
-                                    placeholder="Receipt #, name, reference…"
+                                    placeholder="Receipt #, name, referenceâ€¦"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="h-9 pl-8"
@@ -381,7 +381,7 @@ clearTimeout(searchTimer.current);
                                 </SelectContent>
                             </Select>
 
-                            {/* Date pickers — shown for Custom / All Time */}
+                            {/* Date pickers â€” shown for Custom / All Time */}
                             {showDatePickers && (
                                 <>
                                     <div className="flex items-center gap-2">
@@ -479,9 +479,9 @@ clearTimeout(searchTimer.current);
                     </CardContent>
                 </Card>
 
-                {/* ── DataTable ─────────────────────────────────────────── */}
+                {/* â”€â”€ DataTable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                    <CardHeader className="border-b border-border px-6 py-3">
                         <div className="flex items-center justify-between">
                             <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                                 Receipt Ledger
@@ -568,7 +568,7 @@ clearTimeout(searchTimer.current);
                                                             {payment.deceased.first_name} {payment.deceased.last_name}
                                                         </Link>
                                                     ) : (
-                                                        <span className="text-muted-foreground">—</span>
+                                                        <span className="text-muted-foreground">â€”</span>
                                                     )}
                                                 </TableCell>
 
@@ -597,7 +597,7 @@ clearTimeout(searchTimer.current);
 
                                                 {/* Reference */}
                                                 <TableCell className="max-w-[110px] truncate font-mono text-xs text-muted-foreground">
-                                                    {payment.transaction_reference || '—'}
+                                                    {payment.transaction_reference || 'â€”'}
                                                 </TableCell>
 
                                                 {/* Date */}
@@ -636,7 +636,7 @@ clearTimeout(searchTimer.current);
                         )}
 
                         {payments.last_page > 1 && (
-                            <div className="border-t border-border px-6 py-4">
+                            <div className="border-t border-border px-6 py-3">
                                 <Pagination links={payments.links} />
                             </div>
                         )}

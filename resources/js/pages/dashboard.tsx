@@ -147,11 +147,11 @@ export default function Dashboard({
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                        </span>
-                        <span className="text-xs font-semibold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
+                            </span>
+                        <span className="text-xs font-semibold tracking-wider text-success uppercase">
                             Live updates active
                         </span>
                     </div>
@@ -160,16 +160,16 @@ export default function Dashboard({
                 {/* Key Metric Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Chamber Occupancy */}
-                    <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
+                    <Card className="group relative overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Chamber Occupancy
                             </CardTitle>
-                            <Building2 className="h-4 w-4 text-indigo-500" />
+                            <Building2 className="h-4 w-4 text-primary" />
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-baseline space-x-1.5">
-                                <span className="text-2xl font-bold">
+                            <div className="flex items-baseline gap-1.5">
+                                <span className="text-3xl font-bold tracking-tight">
                                     {stats.occupiedChambers}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
@@ -177,10 +177,9 @@ export default function Dashboard({
                                 </span>
                             </div>
 
-                            {/* Progress bar */}
                             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                 <div
-                                    className="h-1.5 rounded-full bg-indigo-600 transition-all duration-500"
+                                    className="h-1.5 rounded-full bg-primary transition-all duration-500"
                                     style={{
                                         width: `${Math.min(100, stats.occupancyRate)}%`,
                                     }}
@@ -188,7 +187,7 @@ export default function Dashboard({
                             </div>
                             <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                                 <span>Occupancy Rate</span>
-                                <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                                <span className="font-semibold text-primary">
                                     {stats.occupancyRate}%
                                 </span>
                             </div>
@@ -196,34 +195,34 @@ export default function Dashboard({
                     </Card>
 
                     {/* Available Slots */}
-                    <Card className="transition-shadow hover:shadow-md">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Available Slots
                             </CardTitle>
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            <CheckCircle2 className="h-4 w-4 text-success" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
+                            <div className="text-3xl font-bold tracking-tight">
                                 {availableSlots}
                             </div>
                             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-success"></span>
                                 {stats.emptyChambers} empty chambers
                             </p>
                         </CardContent>
                     </Card>
 
                     {/* Pending Assignment */}
-                    <Card className="transition-shadow hover:shadow-md">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Pending Admissions
                             </CardTitle>
                             <Clock className="h-4 w-4 text-amber-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
+                            <div className="text-3xl font-bold tracking-tight">
                                 {stats.pendingAdmissions}
                             </div>
                             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -234,15 +233,15 @@ export default function Dashboard({
                     </Card>
 
                     {/* Total Released Cases */}
-                    <Card className="transition-shadow hover:shadow-md">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Discharged Cases
                             </CardTitle>
-                            <Users className="h-4 w-4 text-slate-500" />
+                            <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
+                            <div className="text-3xl font-bold tracking-tight">
                                 {stats.totalReleases}
                             </div>
                             <p className="mt-1 text-xs text-muted-foreground">
@@ -268,14 +267,14 @@ export default function Dashboard({
                                     </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-4 text-xs font-medium">
-                                    <span className="flex items-center gap-1.5">
-                                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
-                                        Admissions
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                        Releases
-                                    </span>
+                                        <span className="flex items-center gap-1.5 text-xs font-medium">
+                                            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--chart-2)' }}></span>
+                                            Admissions
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-xs font-medium">
+                                            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: 'var(--success)' }}></span>
+                                            Releases
+                                        </span>
                                 </div>
                             </div>
                         </CardHeader>
@@ -296,7 +295,7 @@ export default function Dashboard({
                                                 {trendData[hoveredIdx].label}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+                                                <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'var(--chart-2)' }}></span>
                                                 <span>
                                                     Admissions:{' '}
                                                     <strong>
@@ -309,7 +308,7 @@ export default function Dashboard({
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'var(--success)' }}></span>
                                                 <span>
                                                     Releases:{' '}
                                                     <strong>
@@ -340,12 +339,12 @@ export default function Dashboard({
                                         >
                                             <stop
                                                 offset="5%"
-                                                stopColor="#6366f1"
+                                                stopColor="var(--chart-2)"
                                                 stopOpacity={0.25}
                                             />
                                             <stop
                                                 offset="95%"
-                                                stopColor="#6366f1"
+                                                stopColor="var(--chart-2)"
                                                 stopOpacity={0.0}
                                             />
                                         </linearGradient>
@@ -358,12 +357,12 @@ export default function Dashboard({
                                         >
                                             <stop
                                                 offset="5%"
-                                                stopColor="#10b981"
+                                                stopColor="var(--success)"
                                                 stopOpacity={0.25}
                                             />
                                             <stop
                                                 offset="95%"
-                                                stopColor="#10b981"
+                                                stopColor="var(--success)"
                                                 stopOpacity={0.0}
                                             />
                                         </linearGradient>
@@ -435,7 +434,7 @@ export default function Dashboard({
                                         <path
                                             d={admissionsPath}
                                             fill="none"
-                                            stroke="#6366f1"
+                                            stroke="var(--chart-2)"
                                             strokeWidth={2.5}
                                             strokeLinecap="round"
                                             className="transition-all duration-300"
@@ -445,7 +444,7 @@ export default function Dashboard({
                                         <path
                                             d={releasesPath}
                                             fill="none"
-                                            stroke="#10b981"
+                                            stroke="var(--success)"
                                             strokeWidth={2.5}
                                             strokeLinecap="round"
                                             className="transition-all duration-300"
@@ -479,8 +478,8 @@ export default function Dashboard({
                                                             .admissions,
                                                     )}
                                                     r={5}
-                                                    fill="#6366f1"
-                                                    stroke="white"
+                                                    fill="var(--chart-2)"
+                                                    stroke="var(--background)"
                                                     strokeWidth={1.5}
                                                 />
                                                 {/* Releases Dot */}
@@ -491,8 +490,8 @@ export default function Dashboard({
                                                             .releases,
                                                     )}
                                                     r={5}
-                                                    fill="#10b981"
-                                                    stroke="white"
+                                                    fill="var(--success)"
+                                                    stroke="var(--background)"
                                                     strokeWidth={1.5}
                                                 />
                                             </>

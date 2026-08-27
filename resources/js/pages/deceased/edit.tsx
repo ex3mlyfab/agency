@@ -23,6 +23,8 @@ interface Deceased {
 interface Chamber {
     id: string;
     name: string;
+    available_spaces: number;
+    is_current: boolean;
 }
 
 interface ServiceCategory {

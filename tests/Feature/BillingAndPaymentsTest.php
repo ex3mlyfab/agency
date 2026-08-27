@@ -638,6 +638,105 @@ it('can record an invoice payment and update invoice status', function () {
     expect($invoice->fresh()->status)->toEqual('Paid');
 });
 
+it('applies tiered pricing correctly when saving a deceased invoice', function () {
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::create([
+        'name' => 'Chamber S1',
+        'capacity' => 2,
+        'service_id' => $chamberService->id,
+    ]);
+
+    $price = ServicePrice::create([
+        'service_id' => $chamberService->id,
+        'service_category_id' => $this->category->id,
+        'price' => 10000.00,
+    ]);
+
+    // Days 1-5: ₦10,000/day
+    // Days 6-10: ₦15,000/day
+    // Days 11+: ₦20,000/day
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 1, 'end_day' => 5, 'price' => 10000.00]);
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 6, 'end_day' => 10, 'price' => 15000.00]);
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 11, 'end_day' => null, 'price' => 20000.00]);
+
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'chamber_id' => $chamber->id,
+        'status' => 'InChamber',
+    ]);
+
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(7),
+    ]);
+
+    expect($deceased->fresh()->days_in_storage)->toEqual(7);
+
+    // Show route returns tiered price and has_tiers flag
+    $this->actingAs($this->superAdmin)
+        ->get(route('deceased.show', $deceased))
+        ->assertInertia(fn ($page) => $page
+            ->has('availableServices', 1)
+            ->where('availableServices.0.service_id', (string) $chamberService->id)
+            ->where('availableServices.0.has_tiers', true)
+            ->where('availableServices.0.tiered_price', 80000)
+            ->where('storageServiceId', (string) $chamberService->id)
+        );
+
+    // Save invoice with storage service — should use tiered total, not flat price × qty
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.save', $deceased), [
+            'items' => [['service_id' => $chamberService->id, 'quantity' => 1]],
+            'notes' => 'Tiered storage invoice',
+        ]);
+
+    $invoice = Invoice::where('deceased_id', $deceased->id)->first();
+
+    // 5 days × 10,000 + 2 days × 15,000 = 80,000
+    expect($invoice->total_amount)->toEqual(80000.00);
+    expect($invoice->subtotal)->toEqual(80000.00);
+
+    $this->assertDatabaseHas('invoice_items', [
+        'invoice_id' => $invoice->id,
+        'service_id' => $chamberService->id,
+        'unit_price' => 80000.00,
+        'quantity' => 7,
+        'total_price' => 80000.00,
+    ]);
+});
+
+it('uses flat price when service has no tiers', function () {
+    $service = Service::create(['name' => 'Embalming']);
+    $price = ServicePrice::create([
+        'service_id' => $service->id,
+        'service_category_id' => $this->category->id,
+        'price' => 50000.00,
+    ]);
+
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.save', $deceased), [
+            'items' => [['service_id' => $service->id, 'quantity' => 2]],
+            'notes' => 'Non-tiered service',
+        ]);
+
+    $invoice = Invoice::where('deceased_id', $deceased->id)->first();
+
+    expect($invoice->total_amount)->toEqual(100000.00);
+
+    $this->assertDatabaseHas('invoice_items', [
+        'invoice_id' => $invoice->id,
+        'service_id' => $service->id,
+        'unit_price' => 50000.00,
+        'quantity' => 2,
+        'total_price' => 100000.00,
+    ]);
+});
+
 it('rejects a payment linked to another deceased record invoice', function () {
     $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
     $otherDeceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);

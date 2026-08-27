@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -66,7 +66,7 @@ return;
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {services.total > 0
-                                ? `Showing ${services.from}–${services.to} of ${services.total} services`
+                                ? `Showing ${services.from}â€“${services.to} of ${services.total} services`
                                 : 'No services configured'}
                         </p>
                     </div>
@@ -82,7 +82,7 @@ return;
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                    <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Services
                         </CardTitle>
@@ -155,7 +155,7 @@ return;
                         )}
 
                         {services.last_page > 1 && (
-                            <div className="border-t border-border px-6 py-4">
+                            <div className="border-t border-border px-6 py-3">
                                 <Pagination links={services.links} />
                             </div>
                         )}

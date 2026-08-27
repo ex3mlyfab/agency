@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm } from '@inertiajs/react';
 import { Shield } from 'lucide-react';
 import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,7 @@ export default function RoleCreate({ allPermissions }: Props) {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Role Details
                             </CardTitle>
@@ -91,7 +91,7 @@ export default function RoleCreate({ allPermissions }: Props) {
                     </Card>
 
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between space-y-0">
+                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between space-y-0">
                             <div>
                                 <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                                     <Shield className="h-4 w-4" />

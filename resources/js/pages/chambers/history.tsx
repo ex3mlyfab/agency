@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import { StatusChip } from '@/components/status-chip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ interface Props {
 export default function ChamberHistory({ chamber, history }: Props) {
     return (
         <>
-            <Head title={`History — ${chamber.name}`} />
+            <Head title={`History â€” ${chamber.name}`} />
             <div className="space-y-6 p-6">
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -45,14 +45,14 @@ export default function ChamberHistory({ chamber, history }: Props) {
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {chamber.name}
-                        {chamber.location && ` · ${chamber.location}`} ·{' '}
+                        {chamber.location && ` Â· ${chamber.location}`} Â·{' '}
                         {history.total} event{history.total !== 1 ? 's' : ''}
                     </p>
                 </div>
 
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
-                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                    <CardHeader className="border-b border-border px-6 py-3">
+                        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Audit Timeline
                         </CardTitle>
                     </CardHeader>
@@ -69,7 +69,7 @@ export default function ChamberHistory({ chamber, history }: Props) {
                             <ol className="relative space-y-6 border-l border-border pl-6">
                                 {history.data.map((event) => (
                                     <li key={event.id} className="relative">
-                                        <span className="absolute top-0.5 -left-[1.5rem] flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" />
+                                        <span className="absolute top-0.5 -left-[1.5rem] flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" style={{ boxShadow: '0 0 0 1px var(--background)' }} />
 
                                         <div className="flex flex-wrap items-center gap-2">
                                             <StatusChip
@@ -80,7 +80,7 @@ export default function ChamberHistory({ chamber, history }: Props) {
                                             </span>
                                             {event.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    · by{' '}
+                                                    Â· by{' '}
                                                     {
                                                         event
                                                             .transferred_by_user
@@ -106,8 +106,8 @@ export default function ChamberHistory({ chamber, history }: Props) {
                                             event.to_chamber) && (
                                             <p className="mt-0.5 text-sm text-muted-foreground">
                                                 {event.from_chamber?.name ??
-                                                    '—'}
-                                                {' → '}
+                                                    'â€”'}
+                                                {' â†’ '}
                                                 {event.to_chamber?.name ??
                                                     'Released'}
                                             </p>

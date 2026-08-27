@@ -52,8 +52,22 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.create');
 
+        $chambers = Chamber::orderBy('name')
+            ->select(['id', 'name', 'capacity'])
+            ->get()
+            ->filter(function (Chamber $chamber) {
+                return $chamber->occupants()->count() < $chamber->capacity;
+            })
+            ->map(function (Chamber $chamber) {
+                return [
+                    'id' => $chamber->id,
+                    'name' => $chamber->name,
+                    'available_spaces' => $chamber->capacity - $chamber->occupants()->count(),
+                ];
+            });
+
         return Inertia::render('deceased/create', [
-            'chambers' => Chamber::orderBy('name')->get(['id', 'name']),
+            'chambers' => $chambers,
             'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -109,18 +123,25 @@ class DeceasedController extends Controller
             'payments.receivedByUser',
         ]);
 
-        $availableServices = ServicePrice::with('service')
+        $storageServiceId = $deceased->chamber?->service_id;
+
+        $availableServices = ServicePrice::with('servicePriceTiers')
             ->where('service_category_id', $deceased->service_category_id)
             ->where(function ($query) use ($deceased) {
                 $query->whereNull('source')
                     ->orWhere('source', $deceased->source);
             })
             ->get()
-            ->map(function ($sp) {
+            ->map(function ($sp) use ($deceased) {
+                $hasTiers = $sp->servicePriceTiers->isNotEmpty();
+                $tieredPrice = $hasTiers ? $sp->calculateStorageCharge($deceased->days_in_storage) : null;
+
                 return [
                     'service_id' => $sp->service_id,
                     'name' => $sp->service?->name ?? 'Unknown Service',
                     'price' => (float) $sp->price,
+                    'tiered_price' => $tieredPrice !== null ? round($tieredPrice, 2) : null,
+                    'has_tiers' => $hasTiers,
                 ];
             });
 
@@ -129,6 +150,7 @@ class DeceasedController extends Controller
         return Inertia::render('deceased/show', [
             'deceased' => $deceased,
             'availableServices' => $availableServices,
+            'storageServiceId' => $storageServiceId,
             'paymentModes' => $paymentModes,
             'can' => [
                 'edit' => auth()->user()?->can('deceased.edit'),
@@ -146,9 +168,28 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
+        $chambers = Chamber::orderBy('name')
+            ->select(['id', 'name', 'capacity'])
+            ->get()
+            ->filter(function (Chamber $chamber) use ($deceased) {
+                if ($chamber->id === $deceased->chamber_id) {
+                    return true;
+                }
+
+                return $chamber->occupants()->count() < $chamber->capacity;
+            })
+            ->map(function (Chamber $chamber) use ($deceased) {
+                return [
+                    'id' => $chamber->id,
+                    'name' => $chamber->name,
+                    'available_spaces' => $chamber->capacity - $chamber->occupants()->count(),
+                    'is_current' => $chamber->id === $deceased->chamber_id,
+                ];
+            });
+
         return Inertia::render('deceased/edit', [
             'deceased' => $deceased,
-            'chambers' => Chamber::orderBy('name')->get(['id', 'name']),
+            'chambers' => $chambers,
             'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -352,8 +393,12 @@ class DeceasedController extends Controller
 
             $invoice->invoiceItems()->delete();
             $subtotal = 0.0;
+            $storageServiceId = $deceased->chamber?->service_id;
+            $daysInStorage = $deceased->days_in_storage;
 
             foreach ($validated['items'] as $item) {
+                $isStorageService = (bool) $storageServiceId && $item['service_id'] == $storageServiceId;
+
                 $servicePrice = ServicePrice::where('service_id', $item['service_id'])
                     ->where('service_category_id', $deceased->service_category_id)
                     ->where(function ($query) use ($deceased) {
@@ -362,16 +407,22 @@ class DeceasedController extends Controller
                     })
                     ->first();
 
-                $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
+                if ($isStorageService && $servicePrice && $servicePrice->servicePriceTiers->isNotEmpty()) {
+                    $unitPrice = (float) $servicePrice->calculateStorageCharge($daysInStorage);
+                    $totalPrice = $unitPrice;
+                } else {
+                    $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
+                    $totalPrice = $unitPrice * $item['quantity'];
+                }
+
                 $serviceName = Service::find($item['service_id'])?->name ?? 'Unknown Service';
-                $totalPrice = $unitPrice * $item['quantity'];
                 $subtotal += $totalPrice;
 
                 $invoice->invoiceItems()->create([
                     'service_id' => $item['service_id'],
                     'name' => $serviceName,
                     'unit_price' => $unitPrice,
-                    'quantity' => $item['quantity'],
+                    'quantity' => $isStorageService ? $daysInStorage : $item['quantity'],
                     'total_price' => $totalPrice,
                 ]);
             }

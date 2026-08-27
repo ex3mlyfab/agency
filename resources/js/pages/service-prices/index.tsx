@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowDownIcon,
     ArrowUpIcon,
@@ -216,7 +216,7 @@ return;
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {servicePrices.total > 0
-                                ? `Showing ${servicePrices.from}–${servicePrices.to} of ${servicePrices.total} price configurations`
+                                ? `Showing ${servicePrices.from}â€“${servicePrices.to} of ${servicePrices.total} price configurations`
                                 : 'No price configurations found'}
                         </p>
                     </div>
@@ -238,7 +238,7 @@ return;
                             <div className="relative min-w-[200px] flex-1">
                                 <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search by service, category or source…"
+                                    placeholder="Search by service, category or sourceâ€¦"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="h-9 pl-8"
@@ -322,7 +322,7 @@ return;
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                    <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Price List
                         </CardTitle>
@@ -431,7 +431,7 @@ return;
                         )}
 
                         {servicePrices.last_page > 1 && (
-                            <div className="border-t border-border px-6 py-4">
+                            <div className="border-t border-border px-6 py-3">
                                 <Pagination links={servicePrices.links} />
                             </div>
                         )}

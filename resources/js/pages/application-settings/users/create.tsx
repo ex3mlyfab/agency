@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm } from '@inertiajs/react';
 import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,7 +50,7 @@ export default function UserCreate({ roles }: Props) {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 User Details
                             </CardTitle>
@@ -132,7 +132,7 @@ export default function UserCreate({ roles }: Props) {
                                     disabled={processing}
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="">— Select a role —</option>
+                                    <option value="">â€” Select a role â€”</option>
                                     {roles.map((role) => (
                                         <option key={role.id} value={role.name}>
                                             {role.name}

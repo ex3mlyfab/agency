@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
@@ -15,6 +15,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 interface Transfer {
     id: number;
@@ -71,6 +79,8 @@ interface AvailableService {
     service_id: number;
     name: string;
     price: number;
+    tiered_price: number | null;
+    has_tiers: boolean;
 }
 
 interface Deceased {
@@ -111,6 +121,7 @@ interface PaymentMode {
 interface Props {
     deceased: Deceased;
     availableServices: AvailableService[];
+    storageServiceId: string | null;
     paymentModes: PaymentMode[];
     can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean };
 }
@@ -128,12 +139,14 @@ function Field({
             <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {label}
             </dt>
-            <dd className="text-sm text-foreground">{value ?? '—'}</dd>
+            <dd className="text-sm text-foreground">{value ?? 'â€”'}</dd>
         </div>
     );
 }
 
-export default function DeceasedShow({ deceased, availableServices, paymentModes, can }: Props) {
+export default function DeceasedShow({ deceased, availableServices, storageServiceId, paymentModes, can }: Props) {
+    const { branding } = usePage().props as any;
+    const currencySymbol = branding?.currency_symbol ?? '₦';
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
@@ -215,9 +228,13 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
 
     const calculatedTotal = data.items.reduce((sum, item) => {
         const service = availableServices.find(s => String(s.service_id) === String(item.service_id));
-        const price = service ? service.price : 0;
+        if (!service) return sum;
 
-        return sum + (price * Number(item.quantity || 0));
+        if (service.has_tiers && service.tiered_price !== null) {
+            return sum + service.tiered_price;
+        }
+
+        return sum + (service.price * Number(item.quantity || 0));
     }, 0);
 
     const totalBilled = deceased.invoice?.total_amount || 0;
@@ -238,7 +255,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                             <StatusChip status={deceased.status} />
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Date of death: {deceased.date_of_death}
+                            Date of death: {(deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—')}
                             {deceased.chamber &&
                                 ` · Chamber: ${deceased.chamber.name}`}
                         </p>
@@ -247,7 +264,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                         {can.edit && deceased.status !== 'Released' && (
                             <Button
                                 asChild
-                                className="border-none bg-emerald-600 text-white hover:bg-emerald-700"
+                                className="border-none bg-success text-white hover:bg-success/90"
                             >
                                 <Link href={`/deceased/${deceased.id}/release`}>
                                     <ShieldCheckIcon className="mr-2 h-4 w-4" />
@@ -279,7 +296,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Deceased info card */}
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Deceased Information
                             </CardTitle>
@@ -296,11 +313,11 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                 />
                                 <Field
                                     label="Date of Birth"
-                                    value={deceased.date_of_birth}
+                                    value={deceased.date_of_birth ? new Date(deceased.date_of_birth).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' }) : null}
                                 />
                                 <Field
                                     label="Date of Death"
-                                    value={deceased.date_of_death}
+                                    value={deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : null}
                                 />
                                 <Field label="Gender" value={deceased.gender} />
                                 <Field
@@ -312,12 +329,12 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                         Notes
                                     </dt>
                                     <dd className="text-sm text-foreground">
-                                        {deceased.notes ?? '—'}
+                                        {deceased.notes ?? 'â€”'}
                                     </dd>
                                 </div>
                                 <div className="col-span-2 space-y-1 rounded-md border border-border bg-secondary/10 p-3">
                                     <dt className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                        <ShieldCheckIcon className="h-4 w-4 text-emerald-600" />
+                                        <ShieldCheckIcon className="h-4 w-4 text-success" />
                                         Intake Release Code
                                     </dt>
                                     <dd className="font-mono text-sm font-semibold tracking-wide text-foreground">
@@ -331,7 +348,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                     {/* Relative info & Release card */}
                     <div className="space-y-6">
                         <Card>
-                            <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                            <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Relative / Bringer
                                 </CardTitle>
@@ -359,9 +376,9 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                         </Card>
 
                         {deceased.status === 'Released' && (
-                            <Card className="border border-emerald-600/30 bg-emerald-50/5">
-                                <CardHeader className="border-b border-border bg-emerald-600/5 px-6 py-4">
-                                    <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
+                            <Card className="border border-success/30">
+                                <CardHeader className="border-b border-border bg-success/5 px-6 py-3">
+                                    <CardTitle className="flex items-center gap-2 text-xs font-semibold tracking-wide text-success uppercase dark:text-success">
                                         <ShieldCheckIcon className="h-4 w-4" />
                                         Release Details
                                     </CardTitle>
@@ -414,7 +431,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
 
                 {/* Storage Duration & Payment Tracker */}
                 <Card className="overflow-hidden border border-border">
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                    <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                             <ClockIcon className="h-4 w-4 text-primary" />
                             Storage Tracker
@@ -427,7 +444,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Days Spent in Storage
                                 </div>
-                                <div className="flex justify-center items-baseline gap-1 text-3xl font-extrabold text-foreground">
+                                <div className="flex justify-center items-baseline gap-1 text-3xl font-bold tracking-tight text-foreground">
                                     {deceased.days_in_storage}
                                     <span className="text-sm font-medium text-muted-foreground">days</span>
                                 </div>
@@ -442,7 +459,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Days Paid For
                                 </div>
-                                <div className="flex justify-center items-baseline gap-1 text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                                <div className="flex justify-center items-baseline gap-1 text-3xl font-bold tracking-tight text-success">
                                     {deceased.days_paid}
                                     <span className="text-sm font-medium text-muted-foreground">days</span>
                                 </div>
@@ -456,7 +473,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                 <div>
                                     <div className="flex justify-between text-xs font-semibold mb-1">
                                         <span className="text-muted-foreground">Coverage Progress</span>
-                                        <span className={deceased.days_paid >= deceased.days_in_storage ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
+                                        <span className={deceased.days_paid >= deceased.days_in_storage ? "text-success font-bold" : "text-amber-500 font-bold"}>
                                             {deceased.days_in_storage > 0 
                                                 ? Math.min(100, Math.round((deceased.days_paid / deceased.days_in_storage) * 100))
                                                 : 100}%
@@ -466,7 +483,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                         <div 
                                             className={`h-2.5 rounded-full ${
                                                 deceased.days_paid >= deceased.days_in_storage 
-                                                    ? 'bg-emerald-500' 
+                                                    ? 'bg-success'
                                                     : 'bg-amber-500'
                                             }`}
                                             style={{ 
@@ -479,14 +496,14 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                 </div>
 
                                 {deceased.days_in_storage > deceased.days_paid ? (
-                                    <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-800 dark:text-amber-400">
+                                    <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-700 dark:text-amber-400">
                                         <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5" />
                                         <div>
                                             <span className="font-semibold">Unpaid Storage:</span> {deceased.days_in_storage - deceased.days_paid} day(s) outstanding. Update the invoice to ensure full billing.
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex items-start gap-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-xs text-emerald-800 dark:text-emerald-400">
+                                    <div className="flex items-start gap-2 rounded-md bg-success/10 border border-success/20 p-2.5 text-xs text-success dark:text-success">
                                         <ShieldCheckIcon className="h-4 w-4 shrink-0 mt-0.5" />
                                         <div>
                                             <span className="font-semibold">Fully Covered:</span> All storage days spent are currently covered by payments.
@@ -501,18 +518,18 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Service Invoicing Card */}
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between">
+                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                                 <ReceiptIcon className="h-4 w-4" />
                                 Service Billing / Invoicing
                             </CardTitle>
                             {deceased.invoice && (
                                 <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${
-                                    deceased.invoice.status === 'Paid' 
-                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' 
+                                    deceased.invoice.status === 'Paid'
+                                        ? 'bg-success/10 text-success border-success/20'
                                         : deceased.invoice.status === 'Partially Paid'
-                                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
-                                        : 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
+                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                        : 'bg-destructive/10 text-destructive border-destructive/20'
                                 }`}>
                                     {deceased.invoice.status}
                                 </span>
@@ -558,9 +575,9 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                                 {deceased.invoice.invoice_items?.map((item) => (
                                                     <tr key={item.id} className="border-b border-border/50">
                                                         <td className="py-2 font-medium text-foreground">{item.name}</td>
-                                                        <td className="py-2 text-right">₦{Number(item.unit_price).toLocaleString()}</td>
+                                                        <td className="py-2 text-right">{currencySymbol}{Number(item.unit_price).toLocaleString()}</td>
                                                         <td className="py-2 text-center">{item.quantity}</td>
-                                                        <td className="py-2 text-right font-semibold">₦{Number(item.total_price).toLocaleString()}</td>
+                                                        <td className="py-2 text-right font-semibold">{currencySymbol}{Number(item.total_price).toLocaleString()}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -577,20 +594,20 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                     <div className="border-t border-border pt-4 space-y-2">
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Subtotal:</span>
-                                            <span className="font-medium text-foreground">₦{Number(deceased.invoice.subtotal).toLocaleString()}</span>
+                                            <span className="font-medium text-foreground">{currencySymbol}{Number(deceased.invoice.subtotal).toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Total Billed:</span>
-                                            <span className="font-semibold text-foreground">₦{Number(deceased.invoice.total_amount).toLocaleString()}</span>
+                                            <span className="font-semibold text-foreground">{currencySymbol}{Number(deceased.invoice.total_amount).toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Total Settled:</span>
-                                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">₦{totalPaid.toLocaleString()}</span>
+                                            <span className="font-semibold text-success">{currencySymbol}{totalPaid.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between border-t border-border/60 pt-2 text-base font-bold">
                                             <span className="text-foreground">Ledger Balance:</span>
-                                            <span className={ledgerBalance > 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}>
-                                                ₦{ledgerBalance.toLocaleString()}
+                                            <span className={ledgerBalance > 0 ? "text-destructive" : "text-success"}>
+                                                {currencySymbol}{ledgerBalance.toLocaleString()}
                                             </span>
                                         </div>
                                     </div>
@@ -601,7 +618,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
 
                     {/* Payment History Card */}
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4 flex flex-row items-center justify-between">
+                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                                 <CreditCardIcon className="h-4 w-4" />
                                 Payment & Settled Receipts
@@ -636,14 +653,14 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                                     <tr key={payment.id} className="border-b border-border/50">
                                                         <td className="py-2 font-medium text-foreground">{payment.receipt_number}</td>
                                                         <td className="py-2 text-muted-foreground">
-                                                            {new Date(payment.payment_date).toLocaleDateString()}
+                                                            {new Date(payment.payment_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}
                                                         </td>
                                                         <td className="py-2 text-foreground">{payment.payment_method}</td>
                                                         <td className="py-2 font-mono text-xs text-muted-foreground">
-                                                            {payment.transaction_reference || '—'}
+                                                            {payment.transaction_reference || 'â€”'}
                                                         </td>
-                                                        <td className="py-2 text-right font-semibold text-emerald-600 dark:text-emerald-400">
-                                                            ₦{Number(payment.amount).toLocaleString()}
+                                                        <td className="py-2 text-right font-semibold text-success">
+                                                            {currencySymbol}{Number(payment.amount).toLocaleString()}
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -652,8 +669,8 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                     </div>
                                     <div className="border-t border-border pt-4 flex justify-between items-center text-sm">
                                         <span className="font-semibold text-muted-foreground">Total Payments:</span>
-                                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
-                                            ₦{totalPaid.toLocaleString()}
+                                        <span className="font-bold text-success text-base">
+                                            {currencySymbol}{totalPaid.toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -690,7 +707,10 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                         const selectedService = availableServices.find(
                                             (s) => String(s.service_id) === String(item.service_id)
                                         );
-                                        const price = selectedService ? selectedService.price : 0;
+                                        const isStorage = selectedService?.has_tiers === true;
+                                        const price = isStorage && selectedService?.tiered_price !== null
+                                            ? selectedService.tiered_price
+                                            : (selectedService ? selectedService.price : 0);
 
                                         return (
                                             <div key={index} className="grid grid-cols-12 gap-2 items-center py-1">
@@ -712,23 +732,32 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                                     </select>
                                                 </div>
                                                 <div className="col-span-2 text-right text-sm font-medium text-muted-foreground">
-                                                    ₦{price.toLocaleString()}
+                                                    {currencySymbol}{price.toLocaleString()}
                                                 </div>
                                                 <div className="col-span-2">
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        value={item.quantity}
-                                                        onChange={(e) =>
-                                                            handleItemChange(
-                                                                index,
-                                                                'quantity',
-                                                                Math.max(1, parseInt(e.target.value) || 1)
-                                                            )
-                                                        }
-                                                        className="text-center h-9"
-                                                        required
-                                                    />
+                                                    {isStorage ? (
+                                                        <Input
+                                                            type="text"
+                                                            readOnly
+                                                            value={`${deceased.days_in_storage} days`}
+                                                            className="text-center h-9 bg-secondary/30 cursor-not-allowed"
+                                                        />
+                                                    ) : (
+                                                        <Input
+                                                            type="number"
+                                                            min="1"
+                                                            value={item.quantity}
+                                                            onChange={(e) =>
+                                                                handleItemChange(
+                                                                    index,
+                                                                    'quantity',
+                                                                    Math.max(1, parseInt(e.target.value) || 1)
+                                                                )
+                                                            }
+                                                            className="text-center h-9"
+                                                            required
+                                                        />
+                                                    )}
                                                 </div>
                                                 <div className="col-span-2 text-right">
                                                     <Button
@@ -753,7 +782,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                     Add Service Line
                                 </Button>
                                 <div className="text-sm font-semibold">
-                                    Total Estimate: <span className="text-primary font-bold text-base">₦{calculatedTotal.toLocaleString()}</span>
+                                    Total Estimate: <span className="text-primary font-bold text-base">{currencySymbol}{calculatedTotal.toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -832,7 +861,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="amount">Amount (₦)</Label>
+                                <Label htmlFor="amount">Amount ({currencySymbol})</Label>
                                 <Input
                                     id="amount"
                                     type="number"
@@ -896,7 +925,7 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
 
                 {/* Transfer / audit history */}
                 <Card>
-                    <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                    <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Chamber History
                         </CardTitle>
@@ -918,15 +947,15 @@ export default function DeceasedShow({ deceased, availableServices, paymentModes
                                             </span>
                                             {t.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    · by{' '}
+                                                    Â· by{' '}
                                                     {t.transferred_by_user.name}
                                                 </span>
                                             )}
                                         </div>
                                         {(t.from_chamber || t.to_chamber) && (
                                             <p className="mt-1 text-sm text-foreground">
-                                                {t.from_chamber?.name ?? '—'}
-                                                {' → '}
+                                                {t.from_chamber?.name ?? 'â€”'}
+                                                {' â†’ '}
                                                 {t.to_chamber?.name ??
                                                     'Released'}
                                             </p>

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+﻿import { useForm } from '@inertiajs/react';
 import { InputError } from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +47,7 @@ export function ChamberForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
-                <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                <CardHeader className="border-b border-border px-6 py-3">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Chamber Details
                     </CardTitle>
@@ -55,7 +55,7 @@ export function ChamberForm({
                 <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                     {/* Name */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="name" className="font-semibold">
+                        <Label htmlFor="name" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Chamber Name{' '}
                             <span className="text-destructive">*</span>
                         </Label>
@@ -72,7 +72,7 @@ export function ChamberForm({
 
                     {/* Location */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="location" className="font-semibold">
+                        <Label htmlFor="location" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Location
                         </Label>
                         <Input
@@ -89,7 +89,7 @@ export function ChamberForm({
 
                     {/* Capacity */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="capacity" className="font-semibold">
+                        <Label htmlFor="capacity" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Capacity
                         </Label>
                         <Input
@@ -111,7 +111,7 @@ export function ChamberForm({
 
                     {/* Storage Service */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="service_id" className="font-semibold">
+                        <Label htmlFor="service_id" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Storage Service
                         </Label>
                         <select
@@ -133,7 +133,7 @@ export function ChamberForm({
 
                     {/* Notes */}
                     <div className="space-y-1.5 sm:col-span-2">
-                        <Label htmlFor="notes" className="font-semibold">
+                        <Label htmlFor="notes" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Notes
                         </Label>
                         <textarea
@@ -154,7 +154,7 @@ export function ChamberForm({
                     <a href="/chambers">Cancel</a>
                 </Button>
                 <Button type="submit" disabled={processing}>
-                    {processing ? 'Saving…' : submitLabel}
+                    {processing ? 'Savingâ€¦' : submitLabel}
                 </Button>
             </div>
         </form>

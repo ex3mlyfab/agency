@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { InputError } from '@/components/input-error';
@@ -93,7 +93,7 @@ export default function TransferCreate({
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
-                        <CardHeader className="border-b border-border bg-secondary/30 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-3">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Transfer Details
                             </CardTitle>
@@ -103,7 +103,7 @@ export default function TransferCreate({
                             <div className="space-y-1.5 sm:col-span-2">
                                 <Label
                                     htmlFor="deceased_id"
-                                    className="font-semibold"
+                                    className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                 >
                                     Deceased{' '}
                                     <span className="text-destructive">*</span>
@@ -122,7 +122,7 @@ export default function TransferCreate({
                                                 'border-destructive',
                                         )}
                                     >
-                                        <SelectValue placeholder="Select deceased…" />
+                                        <SelectValue placeholder="Select deceasedâ€¦" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {deceasedOptions.map((d) => (
@@ -130,7 +130,7 @@ export default function TransferCreate({
                                                 key={d.id}
                                                 value={String(d.id)}
                                             >
-                                                {d.first_name} {d.last_name} —{' '}
+                                                {d.first_name} {d.last_name} â€”{' '}
                                                 {d.status}
                                             </SelectItem>
                                         ))}
@@ -143,7 +143,7 @@ export default function TransferCreate({
                             <div className="space-y-1.5">
                                 <Label
                                     htmlFor="event_type"
-                                    className="font-semibold"
+                                    className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                 >
                                     Event Type{' '}
                                     <span className="text-destructive">*</span>
@@ -178,7 +178,7 @@ export default function TransferCreate({
                                 <div className="space-y-1.5">
                                     <Label
                                         htmlFor="to_chamber_id"
-                                        className="font-semibold"
+                                        className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                     >
                                         Target Chamber
                                     </Label>
@@ -196,7 +196,7 @@ export default function TransferCreate({
                                                     'border-destructive',
                                             )}
                                         >
-                                            <SelectValue placeholder="Select chamber…" />
+                                            <SelectValue placeholder="Select chamberâ€¦" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {chamberOptions.map((c) => (
@@ -206,7 +206,7 @@ export default function TransferCreate({
                                                 >
                                                     {c.name}
                                                     {c.location
-                                                        ? ` — ${c.location}`
+                                                        ? ` â€” ${c.location}`
                                                         : ''}
                                                 </SelectItem>
                                             ))}
@@ -222,7 +222,7 @@ export default function TransferCreate({
                             <div className="space-y-1.5 sm:col-span-2">
                                 <Label
                                     htmlFor="notes"
-                                    className="font-semibold"
+                                    className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                 >
                                     Notes
                                 </Label>
@@ -234,7 +234,7 @@ export default function TransferCreate({
                                     }
                                     rows={3}
                                     disabled={processing}
-                                    placeholder="Reason for transfer, special instructions…"
+                                    placeholder="Reason for transfer, special instructionsâ€¦"
                                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                             </div>

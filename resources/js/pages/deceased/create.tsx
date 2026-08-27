@@ -4,6 +4,7 @@ import { DeceasedForm } from '@/components/deceased-form';
 interface Chamber {
     id: string;
     name: string;
+    available_spaces: number;
 }
 
 interface ServiceCategory {

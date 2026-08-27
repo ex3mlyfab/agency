@@ -94,7 +94,7 @@ return;
                             return (
                                 <Card
                                     key={chamber.id}
-                                    className="relative overflow-hidden transition-shadow hover:shadow-md"
+                                    className="relative overflow-hidden"
                                 >
                                     {/* Occupancy indicator strip */}
                                     <div
