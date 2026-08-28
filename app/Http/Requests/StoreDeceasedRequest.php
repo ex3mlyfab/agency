@@ -31,6 +31,7 @@ class StoreDeceasedRequest extends FormRequest
             'body_tag_number' => ['nullable', 'string', 'max:255'],
             'body_condition' => ['nullable', 'string', 'max:255'],
             'place_of_death' => ['nullable', 'string', 'max:255'],
+            'place_of_death_other' => ['nullable', 'string', 'max:255', 'required_if:place_of_death,Others'],
             'hospital_number' => ['nullable', 'string', 'max:255'],
             'gender' => ['required', 'in:Male,Female,Other'],
             'cause_of_death' => ['nullable', 'string', 'max:255'],

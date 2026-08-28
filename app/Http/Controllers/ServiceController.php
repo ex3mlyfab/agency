@@ -19,12 +19,28 @@ class ServiceController extends Controller
     {
         Gate::authorize('services.view');
 
-        $services = Service::latest()
-            ->paginate(10)
-            ->withQueryString();
+        $query = Service::query();
+
+        if (request()->filled('search')) {
+            $query->where('name', 'like', '%'.request('search').'%');
+        }
+
+        $sort = request('sort', 'name_asc');
+        match ($sort) {
+            'name_desc' => $query->orderBy('name', 'desc'),
+            'newest' => $query->orderBy('created_at', 'desc'),
+            'oldest' => $query->orderBy('created_at', 'asc'),
+            default => $query->orderBy('name', 'asc'),
+        };
+
+        $services = $query->paginate(10)->withQueryString();
 
         return Inertia::render('services/index', [
             'services' => $services,
+            'filters' => [
+                'search' => request('search'),
+                'sort' => request('sort', 'name_asc'),
+            ],
             'can' => [
                 'manage' => auth()->user()?->can('services.manage'),
             ],

@@ -228,7 +228,10 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
 
     const calculatedTotal = data.items.reduce((sum, item) => {
         const service = availableServices.find(s => String(s.service_id) === String(item.service_id));
-        if (!service) return sum;
+
+        if (!service) {
+return sum;
+}
 
         if (service.has_tiers && service.tiered_price !== null) {
             return sum + service.tiered_price;

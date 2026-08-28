@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Transfer {
-    id: number;
+    id: string;
     event_type: string;
     transferred_at: string;
     notes: string | null;
-    deceased: { id: number; first_name: string; last_name: string } | null;
+    deceased: { id: string; first_name: string; last_name: string } | null;
     from_chamber: { name: string } | null;
     to_chamber: { name: string } | null;
     transferred_by_user: { name: string } | null;
@@ -24,7 +24,7 @@ interface PaginatedHistory {
 }
 
 interface Chamber {
-    id: number;
+    id: string;
     name: string;
     location: string | null;
 }
@@ -37,7 +37,7 @@ interface Props {
 export default function ChamberHistory({ chamber, history }: Props) {
     return (
         <>
-            <Head title={`History â€” ${chamber.name}`} />
+            <Head title={`History — ${chamber.name}`} />
             <div className="space-y-6 p-6">
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -45,7 +45,7 @@ export default function ChamberHistory({ chamber, history }: Props) {
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {chamber.name}
-                        {chamber.location && ` Â· ${chamber.location}`} Â·{' '}
+                        {chamber.location && ` · ${chamber.location}`} ·{' '}
                         {history.total} event{history.total !== 1 ? 's' : ''}
                     </p>
                 </div>
@@ -80,7 +80,7 @@ export default function ChamberHistory({ chamber, history }: Props) {
                                             </span>
                                             {event.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    Â· by{' '}
+                                                    · by{' '}
                                                     {
                                                         event
                                                             .transferred_by_user
@@ -106,8 +106,8 @@ export default function ChamberHistory({ chamber, history }: Props) {
                                             event.to_chamber) && (
                                             <p className="mt-0.5 text-sm text-muted-foreground">
                                                 {event.from_chamber?.name ??
-                                                    'â€”'}
-                                                {' â†’ '}
+                                                    '—'}
+                                                {' → '}
                                                 {event.to_chamber?.name ??
                                                     'Released'}
                                             </p>

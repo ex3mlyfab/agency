@@ -26,17 +26,64 @@ class DeceasedController extends Controller
     /**
      * Display a listing of deceased records.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         Gate::authorize('deceased.view');
 
-        $deceased = Deceased::with('chamber')
-            ->latest()
-            ->paginate(25)
-            ->withQueryString();
+        $query = Deceased::with('chamber')
+            ->latest();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('body_tag_number', 'like', "%{$search}%")
+                    ->orWhere('relative_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('service_category_id')) {
+            $query->where('service_category_id', $request->service_category_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('date_of_death', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('date_of_death', '<=', $request->date_to);
+        }
+
+        $deceased = $query->paginate(15)->withQueryString();
+
+        $stats = [
+            'total' => (clone $query)->count(),
+            'pending' => (clone $query)->where('status', 'Pending')->count(),
+            'in_chamber' => (clone $query)->where('status', 'InChamber')->count(),
+            'released' => (clone $query)->where('status', 'Released')->count(),
+            'avg_days_in_storage' => (clone $query)->where('status', '!=', 'Pending')->avg('days_in_storage'),
+        ];
+
+        $serviceCategories = ServiceCategory::orderBy('name')->select(['id', 'name'])->get();
+        $genders = ['Male', 'Female', 'Other'];
 
         return Inertia::render('deceased/index', [
             'deceased' => $deceased,
+            'stats' => $stats,
+            'serviceCategories' => $serviceCategories->toArray(),
+            'genders' => $genders,
+            'filters' => [
+                'search' => $request->search ?? '',
+                'status' => $request->status ?? '',
+                'service_category_id' => $request->service_category_id ?? '',
+                'date_from' => $request->date_from ?? '',
+                'date_to' => $request->date_to ?? '',
+            ],
             'can' => [
                 'create' => auth()->user()?->can('deceased.create'),
                 'edit' => auth()->user()?->can('deceased.edit'),
@@ -64,11 +111,13 @@ class DeceasedController extends Controller
                     'name' => $chamber->name,
                     'available_spaces' => $chamber->capacity - $chamber->occupants()->count(),
                 ];
-            });
+            })
+            ->values()
+            ->toArray();
 
         return Inertia::render('deceased/create', [
             'chambers' => $chambers,
-            'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name']),
+            'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name'])->toArray(),
         ]);
     }
 
@@ -185,12 +234,14 @@ class DeceasedController extends Controller
                     'available_spaces' => $chamber->capacity - $chamber->occupants()->count(),
                     'is_current' => $chamber->id === $deceased->chamber_id,
                 ];
-            });
+            })
+            ->values()
+            ->toArray();
 
         return Inertia::render('deceased/edit', [
             'deceased' => $deceased,
             'chambers' => $chambers,
-            'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name']),
+            'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name'])->toArray(),
         ]);
     }
 

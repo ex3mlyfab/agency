@@ -46,6 +46,7 @@ class Deceased extends Model
         'body_tag_number',
         'body_condition',
         'place_of_death',
+        'place_of_death_other',
         'hospital_number',
         'gender',
         'cause_of_death',

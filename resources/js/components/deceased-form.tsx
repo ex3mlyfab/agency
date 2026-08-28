@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { CameraIcon, TriangleAlertIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { InputError } from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
 interface DeceasedFormData {
@@ -71,6 +71,7 @@ export function DeceasedForm({
             body_tag_number: initialValues.body_tag_number ?? '',
             body_condition: initialValues.body_condition ?? '',
             place_of_death: initialValues.place_of_death ?? '',
+            place_of_death_other: initialValues.place_of_death_other ?? '',
             hospital_number: initialValues.hospital_number ?? '',
             gender: initialValues.gender ?? 'Male',
             cause_of_death: initialValues.cause_of_death ?? '',
@@ -223,18 +224,44 @@ export function DeceasedForm({
                         >
                             Place of Death
                         </Label>
-                        <Input
-                            id="place_of_death"
+                        <Select
                             value={data.place_of_death}
-                            onChange={(e) =>
-                                setData('place_of_death', e.target.value)
+                            onValueChange={(val) =>
+                                setData('place_of_death', val)
                             }
-                            placeholder="e.g. Home, Hospital"
                             disabled={processing}
-                            className={cn(
-                                errors.place_of_death && 'border-destructive',
-                            )}
-                        />
+                        >
+                            <SelectTrigger
+                                id="place_of_death"
+                                className={cn(
+                                    errors.place_of_death && 'border-destructive',
+                                )}
+                            >
+                                <SelectValue placeholder="Select place of death" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Home">Home</SelectItem>
+                                <SelectItem value="Roadside">Roadside</SelectItem>
+                                <SelectItem value="Hotel">Hotel</SelectItem>
+                                <SelectItem value="Hospital">Hospital</SelectItem>
+                                <SelectItem value="Others">Others</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {data.place_of_death === 'Others' && (
+                            <Input
+                                id="place_of_death_other"
+                                value={data.place_of_death_other ?? ''}
+                                onChange={(e) =>
+                                    setData(
+                                        'place_of_death_other',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="Specify place of death"
+                                disabled={processing}
+                                className="mt-2"
+                            />
+                        )}
                         <InputError message={errors.place_of_death} />
                     </div>
 
@@ -292,18 +319,29 @@ export function DeceasedForm({
                         >
                             Body Condition
                         </Label>
-                        <Input
-                            id="body_condition"
+                        <Select
                             value={data.body_condition}
-                            onChange={(e) =>
-                                setData('body_condition', e.target.value)
+                            onValueChange={(val) =>
+                                setData('body_condition', val)
                             }
-                            placeholder="e.g. Intact"
                             disabled={processing}
-                            className={cn(
-                                errors.body_condition && 'border-destructive',
-                            )}
-                        />
+                        >
+                            <SelectTrigger
+                                id="body_condition"
+                                className={cn(
+                                    errors.body_condition && 'border-destructive',
+                                )}
+                            >
+                                <SelectValue placeholder="Select body condition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Fresh">Fresh</SelectItem>
+                                <SelectItem value="Embalmed">Embalmed</SelectItem>
+                                <SelectItem value="Decomposed">Decomposed</SelectItem>
+                                <SelectItem value="Autolyzed">Autolyzed</SelectItem>
+                                <SelectItem value="Skelentonized">Skelentonized</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <InputError message={errors.body_condition} />
                     </div>
 
@@ -340,7 +378,7 @@ export function DeceasedForm({
                             htmlFor="cause_of_death"
                             className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
-                            Cause of Death
+                            Reported Cause of Death
                         </Label>
                         <Input
                             id="cause_of_death"

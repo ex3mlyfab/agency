@@ -8,10 +8,10 @@ export interface PaginationLink {
     active: boolean;
 }
 
-export function Pagination({ links }: { links: PaginationLink[] }) {
-    if (links.length <= 3) {
-return null;
-}
+export function Pagination({ links }: { links: PaginationLink[] | undefined }) {
+    if (!links || links.length <= 3) {
+        return null;
+    }
 
     return (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
