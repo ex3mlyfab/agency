@@ -181,20 +181,38 @@ it('computes ledger balance from deposits and invoices correctly', function () {
     expect($deceased->fresh()->isBillSettled())->toBeTrue();
 });
 
-it('blocks release if outstanding balance exists and no bypass is checked', function () {
-    $chamber = Chamber::factory()->create();
+it('blocks release if storage days are not fully paid and no bypass is checked', function () {
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::factory()->create(['service_id' => $chamberService->id]);
     $deceased = Deceased::factory()->create([
         'status' => 'InChamber',
         'chamber_id' => $chamber->id,
         'service_category_id' => $this->category->id,
     ]);
 
-    // Outstanding balance setup
-    Invoice::create([
+    // Create admission/transfer event 5 days ago
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(5),
+    ]);
+
+    // Invoice with 5 days storage but 0 paid
+    $invoice = Invoice::create([
         'deceased_id' => $deceased->id,
         'invoice_number' => 'INV-TEST-02',
-        'total_amount' => 100.00,
+        'total_amount' => 500.00,
         'created_by' => $this->superAdmin->id,
+    ]);
+
+    $invoice->invoiceItems()->create([
+        'service_id' => $chamberService->id,
+        'name' => 'Chamber Storage',
+        'unit_price' => 100.00,
+        'quantity' => 5,
+        'total_price' => 500.00,
     ]);
 
     $this->actingAs($this->superAdmin)
@@ -208,24 +226,43 @@ it('blocks release if outstanding balance exists and no bypass is checked', func
             'confirm_physical_verification' => true,
         ])
         ->assertSessionHasErrors(['billing'])
-        ->assertSessionHas('flash.message', 'Cannot release deceased with outstanding balance of 100.00 without manager override.');
+        ->assertSessionHas('flash.message', 'Cannot release: storage days (5 days) are not fully paid. Only 0 days paid.');
 
     expect($deceased->fresh()->status)->toBe('InChamber');
 });
 
 it('allows release if bypass_billing_restriction is checked and user is authorized', function () {
-    $chamber = Chamber::factory()->create();
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::factory()->create(['service_id' => $chamberService->id]);
     $deceased = Deceased::factory()->create([
         'status' => 'InChamber',
         'chamber_id' => $chamber->id,
         'service_category_id' => $this->category->id,
     ]);
 
-    Invoice::create([
+    // Create admission/transfer event 5 days ago
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(5),
+    ]);
+
+    // Invoice with 5 days storage but 0 paid
+    $invoice = Invoice::create([
         'deceased_id' => $deceased->id,
         'invoice_number' => 'INV-TEST-03',
-        'total_amount' => 100.00,
+        'total_amount' => 500.00,
         'created_by' => $this->superAdmin->id,
+    ]);
+
+    $invoice->invoiceItems()->create([
+        'service_id' => $chamberService->id,
+        'name' => 'Chamber Storage',
+        'unit_price' => 100.00,
+        'quantity' => 5,
+        'total_price' => 500.00,
     ]);
 
     // acting as super admin (has bypass-billing permission)
@@ -247,18 +284,37 @@ it('allows release if bypass_billing_restriction is checked and user is authoriz
 });
 
 it('blocks release bypass if user lacks deceased.bypass-billing permission', function () {
-    $chamber = Chamber::factory()->create();
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::factory()->create(['service_id' => $chamberService->id]);
     $deceased = Deceased::factory()->create([
         'status' => 'InChamber',
         'chamber_id' => $chamber->id,
         'service_category_id' => $this->category->id,
     ]);
 
-    Invoice::create([
+    // Create admission/transfer event 5 days ago
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(5),
+    ]);
+
+    // Invoice with 5 days storage but 0 paid
+    $invoice = Invoice::create([
         'deceased_id' => $deceased->id,
         'invoice_number' => 'INV-TEST-04',
-        'total_amount' => 100.00,
+        'total_amount' => 500.00,
         'created_by' => $this->superAdmin->id,
+    ]);
+
+    $invoice->invoiceItems()->create([
+        'service_id' => $chamberService->id,
+        'name' => 'Chamber Storage',
+        'unit_price' => 100.00,
+        'quantity' => 5,
+        'total_price' => 500.00,
     ]);
 
     // staff user lacks deceased.bypass-billing permission
@@ -748,4 +804,300 @@ it('rejects a payment linked to another deceased record invoice', function () {
         ->assertSessionHasErrors('invoice_id');
 
     expect(Payment::count())->toBe(0);
+});
+
+it('applies wallet deposits to an unpaid invoice and updates invoice status', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-01',
+        'total_amount' => 1000.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    // Two general deposits (wallet) totalling 600
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-01',
+        'amount' => 400.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-02',
+        'amount' => 200.00,
+        'payment_method' => 'BankTransfer',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    expect(Payment::whereNull('invoice_id')->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(600.00);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+        ])
+        ->assertRedirect();
+
+    // Both deposits should now be linked to the invoice
+    expect($invoice->fresh()->paid_amount)->toEqual(600.00);
+    expect($invoice->fresh()->status)->toEqual('Partially Paid');
+    expect(Payment::whereNull('invoice_id')->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(0.00);
+    expect(Payment::where('invoice_id', $invoice->id)->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(600.00);
+});
+
+it('partially applies a wallet deposit to an invoice by splitting the payment', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-02',
+        'total_amount' => 1000.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    // Single deposit of 1500 — exceeds the 800 we want to apply
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-03',
+        'amount' => 1500.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+            'amount' => 800.00,
+        ])
+        ->assertRedirect();
+
+    // Invoice should have 800 paid, remaining deposit should be 700
+    expect($invoice->fresh()->paid_amount)->toEqual(800.00);
+    expect($invoice->fresh()->status)->toEqual('Partially Paid');
+    expect(Payment::whereNull('invoice_id')->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(700.00);
+    expect(Payment::where('invoice_id', $invoice->id)->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(800.00);
+});
+
+it('fully settles an invoice from wallet when wallet balance covers the outstanding amount', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-03',
+        'total_amount' => 500.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-04',
+        'amount' => 2000.00,
+        'payment_method' => 'Hospital Wallet',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+        ])
+        ->assertRedirect();
+
+    expect($invoice->fresh()->paid_amount)->toEqual(500.00);
+    expect($invoice->fresh()->status)->toEqual('Paid');
+    expect(Payment::whereNull('invoice_id')->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(1500.00);
+});
+
+it('does not apply wallet when invoice is fully paid', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-04',
+        'total_amount' => 500.00,
+        'paid_amount' => 500.00,
+        'status' => 'Paid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-05',
+        'amount' => 300.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+        ])
+        ->assertRedirect();
+
+    // Wallet deposits should remain unlinked
+    expect(Payment::whereNull('invoice_id')->where('deceased_id', $deceased->id)->sum('amount'))->toEqual(300.00);
+    expect($invoice->fresh()->paid_amount)->toEqual(500.00);
+    expect($invoice->fresh()->status)->toEqual('Paid');
+});
+
+it('does not apply wallet when no general deposits exist', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-05',
+        'total_amount' => 500.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+        ])
+        ->assertRedirect();
+
+    expect(Payment::where('invoice_id', $invoice->id)->count())->toBe(0);
+    expect($invoice->fresh()->paid_amount)->toEqual(0.00);
+    expect($invoice->fresh()->status)->toEqual('Unpaid');
+});
+
+it('prevents applying wallet from a different deceased record invoice', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+    $otherDeceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $otherInvoice = Invoice::create([
+        'deceased_id' => $otherDeceased->id,
+        'invoice_number' => 'INV-WALLET-06',
+        'total_amount' => 500.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $otherInvoice->id,
+        ])
+        ->assertSessionHasErrors('invoice_id');
+});
+
+it('prevents unauthorized users from applying wallet to invoice', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-07',
+        'total_amount' => 500.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-07',
+        'amount' => 500.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->staffUser)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+        ])
+        ->assertForbidden();
+});
+
+it('passes wallet balance and deposits to deceased show page', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-SHOW',
+        'total_amount' => 1000.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-SHOW',
+        'amount' => 300.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    $response = $this->actingAs($this->superAdmin)
+        ->get(route('deceased.show', $deceased));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('walletBalance', 300)
+        ->has('walletDeposits', 1)
+        ->where('walletDeposits.0.receipt_number', 'REC-WALLET-SHOW')
+    );
+});
+
+it('passes wallet balance to invoice show page', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WALLET-INV-SHOW',
+        'total_amount' => 1000.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    Permission::firstOrCreate(['name' => 'invoices.view']);
+    $this->superAdmin->givePermissionTo('invoices.view');
+
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WALLET-INV-SHOW',
+        'amount' => 250.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    $response = $this->actingAs($this->superAdmin)
+        ->get(route('invoices.show', $invoice));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('walletBalance', 250)
+    );
 });

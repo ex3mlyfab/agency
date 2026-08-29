@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\PaymentMode;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -110,9 +111,18 @@ class InvoiceController extends Controller
         $invoice->load(['deceased', 'invoiceItems.service', 'payments', 'createdByUser']);
         $paymentModes = PaymentMode::where('is_active', true)->orderBy('name')->get();
 
+        $walletBalance = 0.0;
+
+        if ($invoice->deceased) {
+            $walletBalance = (float) Payment::where('deceased_id', $invoice->deceased->id)
+                ->whereNull('invoice_id')
+                ->sum('amount');
+        }
+
         return Inertia::render('invoices/show', [
             'invoice' => $invoice,
             'paymentModes' => $paymentModes,
+            'walletBalance' => $walletBalance,
             'can' => [
                 'managePayments' => auth()->user()?->can('payments.manage'),
             ],

@@ -21,6 +21,11 @@ class RecordTransfer
                 throw ValidationException::withMessages(['to_chamber_id' => 'The selected chamber is at capacity.']);
             }
 
+            // Enforce storage payment check on release
+            if ($validated['event_type'] === 'Released' && ! $deceased->isStorageFullyPaid()) {
+                throw ValidationException::withMessages(['deceased_id' => 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid.']);
+            }
+
             $toChamberId = $destination?->id;
             Transfer::create(['deceased_id' => $deceased->id, 'from_chamber_id' => $deceased->chamber_id, 'to_chamber_id' => $toChamberId, 'transferred_by' => $transferredBy, 'event_type' => $validated['event_type'], 'notes' => $validated['notes'] ?? null, 'transferred_at' => now()]);
             $deceased->update(['status' => $validated['event_type'] === 'Released' ? 'Released' : 'InChamber', 'chamber_id' => $toChamberId]);

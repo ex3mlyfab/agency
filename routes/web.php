@@ -49,6 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Billing
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show']);
     Route::resource('payments', PaymentController::class)->only(['index', 'show', 'store']);
+    Route::post('payments/apply-wallet-to-invoice', [PaymentController::class, 'applyWalletToInvoice'])
+        ->name('payments.apply-wallet-to-invoice');
 });
 
 require __DIR__.'/settings.php';

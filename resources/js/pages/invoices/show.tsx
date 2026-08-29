@@ -1,4 +1,4 @@
-﻿import { Head, Link, useForm } from '@inertiajs/react';
+﻿import { Head, Link, useForm, router } from '@inertiajs/react';
 import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
@@ -83,12 +83,13 @@ interface Invoice {
 interface Props {
     invoice: Invoice;
     paymentModes: PaymentMode[];
+    walletBalance: number;
     can: {
         managePayments: boolean;
     };
 }
 
-export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) {
+export default function InvoiceShow({ invoice, paymentModes = [], walletBalance = 0, can }: Props) {
     const symbol = useCurrency();
     const total = parseFloat(invoice.total_amount as string);
     const paid = parseFloat(invoice.paid_amount as string);
@@ -96,6 +97,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
     const isUnsettled = invoice.status.toLowerCase() !== 'paid';
 
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [isWalletApplying, setIsWalletApplying] = useState(false);
 
     const paymentForm = useForm({
         deceased_id: invoice.deceased?.id || '',
@@ -115,6 +117,32 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                 paymentForm.reset();
             },
         });
+    };
+
+    const handleApplyWalletToInvoice = () => {
+        if (walletBalance <= 0 || balance <= 0) {
+            return;
+        }
+
+        setIsWalletApplying(true);
+        router.post(
+            '/payments/apply-wallet-to-invoice',
+            {
+                deceased_id: invoice.deceased?.id || '',
+                invoice_id: invoice.id,
+            },
+            {
+                onSuccess: () => {
+                    setIsWalletApplying(false);
+                    setIsPaymentOpen(false);
+                    paymentForm.reset();
+                },
+                onError: () => {
+                    setIsWalletApplying(false);
+                },
+                preserveScroll: true,
+            },
+        );
     };
 
     const getStatusColor = (status: string) => {
@@ -374,9 +402,58 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                     <DialogHeader>
                         <DialogTitle>Record Payment for Invoice {invoice.invoice_number}</DialogTitle>
                         <DialogDescription>
-                            Apply a payment receipt to this invoice. Outstanding balance: â‚¦{balance.toLocaleString()}.
+                            Apply a payment receipt to this invoice. Outstanding balance: {fmtCurrency(balance, symbol)}.
                         </DialogDescription>
                     </DialogHeader>
+
+                    <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
+                        <div>
+                            <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
+                            <span className="font-semibold text-foreground">
+                                {fmtCurrency(total, symbol)}
+                            </span>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-xs text-muted-foreground block">Total Paid</span>
+                            <span className="font-medium text-emerald-600">
+                                {fmtCurrency(paid, symbol)}
+                            </span>
+                        </div>
+                        <div className="col-span-2">
+                            <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
+                            <span className="font-bold text-destructive text-base">
+                                {fmtCurrency(balance, symbol)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {walletBalance > 0 && balance > 0 && (
+                        <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                    Wallet Balance Available
+                                </span>
+                                <span className="font-bold text-amber-600 dark:text-amber-400">
+                                    {fmtCurrency(walletBalance, symbol)}
+                                </span>
+                            </div>
+                            <div className="mt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleApplyWalletToInvoice}
+                                    disabled={isWalletApplying}
+                                >
+                                    {isWalletApplying ? 'Applying...' : 'Apply Wallet to Invoice'}
+                                </Button>
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Apply {walletBalance >= balance ? 'full' : 'partial'} wallet funds ({fmtCurrency(walletBalance, symbol)}) toward the outstanding invoice balance ({fmtCurrency(balance, symbol)}).
+                            </p>
+                        </div>
+                    )}
+
                     <form onSubmit={submitPayment} className="space-y-4">
                         <div className="space-y-1.5">
                             <Label htmlFor="payment_mode_id">Payment Mode</Label>
@@ -396,7 +473,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], can }: Props) 
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="amount">Amount (â‚¦)</Label>
+                            <Label htmlFor="amount">Amount ({symbol})</Label>
                             <Input
                                 id="amount"
                                 type="number"

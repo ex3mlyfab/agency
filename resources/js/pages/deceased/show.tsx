@@ -1,4 +1,4 @@
-﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
@@ -118,11 +118,23 @@ interface PaymentMode {
     name: string;
 }
 
+interface WalletDeposit {
+    id: string;
+    receipt_number: string;
+    amount: number;
+    payment_method: string;
+    transaction_reference: string | null;
+    payment_date: string;
+    notes: string | null;
+}
+
 interface Props {
     deceased: Deceased;
     availableServices: AvailableService[];
     storageServiceId: string | null;
     paymentModes: PaymentMode[];
+    walletDeposits: WalletDeposit[];
+    walletBalance: number;
     can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean };
 }
 
@@ -144,11 +156,12 @@ function Field({
     );
 }
 
-export default function DeceasedShow({ deceased, availableServices, storageServiceId, paymentModes, can }: Props) {
+export default function DeceasedShow({ deceased, availableServices, storageServiceId, paymentModes, walletDeposits, walletBalance, can }: Props) {
     const { branding } = usePage().props as any;
     const currencySymbol = branding?.currency_symbol ?? '₦';
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [isWalletApplying, setIsWalletApplying] = useState(false);
 
     const paymentForm = useForm({
         deceased_id: deceased.id,
@@ -169,6 +182,40 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
             },
         });
     };
+
+    const handleApplyWalletToInvoice = () => {
+        if (!deceased.invoice || walletBalance <= 0) {
+            return;
+        }
+
+        setIsWalletApplying(true);
+        router.post(
+            '/payments/apply-wallet-to-invoice',
+            {
+                deceased_id: deceased.id,
+                invoice_id: deceased.invoice.id,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsWalletApplying(false);
+                    setIsPaymentOpen(false);
+                    paymentForm.reset();
+                },
+                onError: () => {
+                    setIsWalletApplying(false);
+                },
+            },
+        );
+    };
+
+    const isWalletMode = paymentForm.data.payment_mode_id
+        ? paymentModes.find((m) => String(m.id) === String(paymentForm.data.payment_mode_id))?.name === 'Hospital Wallet'
+        : false;
+
+    const invoiceOutstanding = deceased.invoice
+        ? Number(deceased.invoice.total_amount) - Number(deceased.invoice.paid_amount || 0)
+        : 0;
 
     const { data, setData, post, processing, errors } = useForm<{
         items: { service_id: string | number; quantity: number }[];
@@ -835,6 +882,9 @@ return sum;
                                             paymentForm.setData('invoice_id', '');
                                         } else {
                                             paymentForm.setData('invoice_id', deceased.invoice?.id || '');
+                                            if (invoiceOutstanding > 0) {
+                                                paymentForm.setData('amount', invoiceOutstanding.toFixed(2));
+                                            }
                                         }
                                     }}
                                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -846,12 +896,84 @@ return sum;
                                 </select>
                             </div>
 
+                            {paymentForm.data.invoice_id && deceased.invoice && (
+                                <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
+                                    <div>
+                                        <span className="text-xs text-muted-foreground block">Invoice #</span>
+                                        <span className="font-mono text-foreground">{deceased.invoice.invoice_number}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
+                                        <span className="font-semibold text-foreground">
+                                            {currencySymbol}{Number(deceased.invoice.total_amount).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-muted-foreground block">Total Paid</span>
+                                        <span className="font-medium text-emerald-600">
+                                            {currencySymbol}{Number(deceased.invoice.paid_amount || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
+                                        <span className="font-semibold text-destructive">
+                                            {currencySymbol}{invoiceOutstanding.toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {walletBalance > 0 && (
+                                <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3 text-sm">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                            Wallet Balance Available
+                                        </span>
+                                        <span className="font-bold text-amber-600 dark:text-amber-400">
+                                            {currencySymbol}{walletBalance.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    {walletDeposits.map((deposit) => (
+                                        <div key={deposit.id} className="mt-1 text-xs text-muted-foreground">
+                                            Receipt {deposit.receipt_number} — {currencySymbol}{Number(deposit.amount).toLocaleString()} via {deposit.payment_method}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {walletBalance > 0 && paymentForm.data.invoice_id && deceased.invoice && invoiceOutstanding > 0 && (
+                                <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-foreground">
+                                            Settle invoice from wallet
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleApplyWalletToInvoice}
+                                            disabled={isWalletApplying}
+                                        >
+                                            {isWalletApplying ? 'Applying...' : `Apply ${currencySymbol}${walletBalance.toLocaleString()}`}
+                                        </Button>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Apply {walletBalance >= invoiceOutstanding ? 'full' : 'partial'} wallet funds ({currencySymbol}{walletBalance.toLocaleString()}) toward the invoice balance ({currencySymbol}{invoiceOutstanding.toLocaleString()}).
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="space-y-1.5">
                                 <Label htmlFor="payment_mode_id">Payment Mode</Label>
                                 <select
                                     id="payment_mode_id"
                                     value={paymentForm.data.payment_mode_id}
-                                    onChange={(e) => paymentForm.setData('payment_mode_id', e.target.value)}
+                                    onChange={(e) => {
+                                        paymentForm.setData('payment_mode_id', e.target.value);
+                                        if (isWalletMode) {
+                                            paymentForm.setData('invoice_id', '');
+                                        }
+                                    }}
                                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     required
                                 >
@@ -861,6 +983,11 @@ return sum;
                                     ))}
                                 </select>
                                 <InputError message={paymentForm.errors.payment_mode_id} />
+                                {isWalletMode && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Hospital Wallet deposits are recorded as general account credit (not linked to an invoice).
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
@@ -870,9 +997,10 @@ return sum;
                                     type="number"
                                     step="0.01"
                                     min="0.01"
+                                    max={paymentForm.data.invoice_id ? invoiceOutstanding : undefined}
                                     value={paymentForm.data.amount}
                                     onChange={(e) => paymentForm.setData('amount', e.target.value)}
-                                    placeholder="Enter amount"
+                                    placeholder={paymentForm.data.invoice_id ? `Outstanding balance: ${invoiceOutstanding.toFixed(2)}` : 'Enter amount'}
                                     required
                                 />
                                 <InputError message={paymentForm.errors.amount} />

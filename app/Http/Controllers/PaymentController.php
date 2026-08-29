@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\ApplyWalletToInvoice;
 use App\Actions\RecordPayment;
 use App\Http\Requests\StorePaymentRequest;
+use App\Http\Requests\StoreWalletApplicationRequest;
+use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -140,6 +143,19 @@ class PaymentController extends Controller
 
         return Inertia::render('payments/show', [
             'payment' => $payment,
+        ]);
+    }
+
+    /**
+     * Apply wallet (general account deposit) balance to an invoice.
+     */
+    public function applyWalletToInvoice(StoreWalletApplicationRequest $request, ApplyWalletToInvoice $applyWalletToInvoice): RedirectResponse
+    {
+        $applyWalletToInvoice->handle($request->validated(), (string) $request->user()->id);
+
+        return back()->with('flash', [
+            'type' => 'success',
+            'message' => 'Wallet balance applied to invoice successfully.',
         ]);
     }
 }

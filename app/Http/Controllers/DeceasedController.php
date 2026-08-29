@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateDeceasedRequest;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\PaymentMode;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -196,11 +197,20 @@ class DeceasedController extends Controller
 
         $paymentModes = PaymentMode::where('is_active', true)->orderBy('name')->get();
 
+        $walletDeposits = Payment::query()
+            ->where('deceased_id', $deceased->id)
+            ->whereNull('invoice_id')
+            ->with('paymentMode')
+            ->latest()
+            ->get();
+
         return Inertia::render('deceased/show', [
             'deceased' => $deceased,
             'availableServices' => $availableServices,
             'storageServiceId' => $storageServiceId,
             'paymentModes' => $paymentModes,
+            'walletDeposits' => $walletDeposits,
+            'walletBalance' => (float) $walletDeposits->sum('amount'),
             'can' => [
                 'edit' => auth()->user()?->can('deceased.edit'),
                 'delete' => auth()->user()?->can('deceased.delete'),
@@ -278,7 +288,19 @@ class DeceasedController extends Controller
                     'transferred_at' => $storedAt ?? now(),
                 ]);
             } elseif ($oldChamberId) {
+                // Releasing via edit - enforce storage payment check
+                if (! $deceased->isStorageFullyPaid()) {
+                    return redirect()->back()
+                        ->with('flash', [
+                            'type' => 'error',
+                            'message' => 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid.',
+                        ])
+                        ->withErrors(['chamber_id' => 'Storage days must be fully paid before release.']);
+                }
+
                 $data['status'] = 'Released';
+                $data['released_at'] = now();
+                $data['released_by'] = auth()->id();
                 Transfer::create([
                     'deceased_id' => $deceased->id,
                     'from_chamber_id' => $oldChamberId,
@@ -334,6 +356,9 @@ class DeceasedController extends Controller
                 'total_paid' => $deceased->total_paid,
                 'ledger_balance' => $deceased->ledger_balance,
                 'is_settled' => $deceased->isBillSettled(),
+                'storage_days' => $deceased->days_in_storage,
+                'storage_days_paid' => $deceased->days_paid,
+                'storage_fully_paid' => $deceased->isStorageFullyPaid(),
                 'can_bypass' => auth()->user()?->can('deceased.bypass-billing') ?? false,
             ],
         ]);
@@ -351,17 +376,17 @@ class DeceasedController extends Controller
                 ->with('flash', ['type' => 'error', 'message' => 'Deceased has already been released.']);
         }
 
-        // Validate billing status
-        if (! $deceased->isBillSettled() && ! $request->boolean('bypass_billing_restriction')) {
+        // Validate billing status - storage days must be fully paid
+        if (! $deceased->isStorageFullyPaid() && ! $request->boolean('bypass_billing_restriction')) {
             return redirect()->back()
                 ->with('flash', [
                     'type' => 'error',
-                    'message' => 'Cannot release deceased with outstanding balance of '.number_format($deceased->ledger_balance, 2).' without manager override.',
+                    'message' => 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid.',
                 ])
-                ->withErrors(['billing' => 'Outstanding balance must be settled before release.']);
+                ->withErrors(['billing' => 'Storage days must be fully paid before release.']);
         }
 
-        if (! $deceased->isBillSettled() && $request->boolean('bypass_billing_restriction')) {
+        if (! $deceased->isStorageFullyPaid() && $request->boolean('bypass_billing_restriction')) {
             Gate::authorize('deceased.bypass-billing');
         }
 

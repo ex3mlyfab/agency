@@ -46,8 +46,20 @@ interface Deceased {
     release_code: string;
 }
 
+interface Billing {
+    total_billed: number;
+    total_paid: number;
+    ledger_balance: number;
+    is_settled: boolean;
+    storage_days: number;
+    storage_days_paid: number;
+    storage_fully_paid: boolean;
+    can_bypass: boolean;
+}
+
 interface Props {
     deceased: Deceased;
+    billing: Billing;
 }
 
 interface ReleaseFormData {
@@ -59,9 +71,10 @@ interface ReleaseFormData {
     released_to_id_number: string;
     release_notes: string;
     confirm_physical_verification: boolean;
+    bypass_billing_restriction: boolean;
 }
 
-export default function DeceasedRelease({ deceased }: Props) {
+export default function DeceasedRelease({ deceased, billing }: Props) {
     const { data, setData, post, processing, errors } =
         useForm<ReleaseFormData>({
             release_code: '',
@@ -72,6 +85,7 @@ export default function DeceasedRelease({ deceased }: Props) {
             released_to_id_number: '',
             release_notes: '',
             confirm_physical_verification: false,
+            bypass_billing_restriction: false,
         });
 
     function handlePrefill() {
@@ -119,6 +133,43 @@ export default function DeceasedRelease({ deceased }: Props) {
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Form Column */}
                     <div className="space-y-6 lg:col-span-2">
+                        {/* Storage Payment Status Banner */}
+                        {!billing.storage_fully_paid && (
+                            <Card className="border border-destructive/30 bg-destructive/5">
+                                <CardContent className="py-3">
+                                    <div className="flex items-start gap-3">
+                                        <ShieldCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-destructive">
+                                                Storage Days Not Fully Paid
+                                            </h4>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {billing.storage_days} days in storage, only {billing.storage_days_paid} days paid.
+                                                Settle all storage charges before release.
+                                            </p>
+                                            {billing.can_bypass && (
+                                                <div className="mt-3 flex items-center gap-2">
+                                                    <Checkbox
+                                                        id="bypass_billing_restriction"
+                                                        checked={data.bypass_billing_restriction}
+                                                        onCheckedChange={(checked) =>
+                                                            setData('bypass_billing_restriction', checked === true)
+                                                        }
+                                                    />
+                                                    <Label
+                                                        htmlFor="bypass_billing_restriction"
+                                                        className="cursor-pointer text-xs font-medium text-destructive"
+                                                    >
+                                                        Manager override — release anyway
+                                                    </Label>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Security Verification Code Card */}
                             <Card className="border border-primary/20 shadow-sm">
@@ -132,7 +183,7 @@ export default function DeceasedRelease({ deceased }: Props) {
                                         intake.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-4 pt-6">
+                                <CardContent className="space-y-4 py-3">
                                     <div className="space-y-2">
                                         <Label htmlFor="release_code">
                                             Intake Release Code{' '}
@@ -191,7 +242,7 @@ export default function DeceasedRelease({ deceased }: Props) {
                                         </Button>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="space-y-4 pt-6">
+                                <CardContent className="space-y-4 py-3">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="space-y-2">
                                             <Label htmlFor="released_to_name">
@@ -286,7 +337,7 @@ export default function DeceasedRelease({ deceased }: Props) {
                                         government-issued physical ID.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-4 pt-6">
+                                <CardContent className="space-y-4 py-3">
                                     <div className="grid gap-4 sm:grid-cols-3">
                                         <div className="space-y-2 sm:col-span-1">
                                             <Label htmlFor="released_to_id_type">
@@ -383,7 +434,7 @@ export default function DeceasedRelease({ deceased }: Props) {
 
                             {/* Confirmation Checkbox */}
                             <Card className="border border-success/30 bg-success/5 shadow-sm">
-                                <CardContent className="pt-6">
+                                <CardContent className="py-3">
                                     <div className="flex items-start space-x-3">
                                         <Checkbox
                                             id="confirm_physical_verification"
@@ -433,7 +484,8 @@ export default function DeceasedRelease({ deceased }: Props) {
                                     disabled={
                                         processing ||
                                         !data.confirm_physical_verification ||
-                                        !data.release_code
+                                        !data.release_code ||
+                                        (!billing.storage_fully_paid && !data.bypass_billing_restriction)
                                     }
                                     className="bg-primary hover:bg-primary/90"
                                 >
@@ -454,7 +506,7 @@ export default function DeceasedRelease({ deceased }: Props) {
                                     Deceased Reference
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3 pt-4">
+                            <CardContent className="space-y-3 py-2">
                                 <div>
                                     <div className="text-xs text-muted-foreground">
                                         Full Name
@@ -504,10 +556,45 @@ export default function DeceasedRelease({ deceased }: Props) {
                         <Card>
                             <CardHeader className="bg-secondary/20 pb-3">
                                 <CardTitle className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+                                    Storage Payment Status
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3 py-2">
+                                <div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Days in Storage
+                                    </div>
+                                    <div className="text-sm font-medium text-foreground">
+                                        {billing.storage_days} days
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Days Paid
+                                    </div>
+                                    <div className={`text-sm font-medium ${billing.storage_fully_paid ? 'text-success' : 'text-destructive'}`}>
+                                        {billing.storage_days_paid} days
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Status
+                                    </div>
+                                    <div className={`text-sm font-medium ${billing.storage_fully_paid ? 'text-success' : 'text-destructive'}`}>
+                                        {billing.storage_fully_paid ? 'Fully Paid' : 'Payment Required'}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Intake Bringer Reference Card */}
+                        <Card>
+                            <CardHeader className="bg-secondary/20 pb-3">
+                                <CardTitle className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
                                     Registered Bringer (Brought In By)
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3 pt-4">
+                            <CardContent className="space-y-3 py-2">
                                 <div>
                                     <div className="text-xs text-muted-foreground">
                                         Name

@@ -180,6 +180,14 @@ class Deceased extends Model
     }
 
     /**
+     * Check if storage days are fully paid.
+     */
+    public function isStorageFullyPaid(): bool
+    {
+        return $this->days_paid >= $this->days_in_storage;
+    }
+
+    /**
      * Get the total days spent in storage.
      */
     public function getDaysInStorageAttribute(): int
