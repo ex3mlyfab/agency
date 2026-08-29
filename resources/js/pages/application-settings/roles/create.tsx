@@ -1,6 +1,8 @@
 ﻿import { Head, useForm } from '@inertiajs/react';
-import { Shield } from 'lucide-react';
+import { Shield, SearchIcon, XIcon } from 'lucide-react';
+import { useState } from 'react';
 import { InputError } from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,6 +28,16 @@ export default function RoleCreate({ allPermissions }: Props) {
         permissions: [],
     });
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [openModules, setOpenModules] = useState<Record<string, boolean>>(() => {
+        const initial: Record<string, boolean> = {};
+        Object.keys(allPermissions).forEach((key) => {
+            initial[key] = true;
+        });
+
+        return initial;
+    });
+
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         post('/settings/application-settings/roles');
@@ -41,21 +53,35 @@ export default function RoleCreate({ allPermissions }: Props) {
 
     function toggleModule(modulePermissions: string[]) {
         const allSelected = modulePermissions.every((p) => data.permissions.includes(p));
-        
+
         if (allSelected) {
-            // Remove all
             setData('permissions', data.permissions.filter((p) => !modulePermissions.includes(p)));
         } else {
-            // Add all missing
             const toAdd = modulePermissions.filter((p) => !data.permissions.includes(p));
             setData('permissions', [...data.permissions, ...toAdd]);
         }
     }
 
+    function removePermission(permission: string) {
+        setData('permissions', data.permissions.filter((p) => p !== permission));
+    }
+
+    const filteredModules = Object.entries(allPermissions).map(([module, permissions]) => {
+        if (!searchQuery.trim()) {
+return [module, permissions] as const;
+}
+
+        const filtered = permissions.filter((p) =>
+            p.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        return filtered.length > 0 ? ([module, filtered] as const) : null;
+    }).filter(Boolean) as [string, string[]][];
+
     return (
         <>
             <Head title="New Role" />
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-4 sm:p-6">
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">
                         New Role
@@ -107,54 +133,112 @@ export default function RoleCreate({ allPermissions }: Props) {
                         </CardHeader>
                         <CardContent className="px-6 py-6">
                             <InputError message={errors.permissions} className="mb-4" />
-                            
-                            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                                {Object.entries(allPermissions).map(([module, permissions]) => {
+
+                            {data.permissions.length > 0 && (
+                                <div className="mb-4 flex flex-wrap gap-1.5">
+                                    {data.permissions.map((permission) => (
+                                        <Badge
+                                            key={permission}
+                                            variant="secondary"
+                                            className="text-xs px-2 py-0.5 gap-1"
+                                        >
+                                            {permission.split('.')[1] || permission}
+                                            <button
+                                                type="button"
+                                                onClick={() => removePermission(permission)}
+                                                className="ml-1 hover:text-destructive"
+                                            >
+                                                <XIcon className="h-3 w-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="relative mb-4">
+                                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search permissions…"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <XIcon className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                {filteredModules.map(([module, permissions]) => {
                                     const allSelected = permissions.every((p) => data.permissions.includes(p));
                                     const someSelected = permissions.some((p) => data.permissions.includes(p)) && !allSelected;
 
                                     return (
-                                        <div key={module} className="space-y-3 rounded-lg border border-border p-4 bg-background">
-                                            <div className="flex items-center justify-between border-b border-border pb-2">
-                                                <h3 className="font-semibold capitalize text-foreground flex items-center gap-2">
+                                        <div key={module} className="rounded-lg border border-border overflow-hidden">
+                                            <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2.5">
+                                                <label className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold capitalize flex-1 min-w-0">
                                                     <input
                                                         type="checkbox"
                                                         checked={allSelected}
                                                         ref={(input) => {
                                                             if (input) {
-input.indeterminate = someSelected;
-}
+                                                                input.indeterminate = someSelected;
+                                                            }
                                                         }}
                                                         onChange={() => toggleModule(permissions)}
                                                         className="h-4 w-4 rounded border-input text-primary focus:ring-ring cursor-pointer"
                                                         disabled={processing}
                                                     />
-                                                    {module.replace('_', ' ')}
-                                                </h3>
+                                                    <span className="truncate">{module.replace('_', ' ')}</span>
+                                                </label>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={() => setOpenModules((prev) => ({ ...prev, [module]: !prev[module] }))}
+                                                >
+                                                    {openModules[module] ? 'Collapse' : 'Expand'}
+                                                </Button>
                                             </div>
-                                            <div className="space-y-2.5">
-                                                {permissions.map((permission) => (
-                                                    <label
-                                                        key={permission}
-                                                        className="flex items-center gap-2.5 text-sm cursor-pointer hover:bg-secondary/50 p-1 -mx-1 rounded transition-colors"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={data.permissions.includes(permission)}
-                                                            onChange={() => togglePermission(permission)}
-                                                            className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
-                                                            disabled={processing}
-                                                        />
-                                                        <span className="text-muted-foreground">
-                                                            {permission.split('.')[1] || permission}
-                                                        </span>
-                                                    </label>
-                                                ))}
-                                            </div>
+                                            {openModules[module] && (
+                                                <div className="divide-y divide-border">
+                                                    {permissions.map((permission) => (
+                                                        <label
+                                                            key={permission}
+                                                            className="flex items-center gap-2.5 text-sm cursor-pointer hover:bg-secondary/50 px-4 py-2 transition-colors"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={data.permissions.includes(permission)}
+                                                                onChange={() => togglePermission(permission)}
+                                                                className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
+                                                                disabled={processing}
+                                                            />
+                                                            <span className="text-muted-foreground">
+                                                                {permission.split('.')[1] || permission}
+                                                            </span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
                             </div>
+
+                            {filteredModules.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-8">
+                                    No permissions match your search.
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
 

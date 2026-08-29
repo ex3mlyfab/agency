@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type {BreadcrumbItem} from '@/types';
 
 interface Role {
@@ -132,20 +139,18 @@ export default function UserEdit({ user, roles }: Props) {
                                 <Label htmlFor="role" className="font-semibold">
                                     Role <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="role"
-                                    value={data.role}
-                                    onChange={(e) => setData('role', e.target.value)}
-                                    disabled={processing}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <option value="">â€” Select a role â€”</option>
-                                    {roles.map((role) => (
-                                        <option key={role.id} value={role.name}>
-                                            {role.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select value={data.role} onValueChange={(value) => setData('role', value)}>
+                                    <SelectTrigger id="role" className="w-full">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {roles.map((role) => (
+                                            <SelectItem key={role.id} value={role.name}>
+                                                <span className="capitalize">{role.name}</span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <InputError message={errors.role} />
                             </div>
                         </CardContent>

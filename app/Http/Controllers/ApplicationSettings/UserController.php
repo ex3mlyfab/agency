@@ -24,12 +24,25 @@ class UserController extends Controller
         Gate::authorize('users.view');
 
         $search = $request->input('search');
+        $role = $request->input('role');
+        $verified = $request->input('verified');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $users = User::with('roles')
             ->when($search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
             })
+            ->when($role, function ($query, $role) {
+                $query->whereHas('roles', fn ($query) => $query->where('name', $role));
+            })
+            ->when($verified === 'verified', fn ($query) => $query->whereNotNull('email_verified_at'))
+            ->when($verified === 'unverified', fn ($query) => $query->whereNull('email_verified_at'))
+            ->when($dateFrom, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($dateTo, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
             ->latest()
             ->paginate(15)
             ->withQueryString()
@@ -38,12 +51,25 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'roles' => $user->roles->pluck('name'),
+                'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at,
             ]);
 
+        $stats = [
+            'total' => User::count(),
+            'super_admins' => User::whereHas('roles', fn ($query) => $query->where('name', 'super admin'))->count(),
+            'verified' => User::whereNotNull('email_verified_at')->count(),
+            'unverified' => User::whereNull('email_verified_at')->count(),
+            'new_this_month' => User::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count(),
+        ];
+
         return Inertia::render('application-settings/users/index', [
             'users' => $users,
-            'filters' => $request->only('search'),
+            'roles' => Role::orderBy('name')->get(['id', 'name']),
+            'stats' => $stats,
+            'filters' => $request->only(['search', 'role', 'verified', 'date_from', 'date_to']),
             'can' => [
                 'manage' => auth()->user()?->can('users.manage'),
             ],

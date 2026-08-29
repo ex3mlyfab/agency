@@ -5,6 +5,7 @@ namespace App\Http\Controllers\ApplicationSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApplicationSettings\StoreRoleRequest;
 use App\Http\Requests\ApplicationSettings\UpdateRoleRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,9 +24,15 @@ class RoleController extends Controller
         Gate::authorize('roles.view');
 
         $search = $request->input('search');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $guardName = $request->input('guard_name');
 
         $roles = Role::withCount('permissions', 'users')
             ->when($search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->when($dateFrom, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($dateTo, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))
+            ->when($guardName, fn ($q, $g) => $q->where('guard_name', $g))
             ->latest()
             ->paginate(15)
             ->withQueryString()
@@ -38,9 +45,20 @@ class RoleController extends Controller
                 'created_at' => $role->created_at,
             ]);
 
+        $summary = [
+            'total_roles' => Role::count(),
+            'total_permissions' => Permission::count(),
+            'total_users' => User::whereHas('roles')->count(),
+            'recent_roles' => Role::where('created_at', '>=', now()->subDays(30))->count(),
+        ];
+
+        $guards = Role::select('guard_name')->distinct()->orderBy('guard_name')->pluck('guard_name');
+
         return Inertia::render('application-settings/roles/index', [
             'roles' => $roles,
-            'filters' => $request->only('search'),
+            'filters' => $request->only('search', 'date_from', 'date_to', 'guard_name'),
+            'summary' => $summary,
+            'guards' => $guards,
             'can' => [
                 'manage' => auth()->user()?->can('roles.manage'),
             ],
