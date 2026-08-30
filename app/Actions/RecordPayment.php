@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentMode;
@@ -22,20 +23,55 @@ class RecordPayment
             }
 
             $payment = Payment::create([
-                'deceased_id' => $validated['deceased_id'], 'invoice_id' => $invoice?->id,
-                'payment_mode_id' => $paymentMode->id, 'payment_method' => $paymentMode->name,
-                'receipt_number' => 'REC-'.strtoupper(Str::random(8)), 'amount' => $validated['amount'],
-                'transaction_reference' => $validated['transaction_reference'] ?? null, 'payment_date' => $validated['payment_date'],
-                'notes' => $validated['notes'] ?? null, 'received_by' => $receivedBy,
+                'deceased_id' => $validated['deceased_id'],
+                'invoice_id' => $invoice?->id,
+                'payment_mode_id' => $paymentMode->id,
+                'payment_method' => $paymentMode->name,
+                'receipt_number' => 'REC-'.strtoupper(Str::random(8)),
+                'amount' => $validated['amount'],
+                'transaction_reference' => $validated['transaction_reference'] ?? null,
+                'payment_date' => $validated['payment_date'],
+                'notes' => $validated['notes'] ?? null,
+                'received_by' => $receivedBy,
             ]);
 
             if ($invoice) {
                 $invoice->paid_amount = $invoice->payments()->sum('amount');
-                $invoice->status = $invoice->paid_amount >= $invoice->total_amount ? 'Paid' : ($invoice->paid_amount > 0 ? 'Partially Paid' : 'Unpaid');
+                $wasUnpaid = $invoice->status === 'Unpaid';
+                $invoice->status = $invoice->paid_amount >= $invoice->total_amount
+                    ? 'Paid'
+                    : ($invoice->paid_amount > 0 ? 'Partially Paid' : 'Unpaid');
                 $invoice->save();
+
+                if ($invoice->billing_type === 'storage' && $invoice->status === 'Paid' && $wasUnpaid) {
+                    $this->maybeAutoGenerateNextStorageInvoice($invoice->deceased_id);
+                }
             }
 
             return $payment;
         });
+    }
+
+    /**
+     * If a storage invoice just became fully paid, check if new days have elapsed
+     * and auto-generate the next storage invoice.
+     */
+    private function maybeAutoGenerateNextStorageInvoice(string $deceasedId): void
+    {
+        $deceased = Deceased::with('storageFeeLogs')->find($deceasedId);
+        if (! $deceased) {
+            return;
+        }
+
+        $lastCoveredDay = (int) ($deceased->storageFeeLogs->max('days_covered_to') ?? 0);
+        $daysInStorage = $deceased->days_in_storage;
+        $newDays = max(0, $daysInStorage - $lastCoveredDay);
+
+        if ($newDays <= 0 || $deceased->status !== 'InChamber') {
+            return;
+        }
+
+        $action = app(CreateStorageFeeInvoice::class);
+        $action->handle($deceased, auth()->id() ?? '000000000000000000000000', $lastCoveredDay);
     }
 }

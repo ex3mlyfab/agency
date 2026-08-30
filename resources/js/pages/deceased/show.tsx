@@ -1,5 +1,5 @@
 ﻿import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react';
+import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon, FileTextIcon, EyeIcon } from 'lucide-react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
 import { StatusChip } from '@/components/status-chip';
@@ -59,9 +59,24 @@ interface Invoice {
     tax: number;
     total_amount: number;
     paid_amount: number;
+    waived_amount: number;
     status: string;
+    billing_type?: string | null;
+    period_start_date?: string | null;
     notes: string | null;
     invoice_items?: InvoiceItem[];
+}
+
+interface StorageFeeLog {
+    id: string;
+    invoice_id: string | null;
+    days_billed: number;
+    days_covered_from: number;
+    days_covered_to: number;
+    amount: number;
+    paid_days_at_creation: number;
+    created_by_user?: { name: string } | null;
+    invoice?: Invoice | null;
 }
 
 interface Payment {
@@ -108,6 +123,7 @@ interface Deceased {
     released_at: string | null;
     released_by_user: { name: string } | null;
     invoice?: Invoice | null;
+    storage_fee_logs?: StorageFeeLog[];
     payments?: Payment[];
     days_in_storage: number;
     days_paid: number;
@@ -132,10 +148,11 @@ interface Props {
     deceased: Deceased;
     availableServices: AvailableService[];
     storageServiceId: string | null;
+    lastStorageCoveredDay: number;
     paymentModes: PaymentMode[];
     walletDeposits: WalletDeposit[];
     walletBalance: number;
-    can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean };
+    can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean; createStorageInvoice: boolean };
 }
 
 
@@ -151,12 +168,12 @@ function Field({
             <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {label}
             </dt>
-            <dd className="text-sm text-foreground">{value ?? 'â€”'}</dd>
+            <dd className="text-sm text-foreground">{value ?? '—'}</dd>
         </div>
     );
 }
 
-export default function DeceasedShow({ deceased, availableServices, storageServiceId, paymentModes, walletDeposits, walletBalance, can }: Props) {
+export default function DeceasedShow({ deceased, availableServices, storageServiceId, lastStorageCoveredDay, paymentModes, walletDeposits, walletBalance, can }: Props) {
     const { branding } = usePage().props as any;
     const currencySymbol = branding?.currency_symbol ?? '₦';
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
@@ -214,7 +231,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
         : false;
 
     const invoiceOutstanding = deceased.invoice
-        ? Number(deceased.invoice.total_amount) - Number(deceased.invoice.paid_amount || 0)
+        ? Number(deceased.invoice.total_amount) - Number(deceased.invoice.paid_amount || 0) - Number(deceased.invoice.waived_amount || 0)
         : 0;
 
     const { data, setData, post, processing, errors } = useForm<{
@@ -226,7 +243,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
     });
 
     const openInvoiceModal = () => {
-        if (deceased.invoice && deceased.invoice.invoice_items) {
+        if (deceased.invoice && deceased.invoice.invoice_items && deceased.invoice.billing_type !== 'storage') {
             setData({
                 items: deceased.invoice.invoice_items.map(item => ({
                     service_id: item.service_id,
@@ -240,15 +257,11 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                 notes: '',
             });
         }
-
         setIsInvoiceOpen(true);
     };
 
     const handleAddItem = () => {
-        setData('items', [
-            ...data.items,
-            { service_id: availableServices[0]?.service_id ?? '', quantity: 1 },
-        ]);
+        setData('items', [...data.items, { service_id: availableServices[0]?.service_id ?? '', quantity: 1 }]);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -259,10 +272,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
 
     const handleItemChange = (index: number, field: 'service_id' | 'quantity', value: any) => {
         const newItems = [...data.items];
-        newItems[index] = {
-            ...newItems[index],
-            [field]: value,
-        };
+        newItems[index] = { ...newItems[index], [field]: value };
         setData('items', newItems);
     };
 
@@ -275,21 +285,20 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
 
     const calculatedTotal = data.items.reduce((sum, item) => {
         const service = availableServices.find(s => String(s.service_id) === String(item.service_id));
-
-        if (!service) {
-return sum;
-}
-
+        if (!service) return sum;
         if (service.has_tiers && service.tiered_price !== null) {
             return sum + service.tiered_price;
         }
-
         return sum + (service.price * Number(item.quantity || 0));
     }, 0);
 
     const totalBilled = deceased.invoice?.total_amount || 0;
     const totalPaid = deceased.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
     const ledgerBalance = totalBilled - totalPaid;
+
+    const hasStorageInvoice = deceased.storage_fee_logs && deceased.storage_fee_logs.length > 0;
+    const hasUncoveredStorageDays = deceased.days_in_storage > deceased.days_paid;
+    const storageFullyPaid = deceased.days_in_storage > 0 && deceased.days_paid >= deceased.days_in_storage;
 
     return (
         <>
@@ -310,7 +319,7 @@ return sum;
                                 ` · Chamber: ${deceased.chamber.name}`}
                         </p>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 gap-2 flex-wrap">
                         {can.edit && deceased.status !== 'Released' && (
                             <Button
                                 asChild
@@ -324,9 +333,7 @@ return sum;
                         )}
                         {can.transfer && deceased.status !== 'Released' && (
                             <Button asChild variant="secondary">
-                                <Link
-                                    href={`/transfers/create?deceased_id=${deceased.id}`}
-                                >
+                                <Link href={`/transfers/create?deceased_id=${deceased.id}`}>
                                     <MoveRightIcon className="mr-2 h-4 w-4" />
                                     Transfer
                                 </Link>
@@ -338,6 +345,35 @@ return sum;
                                     <PencilIcon className="mr-2 h-4 w-4" />
                                     Edit
                                 </Link>
+                            </Button>
+                        )}
+
+                        {/* Service Invoice button */}
+                        {can.edit && deceased.status !== 'Released' && !deceased.invoice && (
+                            <Button onClick={openInvoiceModal} variant="default">
+                                <ReceiptIcon className="mr-2 h-4 w-4" />
+                                Create Service Invoice
+                            </Button>
+                        )}
+
+                        {/* Storage Invoice button — always show when InChamber and user has permission */}
+                        {can.createStorageInvoice && deceased.status === 'InChamber' && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={storageFullyPaid}
+                                onClick={() => {
+                                    router.post(`/deceased/${deceased.id}/storage-invoice`, {}, {
+                                        preserveScroll: true,
+                                    });
+                                }}
+                            >
+                                <FileTextIcon className="mr-2 h-4 w-4" />
+                                {hasStorageInvoice && hasUncoveredStorageDays
+                                    ? 'Generate Next Storage Invoice'
+                                    : hasStorageInvoice
+                                    ? 'Storage Fully Covered'
+                                    : 'Generate Storage Invoice'}
                             </Button>
                         )}
                     </div>
@@ -353,14 +389,8 @@ return sum;
                         </CardHeader>
                         <CardContent className="px-6 py-6">
                             <dl className="grid grid-cols-2 gap-4">
-                                <Field
-                                    label="First Name"
-                                    value={deceased.first_name}
-                                />
-                                <Field
-                                    label="Last Name"
-                                    value={deceased.last_name}
-                                />
+                                <Field label="First Name" value={deceased.first_name} />
+                                <Field label="Last Name" value={deceased.last_name} />
                                 <Field
                                     label="Date of Birth"
                                     value={deceased.date_of_birth ? new Date(deceased.date_of_birth).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' }) : null}
@@ -370,17 +400,12 @@ return sum;
                                     value={deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : null}
                                 />
                                 <Field label="Gender" value={deceased.gender} />
-                                <Field
-                                    label="Cause of Death"
-                                    value={deceased.cause_of_death}
-                                />
+                                <Field label="Cause of Death" value={deceased.cause_of_death} />
                                 <div className="col-span-2 space-y-1">
                                     <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         Notes
                                     </dt>
-                                    <dd className="text-sm text-foreground">
-                                        {deceased.notes ?? 'â€”'}
-                                    </dd>
+                                    <dd className="text-sm text-foreground">{deceased.notes ?? '—'}</dd>
                                 </div>
                                 <div className="col-span-2 space-y-1 rounded-md border border-border bg-secondary/10 p-3">
                                     <dt className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -405,22 +430,10 @@ return sum;
                             </CardHeader>
                             <CardContent className="px-6 py-6">
                                 <dl className="grid grid-cols-2 gap-4">
-                                    <Field
-                                        label="Name"
-                                        value={deceased.relative_name}
-                                    />
-                                    <Field
-                                        label="Relationship"
-                                        value={deceased.relative_relationship}
-                                    />
-                                    <Field
-                                        label="Phone"
-                                        value={deceased.relative_phone}
-                                    />
-                                    <Field
-                                        label="Address"
-                                        value={deceased.relative_address}
-                                    />
+                                    <Field label="Name" value={deceased.relative_name} />
+                                    <Field label="Relationship" value={deceased.relative_relationship} />
+                                    <Field label="Phone" value={deceased.relative_phone} />
+                                    <Field label="Address" value={deceased.relative_address} />
                                 </dl>
                             </CardContent>
                         </Card>
@@ -435,42 +448,14 @@ return sum;
                                 </CardHeader>
                                 <CardContent className="px-6 py-6">
                                     <dl className="grid grid-cols-2 gap-4">
-                                        <Field
-                                            label="Released To"
-                                            value={deceased.released_to_name}
-                                        />
-                                        <Field
-                                            label="Relationship"
-                                            value={
-                                                deceased.released_to_relationship
-                                            }
-                                        />
-                                        <Field
-                                            label="Phone"
-                                            value={deceased.released_to_phone}
-                                        />
-                                        <Field
-                                            label="Released At"
-                                            value={deceased.released_at}
-                                        />
-                                        <Field
-                                            label="Verified ID Type"
-                                            value={deceased.released_to_id_type}
-                                        />
-                                        <Field
-                                            label="Verified ID Number"
-                                            value={
-                                                deceased.released_to_id_number
-                                            }
-                                        />
+                                        <Field label="Released To" value={deceased.released_to_name} />
+                                        <Field label="Relationship" value={deceased.released_to_relationship} />
+                                        <Field label="Phone" value={deceased.released_to_phone} />
+                                        <Field label="Released At" value={deceased.released_at} />
+                                        <Field label="Verified ID Type" value={deceased.released_to_id_type} />
+                                        <Field label="Verified ID Number" value={deceased.released_to_id_number} />
                                         <div className="col-span-2">
-                                            <Field
-                                                label="Authorized By Staff"
-                                                value={
-                                                    deceased.released_by_user
-                                                        ?.name
-                                                }
-                                            />
+                                            <Field label="Authorized By Staff" value={deceased.released_by_user?.name} />
                                         </div>
                                     </dl>
                                 </CardContent>
@@ -484,7 +469,7 @@ return sum;
                     <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                             <ClockIcon className="h-4 w-4 text-primary" />
-                            Storage Tracker
+                            Storage Fee Tracker
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-6 py-6">
@@ -514,7 +499,7 @@ return sum;
                                     <span className="text-sm font-medium text-muted-foreground">days</span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Determined from settled invoice details
+                                    From settled storage invoices
                                 </p>
                             </div>
 
@@ -524,42 +509,46 @@ return sum;
                                     <div className="flex justify-between text-xs font-semibold mb-1">
                                         <span className="text-muted-foreground">Coverage Progress</span>
                                         <span className={deceased.days_paid >= deceased.days_in_storage ? "text-success font-bold" : "text-amber-500 font-bold"}>
-                                            {deceased.days_in_storage > 0 
+                                            {deceased.days_in_storage > 0
                                                 ? Math.min(100, Math.round((deceased.days_paid / deceased.days_in_storage) * 100))
                                                 : 100}%
                                         </span>
                                     </div>
                                     <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
-                                        <div 
+                                        <div
                                             className={`h-2.5 rounded-full ${
-                                                deceased.days_paid >= deceased.days_in_storage 
+                                                deceased.days_paid >= deceased.days_in_storage
                                                     ? 'bg-success'
                                                     : 'bg-amber-500'
                                             }`}
-                                            style={{ 
-                                                width: `${deceased.days_in_storage > 0 
-                                                    ? Math.min(100, (deceased.days_paid / deceased.days_in_storage) * 100) 
-                                                    : 100}%` 
+                                            style={{
+                                                width: `${deceased.days_in_storage > 0
+                                                    ? Math.min(100, (deceased.days_paid / deceased.days_in_storage) * 100)
+                                                    : 100}%`
                                             }}
                                         />
                                     </div>
                                 </div>
 
-                                {deceased.days_in_storage > deceased.days_paid ? (
+                                {deceased.status === 'InChamber' && deceased.days_in_storage > deceased.days_paid ? (
                                     <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-700 dark:text-amber-400">
                                         <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5" />
                                         <div>
-                                            <span className="font-semibold">Unpaid Storage:</span> {deceased.days_in_storage - deceased.days_paid} day(s) outstanding. Update the invoice to ensure full billing.
+                                            <span className="font-semibold">Unpaid Storage:</span>{' '}
+                                            {deceased.days_in_storage - deceased.days_paid} day(s) outstanding.{' '}
+                                            {!hasStorageInvoice
+                                                ? 'Generate a storage invoice to begin billing.'
+                                                : 'A new storage invoice will be generated automatically when the current one is paid.'}
                                         </div>
                                     </div>
-                                ) : (
+                                ) : deceased.days_in_storage > 0 && deceased.days_paid >= deceased.days_in_storage ? (
                                     <div className="flex items-start gap-2 rounded-md bg-success/10 border border-success/20 p-2.5 text-xs text-success dark:text-success">
                                         <ShieldCheckIcon className="h-4 w-4 shrink-0 mt-0.5" />
                                         <div>
-                                            <span className="font-semibold">Fully Covered:</span> All storage days spent are currently covered by payments.
+                                            <span className="font-semibold">Fully Covered:</span> All storage days are paid.
                                         </div>
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     </CardContent>
@@ -571,9 +560,9 @@ return sum;
                         <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                                 <ReceiptIcon className="h-4 w-4" />
-                                Service Billing / Invoicing
+                                Service Invoice
                             </CardTitle>
-                            {deceased.invoice && (
+                            {deceased.invoice && deceased.invoice.billing_type !== 'storage' && (
                                 <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${
                                     deceased.invoice.status === 'Paid'
                                         ? 'bg-success/10 text-success border-success/20'
@@ -586,15 +575,15 @@ return sum;
                             )}
                         </CardHeader>
                         <CardContent className="px-6 py-6 space-y-6">
-                            {!deceased.invoice ? (
+                            {!deceased.invoice || deceased.invoice.billing_type === 'storage' ? (
                                 <div className="text-center py-6">
                                     <p className="text-sm text-muted-foreground mb-4">
-                                        No invoice has been created for this record yet. Configure the invoice to add services and rates.
+                                        No service invoice has been created for this record yet.
                                     </p>
-                                    {can.edit && (
+                                    {can.edit && deceased.status !== 'Released' && (
                                         <Button onClick={openInvoiceModal} size="sm">
                                             <PlusIcon className="mr-2 h-4 w-4" />
-                                            Configure Invoice
+                                            Create Service Invoice
                                         </Button>
                                     )}
                                 </div>
@@ -604,12 +593,12 @@ return sum;
                                         <span className="font-mono text-muted-foreground font-semibold">
                                             Invoice #: {deceased.invoice.invoice_number}
                                         </span>
-                                        {can.edit && (
-                                            <Button onClick={openInvoiceModal} variant="outline" size="sm">
-                                                <PencilIcon className="mr-2.5 h-3.5 w-3.5" />
-                                                Edit Invoice
+                                        <Link href={`/invoices/${deceased.invoice.id}`}>
+                                            <Button variant="outline" size="sm">
+                                                <EyeIcon className="mr-2.5 h-3.5 w-3.5" />
+                                                View Invoice
                                             </Button>
-                                        )}
+                                        </Link>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm text-left">
@@ -633,14 +622,12 @@ return sum;
                                             </tbody>
                                         </table>
                                     </div>
-
                                     {deceased.invoice.notes && (
                                         <div className="text-xs bg-secondary/20 border border-border/50 rounded-md p-3">
                                             <div className="font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes:</div>
                                             <p className="text-foreground">{deceased.invoice.notes}</p>
                                         </div>
                                     )}
-
                                     <div className="border-t border-border pt-4 space-y-2">
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Subtotal:</span>
@@ -707,7 +694,7 @@ return sum;
                                                         </td>
                                                         <td className="py-2 text-foreground">{payment.payment_method}</td>
                                                         <td className="py-2 font-mono text-xs text-muted-foreground">
-                                                            {payment.transaction_reference || 'â€”'}
+                                                            {payment.transaction_reference || '—'}
                                                         </td>
                                                         <td className="py-2 text-right font-semibold text-success">
                                                             {currencySymbol}{Number(payment.amount).toLocaleString()}
@@ -729,13 +716,83 @@ return sum;
                     </Card>
                 </div>
 
-                {/* Configure Invoice Dialog */}
+                {/* Storage Fee Invoices Card */}
+                {can.createStorageInvoice && deceased.storage_fee_logs && deceased.storage_fee_logs.length > 0 && (
+                    <Card>
+                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
+                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                                <FileTextIcon className="h-4 w-4" />
+                                Storage Fee Invoices
+                            </CardTitle>
+                            {deceased.status === 'InChamber' && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={storageFullyPaid}
+                                    onClick={() => {
+                                        router.post(`/deceased/${deceased.id}/storage-invoice`, {}, {
+                                            preserveScroll: true,
+                                        });
+                                    }}
+                                >
+                                    <PlusIcon className="mr-2 h-3.5 w-3.5" />
+                                    {storageFullyPaid ? 'All Covered' : 'Generate Next'}
+                                </Button>
+                            )}
+                        </CardHeader>
+                        <CardContent className="px-6 py-6">
+                            <div className="space-y-3">
+                                {deceased.storage_fee_logs.map((log) => (
+                                    <div key={log.id} className="flex items-center justify-between rounded-md border border-border bg-secondary/10 p-3">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                {log.invoice ? (
+                                                    <Link href={`/invoices/${log.invoice.id}`}>
+                                                        <span className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer">
+                                                            {log.invoice.invoice_number}
+                                                        </span>
+                                                    </Link>
+                                                ) : (
+                                                    <span className="font-mono text-xs font-semibold text-muted-foreground">—</span>
+                                                )}
+                                                {log.invoice && (
+                                                    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
+                                                        log.invoice.status === 'Paid'
+                                                            ? 'bg-success/10 text-success border-success/20'
+                                                            : log.invoice.status === 'Partially Paid'
+                                                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                                            : 'bg-destructive/10 text-destructive border-destructive/20'
+                                                    }`}>
+                                                        {log.invoice.status}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Days {log.days_covered_from}–{log.days_covered_to} · Billed: {log.days_billed} day(s)
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-semibold text-foreground">
+                                                {currencySymbol}{Number(log.amount).toLocaleString()}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                Paid days at creation: {log.paid_days_at_creation}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Configure Service Invoice Dialog */}
                 <Dialog open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen}>
                     <DialogContent className="max-w-2xl bg-card border border-border">
                         <DialogHeader>
                             <DialogTitle>Configure Service Invoice</DialogTitle>
                             <DialogDescription>
-                                Add services and quantities to generate or update the invoice. Rates correspond to the service category assigned to the deceased record.
+                                Add service line items to create or update the invoice. Storage fees are billed separately via the Storage Fee Tracker below.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -767,9 +824,7 @@ return sum;
                                                 <div className="col-span-6">
                                                     <select
                                                         value={item.service_id}
-                                                        onChange={(e) =>
-                                                            handleItemChange(index, 'service_id', e.target.value)
-                                                        }
+                                                        onChange={(e) => handleItemChange(index, 'service_id', e.target.value)}
                                                         className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                         required
                                                     >
@@ -785,29 +840,14 @@ return sum;
                                                     {currencySymbol}{price.toLocaleString()}
                                                 </div>
                                                 <div className="col-span-2">
-                                                    {isStorage ? (
-                                                        <Input
-                                                            type="text"
-                                                            readOnly
-                                                            value={`${deceased.days_in_storage} days`}
-                                                            className="text-center h-9 bg-secondary/30 cursor-not-allowed"
-                                                        />
-                                                    ) : (
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={item.quantity}
-                                                            onChange={(e) =>
-                                                                handleItemChange(
-                                                                    index,
-                                                                    'quantity',
-                                                                    Math.max(1, parseInt(e.target.value) || 1)
-                                                                )
-                                                            }
-                                                            className="text-center h-9"
-                                                            required
-                                                        />
-                                                    )}
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) => handleItemChange(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                                                        className="text-center h-9"
+                                                        required
+                                                    />
                                                 </div>
                                                 <div className="col-span-2 text-right">
                                                     <Button
@@ -832,7 +872,8 @@ return sum;
                                     Add Service Line
                                 </Button>
                                 <div className="text-sm font-semibold">
-                                    Total Estimate: <span className="text-primary font-bold text-base">{currencySymbol}{calculatedTotal.toLocaleString()}</span>
+                                    Total Estimate:{' '}
+                                    <span className="text-primary font-bold text-base">{currencySymbol}{calculatedTotal.toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -889,29 +930,25 @@ return sum;
                                     }}
                                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 >
-                                    {deceased.invoice && (
-                                        <option value="invoice">Invoice ({deceased.invoice.invoice_number})</option>
+                                    {deceased.invoice && deceased.invoice.billing_type !== 'storage' && (
+                                        <option value="invoice">Service Invoice ({deceased.invoice.invoice_number})</option>
                                     )}
+                                    {deceased.storage_fee_logs?.map((log) => (
+                                        <option key={log.invoice?.id} value={log.invoice?.id || ''}>
+                                            Storage Invoice ({log.invoice?.invoice_number}) — {log.days_covered_from}–{log.days_covered_to} days
+                                        </option>
+                                    ))}
                                     <option value="general">General Account Deposit (Ledger)</option>
                                 </select>
                             </div>
 
-                            {paymentForm.data.invoice_id && deceased.invoice && (
+                            {paymentForm.data.invoice_id && (
                                 <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
                                     <div>
                                         <span className="text-xs text-muted-foreground block">Invoice #</span>
-                                        <span className="font-mono text-foreground">{deceased.invoice.invoice_number}</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
-                                        <span className="font-semibold text-foreground">
-                                            {currencySymbol}{Number(deceased.invoice.total_amount).toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-xs text-muted-foreground block">Total Paid</span>
-                                        <span className="font-medium text-emerald-600">
-                                            {currencySymbol}{Number(deceased.invoice.paid_amount || 0).toLocaleString()}
+                                        <span className="font-mono text-foreground">
+                                            {deceased.storage_fee_logs?.find(l => l.invoice?.id === paymentForm.data.invoice_id)?.invoice?.invoice_number
+                                                || deceased.invoice?.invoice_number}
                                         </span>
                                     </div>
                                     <div className="text-right">
@@ -938,28 +975,6 @@ return sum;
                                             Receipt {deposit.receipt_number} — {currencySymbol}{Number(deposit.amount).toLocaleString()} via {deposit.payment_method}
                                         </div>
                                     ))}
-                                </div>
-                            )}
-
-                            {walletBalance > 0 && paymentForm.data.invoice_id && deceased.invoice && invoiceOutstanding > 0 && (
-                                <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-foreground">
-                                            Settle invoice from wallet
-                                        </span>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleApplyWalletToInvoice}
-                                            disabled={isWalletApplying}
-                                        >
-                                            {isWalletApplying ? 'Applying...' : `Apply ${currencySymbol}${walletBalance.toLocaleString()}`}
-                                        </Button>
-                                    </div>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        Apply {walletBalance >= invoiceOutstanding ? 'full' : 'partial'} wallet funds ({currencySymbol}{walletBalance.toLocaleString()}) toward the invoice balance ({currencySymbol}{invoiceOutstanding.toLocaleString()}).
-                                    </p>
                                 </div>
                             )}
 
@@ -997,10 +1012,9 @@ return sum;
                                     type="number"
                                     step="0.01"
                                     min="0.01"
-                                    max={paymentForm.data.invoice_id ? invoiceOutstanding : undefined}
                                     value={paymentForm.data.amount}
                                     onChange={(e) => paymentForm.setData('amount', e.target.value)}
-                                    placeholder={paymentForm.data.invoice_id ? `Outstanding balance: ${invoiceOutstanding.toFixed(2)}` : 'Enter amount'}
+                                    placeholder="Enter amount"
                                     required
                                 />
                                 <InputError message={paymentForm.errors.amount} />
@@ -1078,17 +1092,16 @@ return sum;
                                             </span>
                                             {t.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    Â· by{' '}
+                                                    · by{' '}
                                                     {t.transferred_by_user.name}
                                                 </span>
                                             )}
                                         </div>
                                         {(t.from_chamber || t.to_chamber) && (
                                             <p className="mt-1 text-sm text-foreground">
-                                                {t.from_chamber?.name ?? 'â€”'}
-                                                {' â†’ '}
-                                                {t.to_chamber?.name ??
-                                                    'Released'}
+                                                {t.from_chamber?.name ?? '—'}
+                                                {' → '}
+                                                {t.to_chamber?.name ?? 'Released'}
                                             </p>
                                         )}
                                         {t.notes && (

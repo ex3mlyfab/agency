@@ -19,5 +19,9 @@ return new class extends Migration
             $table->json('properties')->nullable();
             $table->timestamps();
         });
+
+        // Fix: MySQL is strict about types, so we need to alter the morph columns
+        // to accept string IDs (like ULIDs) instead of only bigint
+        DB::statement('ALTER TABLE activity_log MODIFY COLUMN subject_id VARCHAR(26) NULL, MODIFY COLUMN causer_id VARCHAR(26) NULL');
     }
 };

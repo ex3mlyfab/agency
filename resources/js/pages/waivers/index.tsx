@@ -1,15 +1,13 @@
-﻿import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-    EyeIcon,
+    ShieldCheckIcon,
     SearchIcon,
     XIcon,
     FilterIcon,
-    FileTextIcon,
-    CheckCircle2Icon,
-    AlertCircleIcon,
-    WalletIcon,
     CalendarIcon,
     UserIcon,
+    FileTextIcon,
+    TrendingDownIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Pagination } from '@/components/pagination';
@@ -45,17 +43,21 @@ interface Deceased {
 interface Invoice {
     id: string;
     invoice_number: string;
-    deceased: Deceased | null;
-    total_amount: string | number;
-    paid_amount: string | number;
-    waived_amount: string | number;
-    status: string;
-    created_at: string;
-    created_by_user: { id: string; name: string } | null;
 }
 
-interface PaginatedInvoices {
-    data: Invoice[];
+interface Waiver {
+    id: string;
+    deceased: Deceased | null;
+    invoice: Invoice | null;
+    amount: string | number;
+    reason: string | null;
+    authorized_at: string;
+    authorized_by_user: { id: string; name: string } | null;
+    created_at: string;
+}
+
+interface PaginatedWaivers {
+    data: Waiver[];
     current_page: number;
     last_page: number;
     from: number;
@@ -65,161 +67,113 @@ interface PaginatedInvoices {
 }
 
 interface Summary {
-    total_invoices: number;
-    paid: { count: number; total: number };
-    unpaid: { count: number; balance: number };
-    partially_paid: { count: number; balance: number };
+    total_waivers: number;
+    total_waived: number;
+    invoices_affected: number;
+    deceased_affected: number;
+}
+
+interface Authorizer {
+    id: string;
+    name: string;
 }
 
 interface Props {
-    invoices: PaginatedInvoices;
+    waivers: PaginatedWaivers;
     filters: {
         search?: string;
-        status?: string;
         date_from?: string;
         date_to?: string;
-        created_by?: string;
+        authorized_by?: string;
     };
     summary: Summary;
-    statuses: string[];
-    creators: { id: string; name: string }[];
+    authorizers: Authorizer[];
     can: { manage: boolean };
 }
 
-export default function InvoicesIndex({
-    invoices,
-    filters,
-    summary,
-    statuses,
-    creators,
-    can,
-}: Props) {
+export default function WaiversIndex({ waivers, filters, summary, authorizers, can }: Props) {
     const symbol = useCurrency();
     const [search, setSearch] = useState(filters.search || '');
-    const [status, setStatus] = useState(filters.status || 'all');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
-    const [createdBy, setCreatedBy] = useState(filters.created_by || 'all');
+    const [authorizedBy, setAuthorizedBy] = useState(filters.authorized_by || 'all');
     const [filtersOpen, setFiltersOpen] = useState(false);
 
     function applyFilters() {
         router.get(
-            '/invoices',
+            '/waivers',
             {
                 search: search || undefined,
-                status: status === 'all' ? undefined : status,
                 date_from: dateFrom || undefined,
                 date_to: dateTo || undefined,
-                created_by: createdBy === 'all' ? undefined : createdBy,
+                authorized_by: authorizedBy === 'all' ? undefined : authorizedBy,
             },
             {
                 preserveState: true,
                 preserveScroll: true,
-                only: ['invoices', 'filters'],
+                only: ['waivers', 'filters'],
             },
         );
     }
 
     function clearFilters() {
         setSearch('');
-        setStatus('all');
         setDateFrom('');
         setDateTo('');
-        setCreatedBy('all');
+        setAuthorizedBy('all');
         router.get(
-            '/invoices',
+            '/waivers',
             {},
             {
                 preserveState: true,
                 preserveScroll: true,
-                only: ['invoices', 'filters'],
+                only: ['waivers', 'filters'],
             },
         );
     }
 
     function hasActiveFilters() {
-        return !!(
-            search ||
-            status !== 'all' ||
-            dateFrom ||
-            dateTo ||
-            createdBy !== 'all'
-        );
+        return !!(search || dateFrom || dateTo || authorizedBy !== 'all');
     }
-
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'paid':
-                return 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
-            case 'partially_paid':
-            case 'partially paid':
-                return 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
-            case 'unpaid':
-                return 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
-            case 'draft':
-                return 'bg-slate-500/10 text-slate-500 border border-slate-500/20';
-            default:
-                return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
-        }
-    };
 
     return (
         <>
-            <Head title="Invoices" />
+            <Head title="Waivers" />
             <div className="space-y-6 p-4 sm:p-6">
-                {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                            Invoices
+                            Waivers
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            {invoices.total > 0
-                                ? `Showing ${invoices.from}–${invoices.to} of ${invoices.total} invoices`
-                                : 'No invoices on file'}
+                            {waivers.total > 0
+                                ? `Showing ${waivers.from}–${waivers.to} of ${waivers.total} waivers`
+                                : 'No waivers on file'}
                         </p>
                     </div>
                     {can.manage && (
                         <Button asChild className="shrink-0">
-                            <Link href="/invoices/create">
-                                <FileTextIcon className="mr-2 h-4 w-4" />
-                                New Invoice
+                            <Link href="/waivers/create">
+                                <ShieldCheckIcon className="mr-2 h-4 w-4" />
+                                New Waiver
                             </Link>
                         </Button>
                     )}
                 </div>
 
-                {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-violet-500" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                                <FileTextIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
+                                <ShieldCheckIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                             </div>
                             <div className="min-w-0">
                                 <p className="text-2xl font-bold leading-none truncate">
-                                    {summary.total_invoices}
+                                    {summary.total_waivers}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    Total Invoices
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
-                        <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                                <CheckCircle2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
-                                    {summary.paid.count}
-                                </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {fmtCurrency(summary.paid.total, symbol)} collected
+                                    Total Waivers
                                 </p>
                             </div>
                         </CardContent>
@@ -229,14 +183,31 @@ export default function InvoicesIndex({
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-rose-500" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10">
-                                <AlertCircleIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                                <TrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                             </div>
                             <div className="min-w-0">
                                 <p className="text-2xl font-bold leading-none truncate">
-                                    {summary.unpaid.count}
+                                    {fmtCurrency(summary.total_waived, symbol)}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {fmtCurrency(summary.unpaid.balance, symbol)} outstanding
+                                    Total Waived
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="overflow-hidden">
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <CardContent className="flex items-center gap-3 p-4">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                                <FileTextIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-2xl font-bold leading-none truncate">
+                                    {summary.invoices_affected}
+                                </p>
+                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                    Invoices Affected
                                 </p>
                             </div>
                         </CardContent>
@@ -246,35 +217,33 @@ export default function InvoicesIndex({
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                                <WalletIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                <UserIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                             </div>
                             <div className="min-w-0">
                                 <p className="text-2xl font-bold leading-none truncate">
-                                    {summary.partially_paid.count}
+                                    {summary.deceased_affected}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {fmtCurrency(summary.partially_paid.balance, symbol)} remaining
+                                    Records Affected
                                 </p>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Filters Bar */}
                 <Card>
                     <CardContent className="p-0">
-                        {/* Top row: search + toggle */}
                         <div className="flex items-center gap-2 border-b border-border p-3">
                             <div className="relative flex-1 min-w-0">
                                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Search by invoice number or deceased name…"
+                                    placeholder="Search by invoice #, deceased name, or reason…"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                                     className="pl-9 pr-9"
-                                    aria-label="Search invoices"
+                                    aria-label="Search waivers"
                                 />
                                 {search && (
                                     <button
@@ -312,7 +281,6 @@ export default function InvoicesIndex({
                             )}
                         </div>
 
-                        {/* Collapsible filter row */}
                         <div
                             className={`overflow-hidden transition-all duration-200 ${
                                 filtersOpen
@@ -321,36 +289,6 @@ export default function InvoicesIndex({
                             }`}
                         >
                             <div className="flex flex-wrap items-end gap-3 p-3">
-                                <div className="flex flex-col gap-1.5">
-                                    <Label
-                                        htmlFor="status-filter"
-                                        className="text-xs font-medium text-muted-foreground"
-                                    >
-                                        Status
-                                    </Label>
-                                    <Select
-                                        value={status}
-                                        onValueChange={setStatus}
-                                    >
-                                        <SelectTrigger
-                                            id="status-filter"
-                                            className="w-[150px]"
-                                        >
-                                            <SelectValue placeholder="All statuses" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">
-                                                All statuses
-                                            </SelectItem>
-                                            {statuses.map((s) => (
-                                                <SelectItem key={s} value={s}>
-                                                    {s}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
                                 <div className="flex flex-col gap-1.5">
                                     <Label
                                         htmlFor="date-from"
@@ -395,26 +333,26 @@ export default function InvoicesIndex({
 
                                 <div className="flex flex-col gap-1.5">
                                     <Label
-                                        htmlFor="creator-filter"
+                                        htmlFor="authorizer-filter"
                                         className="text-xs font-medium text-muted-foreground"
                                     >
-                                        Created By
+                                        Authorized By
                                     </Label>
                                     <Select
-                                        value={createdBy}
-                                        onValueChange={setCreatedBy}
+                                        value={authorizedBy}
+                                        onValueChange={setAuthorizedBy}
                                     >
                                         <SelectTrigger
-                                            id="creator-filter"
+                                            id="authorizer-filter"
                                             className="w-[160px]"
                                         >
-                                            <SelectValue placeholder="All creators" />
+                                            <SelectValue placeholder="All authorizers" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">
-                                                All creators
+                                                All authorizers
                                             </SelectItem>
-                                            {creators.map((user) => (
+                                            {authorizers.map((user) => (
                                                 <SelectItem
                                                     key={user.id}
                                                     value={user.id}
@@ -440,7 +378,6 @@ export default function InvoicesIndex({
                     </CardContent>
                 </Card>
 
-                {/* Active filter badges */}
                 {hasActiveFilters() && (
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs text-muted-foreground">
@@ -459,24 +396,6 @@ export default function InvoicesIndex({
                                     }}
                                     className="ml-1.5 hover:text-destructive"
                                     aria-label="Remove search filter"
-                                >
-                                    <XIcon className="h-3 w-3" />
-                                </button>
-                            </Badge>
-                        )}
-                        {status !== 'all' && (
-                            <Badge
-                                variant="outline"
-                                className="text-xs px-2 py-0.5"
-                            >
-                                {status}
-                                <button
-                                    onClick={() => {
-                                        setStatus('all');
-                                        applyFilters();
-                                    }}
-                                    className="ml-1.5 hover:text-destructive"
-                                    aria-label="Remove status filter"
                                 >
                                     <XIcon className="h-3 w-3" />
                                 </button>
@@ -528,23 +447,23 @@ export default function InvoicesIndex({
                                 </button>
                             </Badge>
                         )}
-                        {createdBy !== 'all' && (
+                        {authorizedBy !== 'all' && (
                             <Badge
                                 variant="outline"
                                 className="text-xs px-2 py-0.5"
                             >
                                 <UserIcon className="mr-1 h-3 w-3" />
                                 {
-                                    creators.find((u) => u.id === createdBy)
+                                    authorizers.find((u) => u.id === authorizedBy)
                                         ?.name
                                 }
                                 <button
                                     onClick={() => {
-                                        setCreatedBy('all');
+                                        setAuthorizedBy('all');
                                         applyFilters();
                                     }}
                                     className="ml-1.5 hover:text-destructive"
-                                    aria-label="Remove creator filter"
+                                    aria-label="Remove authorizer filter"
                                 >
                                     <XIcon className="h-3 w-3" />
                                 </button>
@@ -553,72 +472,68 @@ export default function InvoicesIndex({
                     </div>
                 )}
 
-                {/* Table */}
                 <Card>
                     <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-                            Billing Ledger
+                            Waiver Ledger
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {invoices.data.length === 0 ? (
+                        {waivers.data.length === 0 ? (
                             <div className="p-6">
                                 <Alert>
-                                    <AlertTitle>No invoices found</AlertTitle>
+                                    <AlertTitle>No waivers found</AlertTitle>
                                     <AlertDescription>
                                         {hasActiveFilters()
-                                            ? 'No invoices match your current filters.'
-                                            : 'No invoices have been created yet.'}
+                                            ? 'No waivers match your current filters.'
+                                            : 'No waivers have been recorded yet.'}
                                     </AlertDescription>
                                 </Alert>
                             </div>
                         ) : (
                             <>
-                                {/* Desktop table */}
                                 <Table className="hidden sm:table">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Invoice #</TableHead>
                                             <TableHead>Deceased</TableHead>
-                                            <TableHead>Total Amount</TableHead>
-                                            <TableHead>Paid Amount</TableHead>
-                                            <TableHead>Balance</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Created By</TableHead>
-                                            <TableHead>Date Created</TableHead>
+                                            <TableHead className="text-right">Amount Waived</TableHead>
+                                            <TableHead>Reason</TableHead>
+                                            <TableHead>Authorized By</TableHead>
+                                            <TableHead>Date Authorized</TableHead>
                                             <TableHead className="w-24 text-right">
                                                 Actions
                                             </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {invoices.data.map((invoice) => {
-                                            const total = parseFloat(
-                                                invoice.total_amount as string,
+                                        {waivers.data.map((waiver) => {
+                                            const amount = parseFloat(
+                                                waiver.amount as string,
                                             );
-                                            const paid = parseFloat(
-                                                invoice.paid_amount as string,
-                                            );
-                                            const waived = parseFloat(
-                                                invoice.waived_amount as string,
-                                            );
-                                            const balance = total - paid - waived;
 
                                             return (
-                                                <TableRow key={invoice.id}>
+                                                <TableRow key={waiver.id}>
                                                     <TableCell className="font-semibold text-foreground">
-                                                        {
-                                                            invoice.invoice_number
-                                                        }
-                                                    </TableCell>
-                                                    <TableCell className="font-medium text-foreground max-w-[160px]">
-                                                        {invoice.deceased ? (
+                                                        {waiver.invoice ? (
                                                             <Link
-                                                                href={`/deceased/${invoice.deceased.id}`}
+                                                                href={`/invoices/${waiver.invoice.id}`}
                                                                 className="hover:underline text-primary"
                                                             >
-                                                                {invoice.deceased.first_name}{' '}
-                                                                {invoice.deceased.last_name}
+                                                                {waiver.invoice.invoice_number}
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">—</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="font-medium text-foreground max-w-[160px]">
+                                                        {waiver.deceased ? (
+                                                            <Link
+                                                                href={`/deceased/${waiver.deceased.id}`}
+                                                                className="hover:underline text-primary"
+                                                            >
+                                                                {waiver.deceased.first_name}{' '}
+                                                                {waiver.deceased.last_name}
                                                             </Link>
                                                         ) : (
                                                             <span className="text-muted-foreground">
@@ -626,41 +541,20 @@ export default function InvoicesIndex({
                                                             </span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-foreground">
-                                                        {fmtCurrency(
-                                                            total,
-                                                            symbol,
-                                                        )}
+                                                    <TableCell className="text-right font-medium text-rose-600 dark:text-rose-400">
+                                                        {fmtCurrency(-amount, symbol)}
                                                     </TableCell>
-                                                    <TableCell className="text-emerald-600 dark:text-emerald-400">
-                                                        {fmtCurrency(
-                                                            paid,
-                                                            symbol,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="font-medium text-destructive">
-                                                        {fmtCurrency(
-                                                            balance,
-                                                            symbol,
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span
-                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(
-                                                                invoice.status,
-                                                            )}`}
-                                                        >
-                                                            {invoice.status}
-                                                        </span>
+                                                    <TableCell className="text-muted-foreground text-xs max-w-[200px] truncate">
+                                                        {waiver.reason || '—'}
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground text-xs">
-                                                        {invoice.created_by_user
-                                                            ? invoice.created_by_user.name
+                                                        {waiver.authorized_by_user
+                                                            ? waiver.authorized_by_user.name
                                                             : '—'}
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
                                                         {new Date(
-                                                            invoice.created_at,
+                                                            waiver.authorized_at,
                                                         ).toLocaleDateString(
                                                             'en-GB',
                                                             {
@@ -678,9 +572,9 @@ export default function InvoicesIndex({
                                                                 size="sm"
                                                             >
                                                                 <Link
-                                                                    href={`/invoices/${invoice.id}`}
+                                                                    href={`/waivers/${waiver.id}`}
                                                                 >
-                                                                    <EyeIcon className="h-4 w-4" />
+                                                                    <ShieldCheckIcon className="h-4 w-4" />
                                                                     <span className="sr-only">
                                                                         View
                                                                     </span>
@@ -694,87 +588,58 @@ export default function InvoicesIndex({
                                     </TableBody>
                                 </Table>
 
-                                {/* Mobile card list */}
                                 <div className="sm:hidden divide-y divide-border">
-                                    {invoices.data.map((invoice) => {
-                                        const total = parseFloat(
-                                            invoice.total_amount as string,
+                                    {waivers.data.map((waiver) => {
+                                        const amount = parseFloat(
+                                            waiver.amount as string,
                                         );
-                                        const paid = parseFloat(
-                                            invoice.paid_amount as string,
-                                        );
-                                        const waived = parseFloat(
-                                            invoice.waived_amount as string,
-                                        );
-                                        const balance = total - paid - waived;
 
                                         return (
                                             <div
-                                                key={invoice.id}
+                                                key={waiver.id}
                                                 className="p-4 space-y-3"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0">
                                                         <p className="font-semibold text-foreground truncate">
-                                                            {
-                                                                invoice.invoice_number
-                                                            }
+                                                            {waiver.invoice
+                                                                ? waiver.invoice.invoice_number
+                                                                : '—'}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            {invoice.deceased
-                                                                ? `${invoice.deceased.first_name} ${invoice.deceased.last_name}`
+                                                            {waiver.deceased
+                                                                ? `${waiver.deceased.first_name} ${waiver.deceased.last_name}`
                                                                 : '—'}
                                                         </p>
                                                     </div>
-                                                    <span
-                                                        className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(
-                                                            invoice.status,
-                                                        )}`}
-                                                    >
-                                                        {invoice.status}
+                                                    <span className="shrink-0 font-medium text-rose-600 dark:text-rose-400 text-sm">
+                                                        {fmtCurrency(-amount, symbol)}
                                                     </span>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-x-4 gap-y-1.5 text-xs">
                                                     <div>
                                                         <span className="text-muted-foreground">
-                                                            Total
+                                                            Reason
                                                         </span>
-                                                        <p className="font-medium text-foreground">
-                                                            {fmtCurrency(
-                                                                total,
-                                                                symbol,
-                                                            )}
+                                                        <p className="font-medium text-foreground truncate">
+                                                            {waiver.reason || '—'}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <span className="text-muted-foreground">
-                                                            Paid
+                                                            Authorized
                                                         </span>
-                                                        <p className="font-medium text-emerald-600 dark:text-emerald-400">
-                                                            {fmtCurrency(
-                                                                paid,
-                                                                symbol,
-                                                            )}
+                                                        <p className="font-medium text-muted-foreground">
+                                                            {waiver.authorized_by_user?.name || '—'}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <span className="text-muted-foreground">
-                                                            Balance
-                                                        </span>
-                                                        <p className="font-medium text-destructive">
-                                                            {fmtCurrency(
-                                                                balance,
-                                                                symbol,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-muted-foreground">
-                                                            Created
+                                                            Date
                                                         </span>
                                                         <p className="font-medium text-muted-foreground">
                                                             {new Date(
-                                                                invoice.created_at,
+                                                                waiver.authorized_at,
                                                             ).toLocaleDateString(
                                                                 'en-GB',
                                                                 {
@@ -785,16 +650,6 @@ export default function InvoicesIndex({
                                                             )}
                                                         </p>
                                                     </div>
-                                                    <div className="col-span-2">
-                                                        <span className="text-muted-foreground">
-                                                            By
-                                                        </span>
-                                                        <p className="font-medium text-muted-foreground">
-                                                            {invoice.created_by_user
-                                                                ? invoice.created_by_user.name
-                                                                : '—'}
-                                                        </p>
-                                                    </div>
                                                 </div>
                                                 <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
                                                     <Button
@@ -803,9 +658,9 @@ export default function InvoicesIndex({
                                                         size="sm"
                                                     >
                                                         <Link
-                                                            href={`/invoices/${invoice.id}`}
+                                                            href={`/waivers/${waiver.id}`}
                                                         >
-                                                            <EyeIcon className="h-4 w-4 mr-1.5" />
+                                                            <ShieldCheckIcon className="h-4 w-4 mr-1.5" />
                                                             View
                                                         </Link>
                                                     </Button>
@@ -815,11 +670,10 @@ export default function InvoicesIndex({
                                     })}
                                 </div>
 
-                                {/* Pagination */}
-                                {invoices.last_page > 1 && (
+                                {waivers.last_page > 1 && (
                                     <div className="border-t border-border px-6 py-3">
                                         <Pagination
-                                            links={invoices.links}
+                                            links={waivers.links}
                                         />
                                     </div>
                                 )}
@@ -832,6 +686,6 @@ export default function InvoicesIndex({
     );
 }
 
-InvoicesIndex.layout = {
-    breadcrumbs: [{ title: 'Invoices', href: '/invoices' }],
+WaiversIndex.layout = {
+    breadcrumbs: [{ title: 'Waivers', href: '/waivers' }],
 };

@@ -7,6 +7,7 @@ import {
     Receipt,
     FileText,
     CreditCard,
+    ShieldCheck,
 } from 'lucide-react';
 import {
     Collapsible,
@@ -35,7 +36,8 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
 
     const showBilling =
         can['invoices.view'] !== false ||
-        can['payments.view'] !== false;
+        can['payments.view'] !== false ||
+        can['waivers.view'] !== false;
 
     if (!showAccounts && !showBilling) {
 return null;
@@ -176,6 +178,21 @@ return null;
                                                 <Link href="/payments">
                                                     <CreditCard className="h-4 w-4" />
                                                     <span>Payments</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    )}
+                                    {can['waivers.view'] !== false && (
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton
+                                                asChild
+                                                isActive={isCurrentUrl(
+                                                    '/waivers',
+                                                )}
+                                            >
+                                                <Link href="/waivers">
+                                                    <ShieldCheck className="h-4 w-4" />
+                                                    <span>Waivers</span>
                                                 </Link>
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>

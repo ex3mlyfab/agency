@@ -257,7 +257,7 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="font-semibold">Rate Per Day (â‚¦)</Label>
+                                            <Label className="font-semibold">Rate Per Day </Label>
                                             <Input
                                                 type="number"
                                                 step="0.01"

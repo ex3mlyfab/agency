@@ -64,8 +64,8 @@ class InvoiceController extends Controller
             SUM(CASE WHEN status = \'Unpaid\' THEN 1 ELSE 0 END) as unpaid_count,
             SUM(CASE WHEN status = \'Partially Paid\' THEN 1 ELSE 0 END) as partially_paid_count,
             SUM(CASE WHEN status = \'Paid\' THEN total_amount ELSE 0 END) as paid_total,
-            SUM(CASE WHEN status = \'Unpaid\' THEN (total_amount - paid_amount) ELSE 0 END) as unpaid_balance,
-            SUM(CASE WHEN status = \'Partially Paid\' THEN (total_amount - paid_amount) ELSE 0 END) as partial_balance
+            SUM(CASE WHEN status = \'Unpaid\' THEN (total_amount - paid_amount - waived_amount) ELSE 0 END) as unpaid_balance,
+            SUM(CASE WHEN status = \'Partially Paid\' THEN (total_amount - paid_amount - waived_amount) ELSE 0 END) as partial_balance
         ')->first();
 
         $statuses = ['Draft', 'Unpaid', 'Partially Paid', 'Paid'];
@@ -125,6 +125,7 @@ class InvoiceController extends Controller
             'walletBalance' => $walletBalance,
             'can' => [
                 'managePayments' => auth()->user()?->can('payments.manage'),
+                'manageWaivers' => auth()->user()?->can('waivers.manage'),
             ],
         ]);
     }

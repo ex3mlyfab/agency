@@ -30,7 +30,11 @@ class Invoice extends Model
         'tax',
         'total_amount',
         'paid_amount',
+        'waived_amount',
         'status',
+        'billing_type',
+        'period_start_date',
+        'period_end_date',
         'notes',
         'created_by',
     ];
@@ -65,5 +69,21 @@ class Invoice extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the waivers applied to this invoice.
+     */
+    public function waivers(): HasMany
+    {
+        return $this->hasMany(Waiver::class);
+    }
+
+    /**
+     * Get the storage fee logs associated with this invoice.
+     */
+    public function storageFeeLog(): HasMany
+    {
+        return $this->hasMany(StorageFeeLog::class);
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePriceController;
 use App\Http\Controllers\TransferController;
+use App\Http\Controllers\WaiverController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
@@ -26,6 +27,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('deceased.release');
     Route::post('deceased/{deceased}/invoice', [DeceasedController::class, 'saveInvoice'])
         ->name('deceased.invoice.save');
+    Route::post('deceased/{deceased}/storage-invoice', [DeceasedController::class, 'generateStorageInvoice'])
+        ->name('deceased.storage-invoice.generate');
 
     // Chambers CRUD + indicator index
     Route::resource('chambers', ChamberController::class)->except(['show']);
@@ -51,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('payments', PaymentController::class)->only(['index', 'show', 'store']);
     Route::post('payments/apply-wallet-to-invoice', [PaymentController::class, 'applyWalletToInvoice'])
         ->name('payments.apply-wallet-to-invoice');
+    Route::resource('waivers', WaiverController::class)->only(['index', 'show', 'store', 'create']);
 });
 
 require __DIR__.'/settings.php';

@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ class ApplyWalletToInvoice
                 abort(422, 'The selected invoice does not belong to the deceased record.');
             }
 
-            $balance = (float) $invoice->total_amount - (float) $invoice->paid_amount;
+            $balance = (float) $invoice->total_amount - (float) $invoice->paid_amount - (float) $invoice->waived_amount;
 
             if ($balance <= 0) {
                 return null;
@@ -85,10 +86,15 @@ class ApplyWalletToInvoice
             }
 
             $invoice->paid_amount = $invoice->payments()->sum('amount');
+            $wasUnpaid = $invoice->status === 'Unpaid';
             $invoice->status = $invoice->paid_amount >= $invoice->total_amount
                 ? 'Paid'
                 : ($invoice->paid_amount > 0 ? 'Partially Paid' : 'Unpaid');
             $invoice->save();
+
+            if ($invoice->billing_type === 'storage' && $invoice->status === 'Paid' && $wasUnpaid) {
+                $this->maybeAutoGenerateNextStorageInvoice($invoice->deceased_id);
+            }
 
             return $appliedPayment;
         });
@@ -99,5 +105,24 @@ class ApplyWalletToInvoice
         return (float) Payment::where('deceased_id', $deceasedId)
             ->whereNull('invoice_id')
             ->sum('amount');
+    }
+
+    private function maybeAutoGenerateNextStorageInvoice(string $deceasedId): void
+    {
+        $deceased = Deceased::with('storageFeeLogs')->find($deceasedId);
+        if (! $deceased) {
+            return;
+        }
+
+        $lastCoveredDay = $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
+        $daysInStorage = $deceased->days_in_storage;
+        $newDays = max(0, $daysInStorage - $lastCoveredDay);
+
+        if ($newDays <= 0 || $deceased->status !== 'InChamber') {
+            return;
+        }
+
+        $action = app(CreateStorageFeeInvoice::class);
+        $action->handle($deceased, (string) auth()->id(), $lastCoveredDay);
     }
 }

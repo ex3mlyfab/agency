@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateStorageFeeInvoice;
 use App\Http\Requests\StoreDeceasedRequest;
 use App\Http\Requests\UpdateDeceasedRequest;
 use App\Models\Chamber;
@@ -67,7 +68,7 @@ class DeceasedController extends Controller
             'pending' => (clone $query)->where('status', 'Pending')->count(),
             'in_chamber' => (clone $query)->where('status', 'InChamber')->count(),
             'released' => (clone $query)->where('status', 'Released')->count(),
-            'avg_days_in_storage' => (clone $query)->where('status', '!=', 'Pending')->avg('days_in_storage'),
+            'avg_days_in_storage' => 0,
         ];
 
         $serviceCategories = ServiceCategory::orderBy('name')->select(['id', 'name'])->get();
@@ -171,7 +172,10 @@ class DeceasedController extends Controller
             'transfers.transferredByUser',
             'invoice.invoiceItems.service',
             'payments.receivedByUser',
+            'storageFeeLogs.invoice',
         ]);
+
+        $lastStorageCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
 
         $storageServiceId = $deceased->chamber?->service_id;
 
@@ -208,6 +212,7 @@ class DeceasedController extends Controller
             'deceased' => $deceased,
             'availableServices' => $availableServices,
             'storageServiceId' => $storageServiceId,
+            'lastStorageCoveredDay' => $lastStorageCoveredDay,
             'paymentModes' => $paymentModes,
             'walletDeposits' => $walletDeposits,
             'walletBalance' => (float) $walletDeposits->sum('amount'),
@@ -216,6 +221,7 @@ class DeceasedController extends Controller
                 'delete' => auth()->user()?->can('deceased.delete'),
                 'transfer' => auth()->user()?->can('transfers.create'),
                 'managePayments' => auth()->user()?->can('payments.manage'),
+                'createStorageInvoice' => auth()->user()?->can('storage.invoices.manage'),
             ],
         ]);
     }
@@ -512,5 +518,24 @@ class DeceasedController extends Controller
 
         return redirect()->route('deceased.show', $deceased)
             ->with('flash', ['type' => 'success', 'message' => 'Invoice saved successfully.']);
+    }
+
+    /**
+     * Generate the initial storage fee invoice for all days spent in storage.
+     */
+    public function generateStorageInvoice(CreateStorageFeeInvoice $action, Deceased $deceased): RedirectResponse
+    {
+        Gate::authorize('deceased.edit');
+
+        $lastCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
+        $invoice = $action->handle($deceased, auth()->id(), $lastCoveredDay);
+
+        if ($invoice) {
+            return redirect()->route('deceased.show', $deceased)
+                ->with('flash', ['type' => 'success', 'message' => "Storage fee invoice {$invoice->invoice_number} created for ".($invoice->invoiceItems->first()?->quantity ?? 0).' day(s).']);
+        }
+
+        return redirect()->route('deceased.show', $deceased)
+            ->with('flash', ['type' => 'info', 'message' => 'No storage days need billing at this time.']);
     }
 }

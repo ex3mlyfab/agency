@@ -147,6 +147,14 @@ class Deceased extends Model
     }
 
     /**
+     * Storage fee logs for this deceased.
+     */
+    public function storageFeeLogs(): HasMany
+    {
+        return $this->hasMany(StorageFeeLog::class)->latest();
+    }
+
+    /**
      * Get the total invoice amount for this deceased person.
      */
     public function getTotalBilledAttribute(): float
@@ -163,12 +171,20 @@ class Deceased extends Model
     }
 
     /**
+     * Get the total amount waived for this deceased person.
+     */
+    public function getTotalWaivedAttribute(): float
+    {
+        return (float) ($this->invoice?->waived_amount ?? 0.0);
+    }
+
+    /**
      * Get the outstanding ledger balance.
      * Positive value means outstanding debt. Negative or zero means paid/surplus.
      */
     public function getLedgerBalanceAttribute(): float
     {
-        return $this->total_billed - $this->total_paid;
+        return $this->total_billed - $this->total_paid - $this->total_waived;
     }
 
     /**
@@ -210,9 +226,37 @@ class Deceased extends Model
 
     /**
      * Get the number of storage days paid for.
+     * Uses storage fee logs when available; falls back to proportional calculation otherwise.
      */
     public function getDaysPaidAttribute(): int
     {
+        $storageLogs = $this->storageFeeLogs;
+
+        if ($storageLogs->isNotEmpty()) {
+            $totalBilledDays = $storageLogs->sum('days_billed');
+            if ($totalBilledDays <= 0) {
+                return 0;
+            }
+
+            $totalPaidAmount = $storageLogs->sum(function ($log) {
+                if (! $log->invoice) {
+                    return 0.0;
+                }
+
+                $invoicePaid = (float) $log->invoice->paid_amount;
+                $invoiceTotal = (float) $log->invoice->total_amount;
+
+                if ($invoiceTotal <= 0) {
+                    return 0.0;
+                }
+
+                return ($invoicePaid / $invoiceTotal) * $log->days_billed;
+            });
+
+            return (int) round(min((float) $totalBilledDays, $totalPaidAmount));
+        }
+
+        // Fallback: proportional calculation from the main invoice
         if (! $this->invoice) {
             return 0;
         }
@@ -233,13 +277,14 @@ class Deceased extends Model
         }
 
         $totalPaid = $this->total_paid;
+        $totalWaived = $this->total_waived;
         $totalBilled = $this->total_billed;
 
         if ($totalBilled <= 0) {
             return 0;
         }
 
-        $proportion = min(1.0, $totalPaid / $totalBilled);
+        $proportion = min(1.0, ($totalPaid + $totalWaived) / $totalBilled);
 
         return (int) round($proportion * $storageItem->quantity);
     }
