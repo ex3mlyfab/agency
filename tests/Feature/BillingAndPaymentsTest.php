@@ -495,6 +495,7 @@ it('calculates days spent in storage and days paid accurately', function () {
         'invoice_number' => 'INV-DAYS-01',
         'subtotal' => 1000.00,
         'total_amount' => 1000.00,
+        'billing_type' => 'service',
         'created_by' => $this->superAdmin->id,
     ]);
 

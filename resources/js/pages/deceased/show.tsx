@@ -1,5 +1,5 @@
 ﻿import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon, FileTextIcon, EyeIcon } from 'lucide-react';
+import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon, FileTextIcon, EyeIcon, PrinterIcon } from 'lucide-react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
 import { StatusChip } from '@/components/status-chip';
@@ -123,6 +123,7 @@ interface Deceased {
     released_at: string | null;
     released_by_user: { name: string } | null;
     invoice?: Invoice | null;
+    invoices?: Invoice[];
     storage_fee_logs?: StorageFeeLog[];
     payments?: Payment[];
     days_in_storage: number;
@@ -152,7 +153,7 @@ interface Props {
     paymentModes: PaymentMode[];
     walletDeposits: WalletDeposit[];
     walletBalance: number;
-    can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean; createStorageInvoice: boolean };
+    can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean; manageWaivers: boolean; createStorageInvoice: boolean };
 }
 
 
@@ -168,27 +169,89 @@ function Field({
             <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {label}
             </dt>
-            <dd className="text-sm text-foreground">{value ?? '—'}</dd>
+            <dd className="text-sm text-foreground">{value ?? '�'}</dd>
         </div>
     );
 }
 
 export default function DeceasedShow({ deceased, availableServices, storageServiceId, lastStorageCoveredDay, paymentModes, walletDeposits, walletBalance, can }: Props) {
     const { branding } = usePage().props as any;
-    const currencySymbol = branding?.currency_symbol ?? '₦';
+    const currencySymbol = branding?.currency_symbol ?? '?';
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [isWaiverOpen, setIsWaiverOpen] = useState(false);
+    const [isGenerateOpen, setIsGenerateOpen] = useState(false);
     const [isWalletApplying, setIsWalletApplying] = useState(false);
+    const [isStorageInvoiceGenerating, setIsStorageInvoiceGenerating] = useState(false);
 
     const paymentForm = useForm({
         deceased_id: deceased.id,
-        invoice_id: deceased.invoice?.id || '',
+        invoice_id: deceased.invoices?.[0]?.id || '',
         payment_mode_id: '',
         amount: '',
         transaction_reference: '',
         payment_date: new Date().toISOString().split('T')[0],
         notes: '',
     });
+
+    const serviceInvoicesTotal = deceased.invoices?.reduce((sum, inv) => sum + Number(inv.total_amount), 0) || 0;
+    const storageInvoicesTotal = deceased.storage_fee_logs?.reduce((sum, log) => sum + Number(log.invoice?.total_amount || 0), 0) || 0;
+    const totalPaid = deceased.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    const totalWaived = (deceased.invoices?.reduce((sum, inv) => sum + Number(inv.waived_amount || 0), 0) || 0) +
+        (deceased.storage_fee_logs?.reduce((sum, log) => sum + Number(log.invoice?.waived_amount || 0), 0) || 0);
+    const totalBilled = serviceInvoicesTotal + storageInvoicesTotal;
+    const ledgerBalance = totalBilled - totalPaid - totalWaived;
+
+    const invoiceOutstanding = serviceInvoicesTotal + storageInvoicesTotal - totalPaid - totalWaived;
+
+    const outstandingInvoices = [
+        ...(deceased.invoices ?? []).filter(inv => ['Unpaid', 'Partially Paid'].includes(inv.status)),
+        ...(deceased.storage_fee_logs ?? []).map(log => log.invoice).filter(Boolean) as Invoice[],
+    ];
+    const firstOutstandingInvoice = outstandingInvoices[0];
+
+    const waiverForm = useForm({
+        deceased_id: deceased.id,
+        invoice_id: firstOutstandingInvoice?.id || '',
+        amount: invoiceOutstanding > 0 ? invoiceOutstanding.toFixed(2) : '0',
+        reason: '',
+    });
+
+    const isWalletMode = paymentForm.data.payment_mode_id
+        ? paymentModes.find((m) => String(m.id) === String(paymentForm.data.payment_mode_id))?.name === 'Hospital Wallet'
+        : false;
+
+    const { data, setData, post, processing, errors } = useForm<{
+        items: { service_id: string | number; quantity: number }[];
+        notes: string;
+    }>({
+        items: [],
+        notes: '',
+    });
+
+    const submitWaiver = (e: React.FormEvent) => {
+        e.preventDefault();
+        waiverForm.post('/waivers', {
+            onSuccess: () => {
+                setIsWaiverOpen(false);
+                waiverForm.reset();
+            },
+        });
+    };
+
+    const submitGenerateInvoice = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.post(`/deceased/${deceased.id}/generate-invoice`, data, {
+            preserveScroll: true,
+            onError: (errors) => {
+                console.error('Generate invoice errors:', errors);
+            },
+            onSuccess: () => {
+                setIsGenerateOpen(false);
+                setData({ items: [{ service_id: availableServices[0]?.service_id ?? '', quantity: 1 }], notes: '' });
+            },
+        });
+    };
 
     const submitPayment = (e: React.FormEvent) => {
         e.preventDefault();
@@ -201,7 +264,8 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
     };
 
     const handleApplyWalletToInvoice = () => {
-        if (!deceased.invoice || walletBalance <= 0) {
+        const targetInvoice = outstandingInvoices[0];
+        if (!targetInvoice || walletBalance <= 0) {
             return;
         }
 
@@ -210,7 +274,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
             '/payments/apply-wallet-to-invoice',
             {
                 deceased_id: deceased.id,
-                invoice_id: deceased.invoice.id,
+                invoice_id: targetInvoice.id,
             },
             {
                 preserveScroll: true,
@@ -226,30 +290,14 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
         );
     };
 
-    const isWalletMode = paymentForm.data.payment_mode_id
-        ? paymentModes.find((m) => String(m.id) === String(paymentForm.data.payment_mode_id))?.name === 'Hospital Wallet'
-        : false;
-
-    const invoiceOutstanding = deceased.invoice
-        ? Number(deceased.invoice.total_amount) - Number(deceased.invoice.paid_amount || 0) - Number(deceased.invoice.waived_amount || 0)
-        : 0;
-
-    const { data, setData, post, processing, errors } = useForm<{
-        items: { service_id: string | number; quantity: number }[];
-        notes: string;
-    }>({
-        items: [],
-        notes: '',
-    });
-
     const openInvoiceModal = () => {
-        if (deceased.invoice && deceased.invoice.invoice_items && deceased.invoice.billing_type !== 'storage') {
+        if (deceased.invoices?.[0] && deceased.invoices[0].invoice_items) {
             setData({
-                items: deceased.invoice.invoice_items.map(item => ({
+                items: deceased.invoices[0].invoice_items.map(item => ({
                     service_id: item.service_id,
                     quantity: item.quantity,
                 })),
-                notes: deceased.invoice.notes ?? '',
+                notes: deceased.invoices[0].notes ?? '',
             });
         } else {
             setData({
@@ -292,13 +340,24 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
         return sum + (service.price * Number(item.quantity || 0));
     }, 0);
 
-    const totalBilled = deceased.invoice?.total_amount || 0;
-    const totalPaid = deceased.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-    const ledgerBalance = totalBilled - totalPaid;
-
     const hasStorageInvoice = deceased.storage_fee_logs && deceased.storage_fee_logs.length > 0;
     const hasUncoveredStorageDays = deceased.days_in_storage > deceased.days_paid;
     const storageFullyPaid = deceased.days_in_storage > 0 && deceased.days_paid >= deceased.days_in_storage;
+
+    // True when any invoice (service or storage) is paid or partially paid � blocks all editing
+    const hasPaidOrPartiallyPaidInvoice = (() => {
+        if (deceased.invoices) {
+            for (const inv of deceased.invoices) {
+                if (['Paid', 'Partially Paid'].includes(inv.status)) return true;
+            }
+        }
+        if (deceased.storage_fee_logs) {
+            for (const log of deceased.storage_fee_logs) {
+                if (log.invoice && ['Paid', 'Partially Paid'].includes(log.invoice.status)) return true;
+            }
+        }
+        return false;
+    })();
 
     return (
         <>
@@ -314,9 +373,9 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                             <StatusChip status={deceased.status} />
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Date of death: {(deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—')}
+                            Date of death: {(deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '�')}
                             {deceased.chamber &&
-                                ` · Chamber: ${deceased.chamber.name}`}
+                                ` � Chamber: ${deceased.chamber.name}`}
                         </p>
                     </div>
                     <div className="flex shrink-0 gap-2 flex-wrap">
@@ -347,29 +406,38 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                 </Link>
                             </Button>
                         )}
+                        <Button asChild variant="outline">
+                            <Link href={`/deceased/${deceased.id}/print`}>
+                                <PrinterIcon className="mr-2 h-4 w-4" />
+                                Print
+                            </Link>
+                        </Button>
 
-                        {/* Service Invoice button */}
-                        {can.edit && deceased.status !== 'Released' && !deceased.invoice && (
-                            <Button onClick={openInvoiceModal} variant="default">
-                                <ReceiptIcon className="mr-2 h-4 w-4" />
-                                Create Service Invoice
+                        {/* Generate Service Invoice button � available only when no invoice is paid/partially paid */}
+                        {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
+                            <Button onClick={() => setIsGenerateOpen(true)} variant="default">
+                                <PlusIcon className="mr-2 h-4 w-4" />
+                                Generate Service Invoice
                             </Button>
                         )}
 
-                        {/* Storage Invoice button — always show when InChamber and user has permission */}
+                        {/* Storage Invoice button � always show when InChamber and user has permission */}
                         {can.createStorageInvoice && deceased.status === 'InChamber' && (
                             <Button
                                 variant="outline"
                                 size="sm"
-                                disabled={storageFullyPaid}
+                                disabled={storageFullyPaid || isStorageInvoiceGenerating}
                                 onClick={() => {
+                                    setIsStorageInvoiceGenerating(true);
                                     router.post(`/deceased/${deceased.id}/storage-invoice`, {}, {
                                         preserveScroll: true,
+                                        onSuccess: () => setIsStorageInvoiceGenerating(false),
+                                        onError: () => setIsStorageInvoiceGenerating(false),
                                     });
                                 }}
                             >
                                 <FileTextIcon className="mr-2 h-4 w-4" />
-                                {hasStorageInvoice && hasUncoveredStorageDays
+                                {isStorageInvoiceGenerating ? 'Generating...' : hasStorageInvoice && hasUncoveredStorageDays
                                     ? 'Generate Next Storage Invoice'
                                     : hasStorageInvoice
                                     ? 'Storage Fully Covered'
@@ -405,7 +473,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                     <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         Notes
                                     </dt>
-                                    <dd className="text-sm text-foreground">{deceased.notes ?? '—'}</dd>
+                                    <dd className="text-sm text-foreground">{deceased.notes ?? '�'}</dd>
                                 </div>
                                 <div className="col-span-2 space-y-1 rounded-md border border-border bg-secondary/10 p-3">
                                     <dt className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -560,88 +628,133 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                         <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
                                 <ReceiptIcon className="h-4 w-4" />
-                                Service Invoice
+                                Service Invoices
                             </CardTitle>
-                            {deceased.invoice && deceased.invoice.billing_type !== 'storage' && (
-                                <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${
-                                    deceased.invoice.status === 'Paid'
-                                        ? 'bg-success/10 text-success border-success/20'
-                                        : deceased.invoice.status === 'Partially Paid'
-                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                                        : 'bg-destructive/10 text-destructive border-destructive/20'
-                                }`}>
-                                    {deceased.invoice.status}
-                                </span>
-                            )}
+                            <div className="flex gap-2">
+                                {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
+                                    <Button onClick={openInvoiceModal} variant="outline" size="sm">
+                                        <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
+                                        Edit Latest
+                                    </Button>
+                                )}
+                                {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
+                                    <Button onClick={() => setIsGenerateOpen(true)} size="sm">
+                                        <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
+                                        Generate New
+                                    </Button>
+                                )}
+                            </div>
                         </CardHeader>
-                        <CardContent className="px-6 py-6 space-y-6">
-                            {!deceased.invoice || deceased.invoice.billing_type === 'storage' ? (
+                        <CardContent className="px-6 py-6 space-y-4">
+                            {deceased.invoices && deceased.invoices.length === 0 ? (
                                 <div className="text-center py-6">
                                     <p className="text-sm text-muted-foreground mb-4">
-                                        No service invoice has been created for this record yet.
+                                        No service invoices have been created for this record yet.
                                     </p>
-                                    {can.edit && deceased.status !== 'Released' && (
-                                        <Button onClick={openInvoiceModal} size="sm">
+                                    {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
+                                        <Button onClick={() => setIsGenerateOpen(true)} size="sm">
                                             <PlusIcon className="mr-2 h-4 w-4" />
-                                            Create Service Invoice
+                                            Generate Service Invoice
                                         </Button>
                                     )}
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-sm border-b border-border pb-2">
-                                        <span className="font-mono text-muted-foreground font-semibold">
-                                            Invoice #: {deceased.invoice.invoice_number}
-                                        </span>
-                                        <Link href={`/invoices/${deceased.invoice.id}`}>
-                                            <Button variant="outline" size="sm">
-                                                <EyeIcon className="mr-2.5 h-3.5 w-3.5" />
-                                                View Invoice
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm text-left">
-                                            <thead>
-                                                <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
-                                                    <th className="py-2 font-semibold">Service</th>
-                                                    <th className="py-2 text-right font-semibold">Rate</th>
-                                                    <th className="py-2 text-center font-semibold">Qty</th>
-                                                    <th className="py-2 text-right font-semibold">Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {deceased.invoice.invoice_items?.map((item) => (
-                                                    <tr key={item.id} className="border-b border-border/50">
-                                                        <td className="py-2 font-medium text-foreground">{item.name}</td>
-                                                        <td className="py-2 text-right">{currencySymbol}{Number(item.unit_price).toLocaleString()}</td>
-                                                        <td className="py-2 text-center">{item.quantity}</td>
-                                                        <td className="py-2 text-right font-semibold">{currencySymbol}{Number(item.total_price).toLocaleString()}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {deceased.invoice.notes && (
-                                        <div className="text-xs bg-secondary/20 border border-border/50 rounded-md p-3">
-                                            <div className="font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes:</div>
-                                            <p className="text-foreground">{deceased.invoice.notes}</p>
+                                <div className="space-y-3">
+                                    {deceased.invoices.map((inv) => (
+                                        <div key={inv.id} className="rounded-md border border-border bg-secondary/5 p-3 space-y-2">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="font-mono text-muted-foreground font-semibold">
+                                                    {inv.invoice_number}
+                                                </span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
+                                                    inv.status === 'Paid'
+                                                        ? 'bg-success/10 text-success border-success/20'
+                                                        : inv.status === 'Partially Paid'
+                                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                                        : 'bg-destructive/10 text-destructive border-destructive/20'
+                                                }`}>
+                                                    {inv.status}
+                                                </span>
+                                            </div>
+                                            {inv.invoice_items && inv.invoice_items.length > 0 && (
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-xs text-left">
+                                                        <thead>
+                                                            <tr className="text-muted-foreground uppercase tracking-wider">
+                                                                <th className="py-1 font-semibold">Service</th>
+                                                                <th className="py-1 font-semibold text-right">Rate</th>
+                                                                <th className="py-1 font-semibold text-center">Qty</th>
+                                                                <th className="py-1 font-semibold text-right">Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {inv.invoice_items.slice(0, 3).map((item) => (
+                                                                <tr key={item.id} className="border-t border-border/50">
+                                                                    <td className="py-1 font-medium text-foreground">{item.name}</td>
+                                                                    <td className="py-1 text-right text-muted-foreground">{currencySymbol}{Number(item.unit_price).toLocaleString()}</td>
+                                                                    <td className="py-1 text-center text-muted-foreground">{item.quantity}</td>
+                                                                    <td className="py-1 text-right font-medium text-foreground">{currencySymbol}{Number(item.total_price).toLocaleString()}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                    {inv.invoice_items.length > 3 && (
+                                                        <p className="text-xs text-muted-foreground mt-1">+{inv.invoice_items.length - 3} more items</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {inv.notes && (
+                                                <p className="text-xs text-muted-foreground">{inv.notes}</p>
+                                            )}
+                                            <div className="flex justify-between items-center text-sm border-t border-border/50 pt-2">
+                                                <div className="flex gap-1">
+                                                    <Link href={`/invoices/${inv.id}`}>
+                                                        <Button variant="ghost" size="sm" className="h-7 text-xs">
+                                                            <EyeIcon className="mr-1.5 h-3 w-3" />
+                                                            View Invoice
+                                                        </Button>
+                                                    </Link>
+                                                    <Link href={`/invoices/${inv.id}/print`}>
+                                                        <Button variant="ghost" size="sm" className="h-7 text-xs">
+                                                            <PrinterIcon className="mr-1.5 h-3 w-3" />
+                                                            Print
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                                <span className="font-semibold text-foreground">
+                                                    {currencySymbol}{Number(inv.total_amount).toLocaleString()}
+                                                </span>
+                                            </div>
                                         </div>
-                                    )}
-                                    <div className="border-t border-border pt-4 space-y-2">
+                                    ))}
+
+                                    {/* Summary */}
+                                    <div className="border-t border-border pt-3 space-y-1.5">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Subtotal:</span>
-                                            <span className="font-medium text-foreground">{currencySymbol}{Number(deceased.invoice.subtotal).toLocaleString()}</span>
+                                            <span className="text-muted-foreground">Service Invoices Billed:</span>
+                                            <span className="font-semibold text-foreground">
+                                                {currencySymbol}{serviceInvoicesTotal.toLocaleString()}
+                                            </span>
                                         </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Total Billed:</span>
-                                            <span className="font-semibold text-foreground">{currencySymbol}{Number(deceased.invoice.total_amount).toLocaleString()}</span>
-                                        </div>
+                                        {hasStorageInvoice && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Storage Invoices Billed:</span>
+                                                <span className="font-semibold text-foreground">
+                                                    {currencySymbol}{storageInvoicesTotal.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Total Settled:</span>
                                             <span className="font-semibold text-success">{currencySymbol}{totalPaid.toLocaleString()}</span>
                                         </div>
-                                        <div className="flex justify-between border-t border-border/60 pt-2 text-base font-bold">
+                                        {totalWaived > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Total Waived:</span>
+                                                <span className="font-semibold text-rose-600 dark:text-rose-400">-{currencySymbol}{Number(totalWaived).toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold">
                                             <span className="text-foreground">Ledger Balance:</span>
                                             <span className={ledgerBalance > 0 ? "text-destructive" : "text-success"}>
                                                 {currencySymbol}{ledgerBalance.toLocaleString()}
@@ -660,12 +773,25 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                 <CreditCardIcon className="h-4 w-4" />
                                 Payment & Settled Receipts
                             </CardTitle>
-                            {(can.managePayments || can.edit) && (
-                                <Button size="sm" onClick={() => setIsPaymentOpen(true)} className="h-8 flex items-center gap-1">
-                                    <PlusIcon className="h-3.5 w-3.5" />
-                                    Record Payment
-                                </Button>
-                            )}
+                            <div className="flex gap-2">
+                                {firstOutstandingInvoice && invoiceOutstanding > 0 && can.manageWaivers && !hasPaidOrPartiallyPaidInvoice && (
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => setIsWaiverOpen(true)}
+                                        className="h-8 flex items-center gap-1"
+                                    >
+                                        <ShieldCheckIcon className="h-3.5 w-3.5" />
+                                        Apply Waiver
+                                    </Button>
+                                )}
+                                {(can.managePayments || can.edit) && (
+                                    <Button size="sm" onClick={() => setIsPaymentOpen(true)} className="h-8 flex items-center gap-1">
+                                        <PlusIcon className="h-3.5 w-3.5" />
+                                        Record Payment
+                                    </Button>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent className="px-6 py-6">
                             {!deceased.payments || deceased.payments.length === 0 ? (
@@ -694,7 +820,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                                         </td>
                                                         <td className="py-2 text-foreground">{payment.payment_method}</td>
                                                         <td className="py-2 font-mono text-xs text-muted-foreground">
-                                                            {payment.transaction_reference || '—'}
+                                                            {payment.transaction_reference || '�'}
                                                         </td>
                                                         <td className="py-2 text-right font-semibold text-success">
                                                             {currencySymbol}{Number(payment.amount).toLocaleString()}
@@ -704,11 +830,27 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="border-t border-border pt-4 flex justify-between items-center text-sm">
-                                        <span className="font-semibold text-muted-foreground">Total Payments:</span>
-                                        <span className="font-bold text-success text-base">
-                                            {currencySymbol}{totalPaid.toLocaleString()}
-                                        </span>
+                                    <div className="border-t border-border pt-4 space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-semibold text-muted-foreground">Total Payments:</span>
+                                            <span className="font-bold text-success text-base">
+                                                {currencySymbol}{totalPaid.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        {totalWaived > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-semibold text-muted-foreground">Total Waived:</span>
+                                                <span className="font-bold text-rose-600 dark:text-rose-400 text-base">
+                                                    -{currencySymbol}{Number(totalWaived).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between border-t border-border pt-2 text-base font-bold">
+                                            <span className="text-foreground">Ledger Balance:</span>
+                                            <span className={ledgerBalance > 0 ? "text-destructive" : "text-success"}>
+                                                {currencySymbol}{ledgerBalance.toLocaleString()}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -724,19 +866,22 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                 <FileTextIcon className="h-4 w-4" />
                                 Storage Fee Invoices
                             </CardTitle>
-                            {deceased.status === 'InChamber' && (
+                            {can.createStorageInvoice && deceased.status === 'InChamber' && (
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    disabled={storageFullyPaid}
+                                    disabled={storageFullyPaid || isStorageInvoiceGenerating}
                                     onClick={() => {
+                                        setIsStorageInvoiceGenerating(true);
                                         router.post(`/deceased/${deceased.id}/storage-invoice`, {}, {
                                             preserveScroll: true,
+                                            onSuccess: () => setIsStorageInvoiceGenerating(false),
+                                            onError: () => setIsStorageInvoiceGenerating(false),
                                         });
                                     }}
                                 >
                                     <PlusIcon className="mr-2 h-3.5 w-3.5" />
-                                    {storageFullyPaid ? 'All Covered' : 'Generate Next'}
+                                    {isStorageInvoiceGenerating ? 'Generating...' : storageFullyPaid ? 'All Covered' : 'Generate Next'}
                                 </Button>
                             )}
                         </CardHeader>
@@ -753,7 +898,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                                         </span>
                                                     </Link>
                                                 ) : (
-                                                    <span className="font-mono text-xs font-semibold text-muted-foreground">—</span>
+                                                    <span className="font-mono text-xs font-semibold text-muted-foreground">�</span>
                                                 )}
                                                 {log.invoice && (
                                                     <span className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
@@ -768,7 +913,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                                 )}
                                             </div>
                                             <p className="text-xs text-muted-foreground">
-                                                Days {log.days_covered_from}–{log.days_covered_to} · Billed: {log.days_billed} day(s)
+                                                Days {log.days_covered_from}�{log.days_covered_to} � Billed: {log.days_billed} day(s)
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -922,7 +1067,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                         if (e.target.value === 'general') {
                                             paymentForm.setData('invoice_id', '');
                                         } else {
-                                            paymentForm.setData('invoice_id', deceased.invoice?.id || '');
+                                            paymentForm.setData('invoice_id', deceased.invoices?.[0]?.id || '');
                                             if (invoiceOutstanding > 0) {
                                                 paymentForm.setData('amount', invoiceOutstanding.toFixed(2));
                                             }
@@ -930,12 +1075,14 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                     }}
                                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 >
-                                    {deceased.invoice && deceased.invoice.billing_type !== 'storage' && (
-                                        <option value="invoice">Service Invoice ({deceased.invoice.invoice_number})</option>
-                                    )}
+                                    {deceased.invoices?.map((inv) => (
+                                        <option key={inv.id} value={inv.id}>
+                                            Service Invoice ({inv.invoice_number}) � {inv.status}
+                                        </option>
+                                    ))}
                                     {deceased.storage_fee_logs?.map((log) => (
                                         <option key={log.invoice?.id} value={log.invoice?.id || ''}>
-                                            Storage Invoice ({log.invoice?.invoice_number}) — {log.days_covered_from}–{log.days_covered_to} days
+                                            Storage Invoice ({log.invoice?.invoice_number}) � {log.days_covered_from}�{log.days_covered_to} days
                                         </option>
                                     ))}
                                     <option value="general">General Account Deposit (Ledger)</option>
@@ -947,8 +1094,11 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                     <div>
                                         <span className="text-xs text-muted-foreground block">Invoice #</span>
                                         <span className="font-mono text-foreground">
-                                            {deceased.storage_fee_logs?.find(l => l.invoice?.id === paymentForm.data.invoice_id)?.invoice?.invoice_number
-                                                || deceased.invoice?.invoice_number}
+                                            {(() => {
+                                                const storedInv = deceased.invoices?.find(inv => String(inv.id) === String(paymentForm.data.invoice_id));
+                                                const storedLog = deceased.storage_fee_logs?.find(l => String(l.invoice?.id) === String(paymentForm.data.invoice_id));
+                                                return storedInv?.invoice_number || storedLog?.invoice?.invoice_number || deceased.invoice?.invoice_number || '';
+                                            })()}
                                         </span>
                                     </div>
                                     <div className="text-right">
@@ -972,7 +1122,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                     </div>
                                     {walletDeposits.map((deposit) => (
                                         <div key={deposit.id} className="mt-1 text-xs text-muted-foreground">
-                                            Receipt {deposit.receipt_number} — {currencySymbol}{Number(deposit.amount).toLocaleString()} via {deposit.payment_method}
+                                            Receipt {deposit.receipt_number} � {currencySymbol}{Number(deposit.amount).toLocaleString()} via {deposit.payment_method}
                                         </div>
                                     ))}
                                 </div>
@@ -1068,6 +1218,203 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                     </DialogContent>
                 </Dialog>
 
+                {/* Apply Waiver Dialog */}
+                <Dialog open={isWaiverOpen} onOpenChange={setIsWaiverOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Apply Waiver to Invoice {firstOutstandingInvoice?.invoice_number ?? ''}</DialogTitle>
+                            <DialogDescription>
+                                Waive an amount from the outstanding balance. Outstanding balance: {currencySymbol}{invoiceOutstanding.toLocaleString()}.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
+                            <div>
+                                <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
+                                <span className="font-semibold text-foreground">
+                                    {currencySymbol}{Number(firstOutstandingInvoice?.total_amount || 0).toLocaleString()}
+                                </span>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs text-muted-foreground block">Total Paid</span>
+                                <span className="font-medium text-success">
+                                    {currencySymbol}{totalPaid.toLocaleString()}
+                                </span>
+                            </div>
+                            {totalWaived > 0 && (
+                                <div className="text-right">
+                                    <span className="text-xs text-muted-foreground block">Already Waived</span>
+                                    <span className="font-medium text-rose-600 dark:text-rose-400">
+                                        {currencySymbol}{Number(totalWaived).toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
+                            <div className="col-span-2">
+                                <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
+                                <span className="font-bold text-destructive text-base">
+                                    {currencySymbol}{invoiceOutstanding.toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <form onSubmit={submitWaiver} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="waiver_amount">Waiver Amount ({currencySymbol})</Label>
+                                <Input
+                                    id="waiver_amount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    max={invoiceOutstanding}
+                                    value={waiverForm.data.amount}
+                                    onChange={(e) => waiverForm.setData('amount', e.target.value)}
+                                    placeholder="Enter amount to waive"
+                                    required
+                                />
+                                <InputError message={waiverForm.errors.amount} />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="waiver_reason">Reason (Optional)</Label>
+                                <textarea
+                                    id="waiver_reason"
+                                    value={waiverForm.data.reason}
+                                    onChange={(e) => waiverForm.setData('reason', e.target.value)}
+                                    rows={3}
+                                    placeholder="Provide a reason for this waiver..."
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                                <InputError message={waiverForm.errors.reason} />
+                            </div>
+
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setIsWaiverOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={waiverForm.processing}>
+                                    {waiverForm.processing ? 'Applying...' : 'Apply Waiver'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Generate Service Invoice Dialog */}
+                <Dialog open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>
+                    <DialogContent className="max-w-2xl bg-card border border-border">
+                        <DialogHeader>
+                            <DialogTitle>Generate Service Invoice</DialogTitle>
+                            <DialogDescription>
+                                Add service line items to create a new invoice. Storage fees are billed separately.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form onSubmit={submitGenerateInvoice} className="space-y-4">
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                                <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider pb-1 border-b border-border/50">
+                                    <div className="col-span-6">Service</div>
+                                    <div className="col-span-2 text-right">Price</div>
+                                    <div className="col-span-2 text-center">Qty</div>
+                                    <div className="col-span-2 text-right">Action</div>
+                                </div>
+
+                                {data.items.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                        No services added yet. Add a service to begin.
+                                    </p>
+                                ) : (
+                                    data.items.map((item, index) => {
+                                        const selectedService = availableServices.find(
+                                            (s) => String(s.service_id) === String(item.service_id)
+                                        );
+                                        const isStorage = selectedService?.has_tiers === true;
+                                        const price = isStorage && selectedService?.tiered_price !== null
+                                            ? selectedService.tiered_price
+                                            : (selectedService ? selectedService.price : 0);
+
+                                        return (
+                                            <div key={index} className="grid grid-cols-12 gap-2 items-center py-1">
+                                                <div className="col-span-6">
+                                                    <select
+                                                        value={item.service_id}
+                                                        onChange={(e) => handleItemChange(index, 'service_id', e.target.value)}
+                                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        required
+                                                    >
+                                                        <option value="" disabled>-- Select Service --</option>
+                                                        {availableServices.map((s) => (
+                                                            <option key={s.service_id} value={s.service_id}>
+                                                                {s.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="col-span-2 text-right text-sm font-medium text-muted-foreground">
+                                                    {currencySymbol}{price.toLocaleString()}
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) => handleItemChange(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                                                        className="text-center h-9"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="col-span-2 text-right">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleRemoveItem(index)}
+                                                        className="text-destructive hover:bg-destructive/10 h-9 w-9"
+                                                    >
+                                                        <Trash2Icon className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="generate_notes">Notes (Optional)</Label>
+                                <textarea
+                                    id="generate_notes"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    rows={2}
+                                    placeholder="Any additional remarks..."
+                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                                <InputError message={errors.notes} />
+                            </div>
+
+                            <div className="flex justify-between items-center border-t border-border pt-3">
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                    Add Service Line
+                                </Button>
+                                <div className="text-sm font-semibold">
+                                    Total Estimate:{' '}
+                                    <span className="text-primary font-bold text-base">{currencySymbol}{calculatedTotal.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setIsGenerateOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={processing}>
+                                    {processing ? 'Generating...' : 'Generate Invoice'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
                 {/* Transfer / audit history */}
                 <Card>
                     <CardHeader className="border-b border-border px-6 py-3">
@@ -1092,15 +1439,15 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                             </span>
                                             {t.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    · by{' '}
+                                                    � by{' '}
                                                     {t.transferred_by_user.name}
                                                 </span>
                                             )}
                                         </div>
                                         {(t.from_chamber || t.to_chamber) && (
                                             <p className="mt-1 text-sm text-foreground">
-                                                {t.from_chamber?.name ?? '—'}
-                                                {' → '}
+                                                {t.from_chamber?.name ?? '�'}
+                                                {' ? '}
                                                 {t.to_chamber?.name ?? 'Released'}
                                             </p>
                                         )}

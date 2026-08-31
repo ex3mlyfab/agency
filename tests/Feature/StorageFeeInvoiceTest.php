@@ -14,6 +14,7 @@ use App\Models\ServicePriceTier;
 use App\Models\StorageFeeLog;
 use App\Models\Transfer;
 use App\Models\User;
+use App\Models\Waiver;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -526,4 +527,61 @@ it('shows no storage invoice button when user lacks permission', function () {
         ->assertInertia(fn ($page) => $page
             ->where('can.createStorageInvoice', false)
         );
+});
+
+it('computes days_paid including waived_amount on storage invoices', function () {
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::create([
+        'name' => 'Chamber SW',
+        'capacity' => 2,
+        'service_id' => $chamberService->id,
+    ]);
+
+    $price = ServicePrice::create([
+        'service_id' => $chamberService->id,
+        'service_category_id' => $this->category->id,
+        'price' => 10000.00,
+    ]);
+
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 1, 'end_day' => 10, 'price' => 10000.00]);
+
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'chamber_id' => $chamber->id,
+        'status' => 'InChamber',
+    ]);
+
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(10),
+    ]);
+
+    $action = app(CreateStorageFeeInvoice::class);
+    $invoice = $action->handle($deceased, $this->superAdmin->id, 0);
+
+    $deceased = $deceased->fresh()->load('storageFeeLogs');
+    expect($deceased->days_paid)->toEqual(0);
+
+    // Apply a full waiver covering all 10 days (100,000)
+    $waiver = Waiver::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => $invoice->id,
+        'amount' => 100000.00,
+        'reason' => 'Full waiver',
+        'authorized_by' => $this->superAdmin->id,
+        'authorized_at' => now(),
+    ]);
+
+    $invoice->refresh();
+    $invoice->waived_amount = $invoice->waived_amount + 100000.00;
+    $invoice->status = 'Paid';
+    $invoice->save();
+
+    $deceased = $deceased->fresh()->load('storageFeeLogs');
+    expect($deceased->days_paid)->toEqual(10);
+    expect($deceased->isStorageFullyPaid())->toBeTrue();
+    expect($deceased->ledger_balance)->toEqual(0.00);
 });

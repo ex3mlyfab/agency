@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -131,11 +130,11 @@ class Deceased extends Model
     }
 
     /**
-     * The invoice associated with the deceased.
+     * All service invoices for this deceased (non-storage).
      */
-    public function invoice(): HasOne
+    public function invoices(): HasMany
     {
-        return $this->hasOne(Invoice::class);
+        return $this->hasMany(Invoice::class)->where('billing_type', 'service')->latest();
     }
 
     /**
@@ -155,11 +154,16 @@ class Deceased extends Model
     }
 
     /**
-     * Get the total invoice amount for this deceased person.
+     * Get the total invoice amount for this deceased person (service + all storage invoices).
      */
     public function getTotalBilledAttribute(): float
     {
-        return (float) ($this->invoice?->total_amount ?? 0.0);
+        $serviceInvoiceTotal = $this->invoices->sum('total_amount');
+        $storageInvoiceTotal = $this->storageFeeLogs->sum(function ($log) {
+            return $log->invoice ? (float) $log->invoice->total_amount : 0.0;
+        });
+
+        return $serviceInvoiceTotal + $storageInvoiceTotal;
     }
 
     /**
@@ -171,11 +175,16 @@ class Deceased extends Model
     }
 
     /**
-     * Get the total amount waived for this deceased person.
+     * Get the total amount waived for this deceased person (service + all storage invoices).
      */
     public function getTotalWaivedAttribute(): float
     {
-        return (float) ($this->invoice?->waived_amount ?? 0.0);
+        $serviceWaived = $this->invoices->sum('waived_amount');
+        $storageWaived = $this->storageFeeLogs->sum(function ($log) {
+            return $log->invoice ? (float) $log->invoice->waived_amount : 0.0;
+        });
+
+        return $serviceWaived + $storageWaived;
     }
 
     /**
@@ -244,26 +253,27 @@ class Deceased extends Model
                 }
 
                 $invoicePaid = (float) $log->invoice->paid_amount;
+                $invoiceWaived = (float) $log->invoice->waived_amount;
                 $invoiceTotal = (float) $log->invoice->total_amount;
 
                 if ($invoiceTotal <= 0) {
                     return 0.0;
                 }
 
-                return ($invoicePaid / $invoiceTotal) * $log->days_billed;
+                return (($invoicePaid + $invoiceWaived) / $invoiceTotal) * $log->days_billed;
             });
 
             return (int) round(min((float) $totalBilledDays, $totalPaidAmount));
         }
 
         // Fallback: proportional calculation from the main invoice
-        if (! $this->invoice) {
+        if ($this->invoices->isEmpty()) {
             return 0;
         }
 
         $storageServiceId = $this->chamber?->service_id;
 
-        $storageItem = $this->invoice->invoiceItems
+        $storageItem = $this->invoices->first()?->invoiceItems
             ->first(function ($item) use ($storageServiceId) {
                 if ($storageServiceId) {
                     return $item->service_id === $storageServiceId;

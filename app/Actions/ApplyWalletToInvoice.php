@@ -85,7 +85,7 @@ class ApplyWalletToInvoice
                 }
             }
 
-            $invoice->paid_amount = $invoice->payments()->sum('amount');
+            $invoice->paid_amount = min((float) $invoice->payments()->sum('amount'), (float) $invoice->total_amount);
             $wasUnpaid = $invoice->status === 'Unpaid';
             $invoice->status = $invoice->paid_amount >= $invoice->total_amount
                 ? 'Paid'

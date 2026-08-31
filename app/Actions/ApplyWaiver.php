@@ -52,7 +52,10 @@ class ApplyWaiver
                 'authorized_at' => now(),
             ]);
 
-            $invoice->waived_amount = (float) $invoice->waived_amount + $amount;
+            $invoice->waived_amount = min(
+                (float) $invoice->waived_amount + $amount,
+                (float) $invoice->total_amount - (float) $invoice->paid_amount
+            );
             $invoice->status = $invoice->paid_amount + $invoice->waived_amount >= $invoice->total_amount
                 ? 'Paid'
                 : ($invoice->paid_amount > 0 || $invoice->waived_amount > 0 ? 'Partially Paid' : 'Unpaid');

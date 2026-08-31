@@ -27,8 +27,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('deceased.release');
     Route::post('deceased/{deceased}/invoice', [DeceasedController::class, 'saveInvoice'])
         ->name('deceased.invoice.save');
+    Route::post('deceased/{deceased}/generate-invoice', [DeceasedController::class, 'generateInvoice'])
+        ->name('deceased.invoice.generate');
     Route::post('deceased/{deceased}/storage-invoice', [DeceasedController::class, 'generateStorageInvoice'])
         ->name('deceased.storage-invoice.generate');
+    Route::get('deceased/{deceased}/print', [DeceasedController::class, 'print'])
+        ->name('deceased.print');
 
     // Chambers CRUD + indicator index
     Route::resource('chambers', ChamberController::class)->except(['show']);
@@ -51,6 +55,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Billing
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show']);
+    Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])
+        ->name('invoices.print');
     Route::resource('payments', PaymentController::class)->only(['index', 'show', 'store']);
     Route::post('payments/apply-wallet-to-invoice', [PaymentController::class, 'applyWalletToInvoice'])
         ->name('payments.apply-wallet-to-invoice');

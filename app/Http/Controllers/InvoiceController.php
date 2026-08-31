@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApplicationSetting;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentMode;
 use App\Models\User;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -128,5 +132,28 @@ class InvoiceController extends Controller
                 'manageWaivers' => auth()->user()?->can('waivers.manage'),
             ],
         ]);
+    }
+
+    /**
+     * Render a print-optimized view of the invoice.
+     */
+    public function print(Invoice $invoice): View|Factory
+    {
+        Gate::authorize('invoices.view');
+
+        $invoice->load(['deceased', 'invoiceItems.service', 'payments', 'createdByUser']);
+
+        $currencySymbol = ApplicationSetting::get('currency_symbol', '₦');
+        $branding = [
+            'name' => ApplicationSetting::get('app_name', config('app.name')),
+            'logo' => ApplicationSetting::get('app_logo')
+                ? Storage::disk('public')->url(ApplicationSetting::get('app_logo'))
+                : null,
+            'currency_symbol' => $currencySymbol,
+        ];
+
+        $deceased = $invoice->deceased;
+
+        return view('invoice-print', compact('invoice', 'deceased', 'currencySymbol', 'branding'));
     }
 }

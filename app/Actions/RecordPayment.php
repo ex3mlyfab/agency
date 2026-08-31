@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\PaymentMode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class RecordPayment
 {
@@ -20,6 +21,16 @@ class RecordPayment
 
             if ($invoice && $invoice->deceased_id !== $validated['deceased_id']) {
                 abort(422, 'The selected invoice does not belong to the deceased record.');
+            }
+
+            if ($invoice) {
+                $balance = (float) $invoice->total_amount - (float) $invoice->paid_amount - (float) $invoice->waived_amount;
+
+                if ($validated['amount'] > max(0, $balance)) {
+                    throw ValidationException::withMessages([
+                        'amount' => "Payment amount exceeds the outstanding balance of {$balance}.",
+                    ]);
+                }
             }
 
             $payment = Payment::create([
@@ -36,7 +47,7 @@ class RecordPayment
             ]);
 
             if ($invoice) {
-                $invoice->paid_amount = $invoice->payments()->sum('amount');
+                $invoice->paid_amount = min((float) $invoice->payments()->sum('amount'), (float) $invoice->total_amount);
                 $wasUnpaid = $invoice->status === 'Unpaid';
                 $invoice->status = $invoice->paid_amount >= $invoice->total_amount
                     ? 'Paid'

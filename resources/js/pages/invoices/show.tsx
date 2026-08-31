@@ -1,5 +1,5 @@
 ﻿import { Head, Link, useForm, router } from '@inertiajs/react';
-import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon, ShieldCheckIcon } from 'lucide-react';
+import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon, ShieldCheckIcon, PrinterIcon } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
@@ -212,6 +212,12 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                 <span>Apply Waiver</span>
                             </Button>
                         )}
+                        <Button asChild variant="outline" size="sm" className="flex items-center gap-1.5">
+                            <Link href={`/invoices/${invoice.id}/print`}>
+                                <PrinterIcon className="h-4 w-4" />
+                                <span>Print</span>
+                            </Link>
+                        </Button>
                         <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(invoice.status)}`}>
                             {invoice.status}
                         </span>

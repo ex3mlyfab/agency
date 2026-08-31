@@ -107,3 +107,20 @@ it('can delete a deceased record', function () {
         'id' => $deceased->id,
     ]);
 });
+
+it('renders the print page for a deceased record', function () {
+    $deceased = Deceased::factory()->create();
+
+    $this->actingAs($this->superAdmin)
+        ->get(route('deceased.print', $deceased))
+        ->assertOk()
+        ->assertViewIs('deceased-print')
+        ->assertViewHas('deceased', $deceased);
+});
+
+it('denies unauthenticated users from accessing the print page', function () {
+    $deceased = Deceased::factory()->create();
+
+    $this->get(route('deceased.print', $deceased))
+        ->assertRedirect(route('login'));
+});

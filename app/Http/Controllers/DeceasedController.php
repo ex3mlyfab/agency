@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateStorageFeeInvoice;
 use App\Http\Requests\StoreDeceasedRequest;
 use App\Http\Requests\UpdateDeceasedRequest;
+use App\Models\ApplicationSetting;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Invoice;
@@ -14,6 +15,8 @@ use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\ServicePrice;
 use App\Models\Transfer;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -170,7 +173,7 @@ class DeceasedController extends Controller
             'transfers.fromChamber',
             'transfers.toChamber',
             'transfers.transferredByUser',
-            'invoice.invoiceItems.service',
+            'invoices.invoiceItems.service',
             'payments.receivedByUser',
             'storageFeeLogs.invoice',
         ]);
@@ -221,6 +224,7 @@ class DeceasedController extends Controller
                 'delete' => auth()->user()?->can('deceased.delete'),
                 'transfer' => auth()->user()?->can('transfers.create'),
                 'managePayments' => auth()->user()?->can('payments.manage'),
+                'manageWaivers' => auth()->user()?->can('waivers.manage'),
                 'createStorageInvoice' => auth()->user()?->can('storage.invoices.manage'),
             ],
         ]);
@@ -450,6 +454,22 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
+        // Block editing if any service invoice OR any storage invoice is paid or partially paid
+        $blockedInvoices = collect()
+            ->merge($deceased->invoices)
+            ->merge($deceased->storageFeeLogs->pluck('invoice'))
+            ->filter(fn ($inv) => $inv !== null)
+            ->filter(fn ($inv) => in_array($inv->status, ['Paid', 'Partially Paid'], true));
+
+        if ($blockedInvoices->isNotEmpty()) {
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'error',
+                    'message' => 'Cannot edit invoice: one or more invoices for this record are already paid or partially paid.',
+                ]);
+        }
+
+        // Find or create the latest unpaid service invoice to edit
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.service_id' => ['required', 'exists:services,id'],
@@ -458,7 +478,7 @@ class DeceasedController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $deceased) {
-            $invoice = $deceased->invoice;
+            $invoice = $deceased->invoices->where('status', 'Unpaid')->first();
             if (! $invoice) {
                 $invoice = Invoice::create([
                     'deceased_id' => $deceased->id,
@@ -469,6 +489,7 @@ class DeceasedController extends Controller
                     'total_amount' => 0.00,
                     'paid_amount' => 0.00,
                     'status' => 'Unpaid',
+                    'billing_type' => 'service',
                     'created_by' => auth()->id(),
                 ]);
             }
@@ -521,6 +542,94 @@ class DeceasedController extends Controller
     }
 
     /**
+     * Generate a new service invoice for the deceased person.
+     */
+    public function generateInvoice(Request $request, Deceased $deceased): RedirectResponse
+    {
+        Gate::authorize('deceased.edit');
+
+        // Block if any invoice (service or storage) is paid or partially paid
+        $allInvoices = collect()
+            ->merge($deceased->invoices)
+            ->merge($deceased->storageFeeLogs->pluck('invoice'))
+            ->filter(fn ($inv) => $inv !== null);
+
+        if ($allInvoices->filter(fn ($inv) => in_array($inv->status, ['Paid', 'Partially Paid'], true))->isNotEmpty()) {
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'error',
+                    'message' => 'Cannot generate invoice: one or more invoices for this record are already paid or partially paid.',
+                ]);
+        }
+
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.service_id' => ['required', 'exists:services,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        DB::transaction(function () use ($validated, $deceased) {
+            $invoice = Invoice::create([
+                'deceased_id' => $deceased->id,
+                'invoice_number' => 'INV-'.strtoupper(Str::random(8)),
+                'subtotal' => 0.00,
+                'discount' => 0.00,
+                'tax' => 0.00,
+                'total_amount' => 0.00,
+                'paid_amount' => 0.00,
+                'status' => 'Unpaid',
+                'billing_type' => 'service',
+                'created_by' => auth()->id(),
+            ]);
+
+            $subtotal = 0.0;
+            $daysInStorage = $deceased->days_in_storage;
+
+            foreach ($validated['items'] as $item) {
+                $storageServiceId = $deceased->chamber?->service_id;
+                $isStorageService = (bool) $storageServiceId && $item['service_id'] == $storageServiceId;
+
+                $servicePrice = ServicePrice::where('service_id', $item['service_id'])
+                    ->where('service_category_id', $deceased->service_category_id)
+                    ->where(function ($query) use ($deceased) {
+                        $query->whereNull('source')
+                            ->orWhere('source', $deceased->source);
+                    })
+                    ->first();
+
+                if ($isStorageService && $servicePrice && $servicePrice->servicePriceTiers->isNotEmpty()) {
+                    $unitPrice = (float) $servicePrice->calculateStorageCharge($daysInStorage);
+                    $totalPrice = $unitPrice;
+                } else {
+                    $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
+                    $totalPrice = $unitPrice * $item['quantity'];
+                }
+
+                $serviceName = Service::find($item['service_id'])?->name ?? 'Unknown Service';
+                $subtotal += $totalPrice;
+
+                $invoice->invoiceItems()->create([
+                    'service_id' => $item['service_id'],
+                    'name' => $serviceName,
+                    'unit_price' => $unitPrice,
+                    'quantity' => $isStorageService ? $daysInStorage : $item['quantity'],
+                    'total_price' => $totalPrice,
+                ]);
+            }
+
+            $invoice->update([
+                'subtotal' => $subtotal,
+                'total_amount' => $subtotal,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+        });
+
+        return redirect()->route('deceased.show', $deceased)
+            ->with('flash', ['type' => 'success', 'message' => 'Service invoice generated successfully.']);
+    }
+
+    /**
      * Generate the initial storage fee invoice for all days spent in storage.
      */
     public function generateStorageInvoice(CreateStorageFeeInvoice $action, Deceased $deceased): RedirectResponse
@@ -537,5 +646,53 @@ class DeceasedController extends Controller
 
         return redirect()->route('deceased.show', $deceased)
             ->with('flash', ['type' => 'info', 'message' => 'No storage days need billing at this time.']);
+    }
+
+    /**
+     * Render a print-optimized view of the deceased record with invoice and payment data.
+     */
+    public function print(Deceased $deceased): View|Factory
+    {
+        Gate::authorize('deceased.view');
+
+        $deceased->load([
+            'invoices.invoiceItems.service',
+            'invoices.createdByUser',
+            'payments.receivedByUser',
+            'storageFeeLogs.invoice',
+        ]);
+
+        $serviceInvoices = $deceased->invoices;
+        $storageLogs = $deceased->storageFeeLogs;
+        $payments = $deceased->payments;
+
+        $serviceInvoicesTotal = $serviceInvoices->sum('total_amount');
+        $storageInvoicesTotal = $storageLogs->sum(fn ($log) => $log->invoice ? (float) $log->invoice->total_amount : 0.0);
+        $totalBilled = $serviceInvoicesTotal + $storageInvoicesTotal;
+        $totalPaid = $payments->sum('amount');
+        $totalWaived = $serviceInvoices->sum('waived_amount') + $storageLogs->sum(fn ($log) => $log->invoice ? (float) $log->invoice->waived_amount : 0.0);
+        $ledgerBalance = $totalBilled - $totalPaid - $totalWaived;
+
+        $currencySymbol = ApplicationSetting::get('currency_symbol', '₦');
+        $branding = [
+            'name' => ApplicationSetting::get('app_name', config('app.name')),
+            'logo' => ApplicationSetting::get('app_logo')
+                ? Storage::disk('public')->url(ApplicationSetting::get('app_logo'))
+                : null,
+            'currency_symbol' => $currencySymbol,
+        ];
+
+        return view('deceased-print', compact(
+            'deceased',
+            'serviceInvoices',
+            'storageLogs',
+            'payments',
+            'totalBilled',
+            'totalPaid',
+            'totalWaived',
+            'ledgerBalance',
+            'currencySymbol',
+            'branding',
+        ));
     }
 }
