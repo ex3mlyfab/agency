@@ -379,6 +379,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                         </p>
                     </div>
                     <div className="flex shrink-0 gap-2 flex-wrap">
+                        <div className="grid gap-2 lg:grid-cols-3">
                         {can.edit && deceased.status !== 'Released' && (
                             <Button
                                 asChild
@@ -444,6 +445,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                     : 'Generate Storage Invoice'}
                             </Button>
                         )}
+                        </div>
                     </div>
                 </div>
 
