@@ -18,7 +18,7 @@ class CreateStorageFeeInvoice
      */
     public function handle(Deceased $deceased, string $createdBy, int $lastCoveredDay = 0): ?Invoice
     {
-        if ($deceased->chamber_id === null) {
+        if ($deceased->status !== 'InChamber' || $deceased->chamber_id === null) {
             return null;
         }
 
@@ -46,7 +46,10 @@ class CreateStorageFeeInvoice
             return null;
         }
 
-        $charge = $servicePrice->calculateStorageCharge($newDaysToBill);
+        // Bill the uncovered absolute day range [lastCoveredDay+1, daysInStorage]
+        // so each day is charged at the tier that actually owns it, not a
+        // day-1-anchored total that would always land in the cheapest tier.
+        $charge = $servicePrice->calculateStorageChargeForRange($lastCoveredDay + 1, $daysInStorage);
 
         $invoice = DB::transaction(function () use ($deceased, $storageServiceId, $lastCoveredDay, $newDaysToBill, $charge, $createdBy, $servicePrice) {
             $invoice = Invoice::create([
@@ -65,10 +68,16 @@ class CreateStorageFeeInvoice
 
             $serviceName = $servicePrice->service?->name ?? 'Storage Fee';
 
+            // Blended per-day rate so the line item stays internally consistent
+            // (unit_price × quantity = total_price) even across tier boundaries.
+            $unitPrice = $newDaysToBill > 0
+                ? round($charge / $newDaysToBill, 2)
+                : 0.0;
+
             $invoice->invoiceItems()->create([
                 'service_id' => $storageServiceId,
                 'name' => $serviceName,
-                'unit_price' => $charge,
+                'unit_price' => $unitPrice,
                 'quantity' => $newDaysToBill,
                 'total_price' => $charge,
             ]);
@@ -82,6 +91,9 @@ class CreateStorageFeeInvoice
                 'amount' => $charge,
                 'paid_days_at_creation' => $lastCoveredDay,
                 'created_by' => $createdBy,
+                // Link this billed range to the continuous admission it belongs
+                // to, so days_paid can scope to the current stay only.
+                'admission_started_at' => $deceased->currentAdmissionStart(),
             ]);
 
             return $invoice;

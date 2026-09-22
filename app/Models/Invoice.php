@@ -40,6 +40,20 @@ class Invoice extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'waived_amount' => 'decimal:2',
+        'period_start_date' => 'date',
+        'period_end_date' => 'date',
+    ];
+
+    /**
      * Get the deceased record associated with this invoice.
      */
     public function deceased(): BelongsTo

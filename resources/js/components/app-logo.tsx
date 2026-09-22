@@ -16,7 +16,7 @@ export default function AppLogo() {
                         className="h-full w-full object-contain p-1"
                     />
                 ) : (
-                    <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
+                    <AppLogoIcon className="size-5 fill-current text-sidebar-primary-foreground" />
                 )}
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">

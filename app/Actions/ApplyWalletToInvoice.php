@@ -22,7 +22,7 @@ class ApplyWalletToInvoice
 
             $balance = (float) $invoice->total_amount - (float) $invoice->paid_amount - (float) $invoice->waived_amount;
 
-            if ($balance <= 0) {
+            if ($balance <= 0 || $invoice->status === 'Paid') {
                 return null;
             }
 

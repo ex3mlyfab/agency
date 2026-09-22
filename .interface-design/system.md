@@ -1,7 +1,7 @@
 # MMA — Interface Design System
 
 **Project:** Mortuary Management Application  
-**Direction:** Serene Oversight — reverent, operational, architecturally calm
+**Direction:** Vibrant Oversight — operational, high-contrast, and premium with a bold-but-harmonious saturated palette
 
 ---
 
@@ -9,7 +9,7 @@
 
 - **Who:** Mortuary facility staff managing intake, chamber allocation, and release workflows
 - **Verb:** Track occupancy, register deceased, move chambers, audit history
-- **Feel:** Dignified control room — like a hospital operations floor at 3am. Quiet, precise, no visual noise.
+- **Feel:** A confident control room — strong visual hierarchy, crisp contrast, saturated accents used strategically, generous whitespace, and clearly defined interactive states. Readability and accessibility (WCAG AA) come first; color adds a premium feel, never visual noise.
 
 ---
 
@@ -73,6 +73,12 @@ Workbench-tight. 36px row height in tables (`py-2.5`). Card headers are compact 
 - Colors: `mma-chip-pending`, `mma-chip-in-chamber`, `mma-chip-released`, `mma-chip-entered`, `mma-chip-transferred`, `mma-chip-completed`
 - Defined in `app.css` under `@layer utilities`
 
+### Sidebar
+- Canvas-adjacent pale sky surface: `--sidebar` rather than a separate dark navigation world
+- Active item: `bg-sidebar-accent` with `font-semibold` and `text-sidebar-accent-foreground`
+- Navigation icons use restrained semantic cues: mint for chambers, plum for transfers, apricot for history, blue for reports
+- Group labels remain muted; color is reserved for active navigation and semantic states
+
 ### Button
 - Primary: `variant="default"` → `bg-primary text-primary-foreground`
 - Destructive: `variant="destructive"` only for confirmed destructive ops
@@ -89,22 +95,32 @@ Workbench-tight. 36px row height in tables (`py-2.5`). Card headers are compact 
 
 | Token | Light | Dark | Use |
 |-------|-------|------|-----|
-| `--background` | `#f8f9fa` | `oklch(0.145 0 0)` | Canvas |
-| `--primary` | `#2c3e50` | `oklch(0.985 0 0)` | Primary action, hero text |
-| `--secondary` | `#34495e` | `oklch(0.269 0.02 210)` | Section fills (rare) |
-| `--success` | `oklch(0.6 0.15 160)` | `oklch(0.5 0.12 160)` | Occupied, released, positive |
-| `--muted` | `#e2e8f0` | `oklch(0.269 0.02 210)` | Disabled, tracks, subtle fills |
-| `--muted-foreground` | `#64748b` | `oklch(0.708 0 0)` | Labels, meta text |
-| `--border` | `oklch(0.83 0.01 210)` | `oklch(0.269 0.02 210)` | All borders |
-| `--ring` | `oklch(0.55 0.05 243)` | `oklch(0.55 0.05 243)` | Focus rings |
-| `--destructive` | `oklch(0.47 0.19 27)` | `oklch(0.396 0.141 25.723)` | Errors, delete |
-| `--chart-2` | `oklch(0.6 0.118 184.704)` | `oklch(0.696 0.17 162.48)` | Chart lines (admissions) |
+| `--background` | `#eef2f7` | `#0b1120` | Canvas |
+| `--primary` | `#4338ca` | `#818cf8` | Primary action, hero text |
+| `--secondary` | `#e2e8f0` | `#1e293b` | Quiet controls and secondary actions |
+| `--success` | `#15803d` | `#22c55e` | Occupied, released, positive |
+| `--warning` | `#b45309` | `#f59e0b` | Pending, attention-required |
+| `--info` | `#1d4ed8` | `#3b82f6` | Reports, trend data, informational actions |
+| `--highlight` | `#7c3aed` | `#a78bfa` | Transfers, secondary focal panels |
+| `--accent` | `#0e7490` | `#22d3ee` | Complementary accent surfaces |
+| `--muted` | `#eef2f7` | `#1e293b` | Disabled, tracks, subtle fills |
+| `--muted-foreground` | `#475569` | `#94a3b8` | Labels, meta text |
+| `--border` | `#cbd5e1` | `#24324a` | All borders |
+| `--ring` | `#4338ca` | `#818cf8` | Focus rings |
+| `--destructive` | `#dc2626` | `#ef4444` | Errors, delete |
+| `--chart-2` | `oklch(0.62 0.16 190)` | `oklch(0.78 0.16 190)` | Chart lines (admissions) |
+
+All accent tokens pair with a near-white (`#ffffff`) foreground in light mode and a deep-ink
+(`#0b1120` / `#ffffff`) foreground in dark mode to keep foreground/background contrast at WCAG AA or
+better. Buttons, chips, and status pills use solid, high-contrast fills rather than low-opacity tints.
 
 ---
 
 ## Do Not
 
 - Hardcode hex colors in React components (use semantic tokens)
+- Use raw `text-blue-*`, `text-emerald-*`, `text-amber-*`, or `text-slate-*` classes for product states
+- Use gradients for dashboard cards; use a subtle semantic tint and edge accent instead
 - Use `bg-secondary/30` on card headers — border is enough
 - Use `hover:shadow-md` on cards — border intensify instead
 - Mix `rounded-xl` and `rounded-lg` — standardize on `rounded-lg` for cards

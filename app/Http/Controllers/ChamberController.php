@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreChamberRequest;
 use App\Http\Requests\UpdateChamberRequest;
 use App\Models\Chamber;
+use App\Models\Deceased;
 use App\Models\Service;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -154,6 +155,49 @@ class ChamberController extends Controller
 
         return redirect()->route('chambers.index')
             ->with('flash', ['type' => 'success', 'message' => 'Chamber updated.']);
+    }
+
+    /**
+     * Display all occupied chambers with their deceased occupants.
+     */
+    public function deposers(): Response
+    {
+        Gate::authorize('chambers.view');
+
+        $chambers = Chamber::with(['service', 'occupants'])
+            ->withCount(['occupants'])
+            ->havingRaw('occupants_count > 0')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Chamber $chamber) {
+                $occupants = $chamber->occupants->map(function (Deceased $d) {
+                    return [
+                        'id' => $d->id,
+                        'full_name' => $d->full_name,
+                        'age' => $d->date_of_birth
+                            ? (int) $d->date_of_birth->diffInYears(now())
+                            : null,
+                        'days_in_storage' => $d->days_in_storage,
+                    ];
+                });
+
+                return [
+                    'id' => $chamber->id,
+                    'name' => $chamber->name,
+                    'location' => $chamber->location,
+                    'capacity' => $chamber->capacity,
+                    'occupants_count' => $chamber->occupants_count,
+                    'occupancy_status' => $chamber->occupancy_status,
+                    'service' => $chamber->service
+                        ? ['id' => $chamber->service->id, 'name' => $chamber->service->name]
+                        : null,
+                    'occupants' => $occupants,
+                ];
+            });
+
+        return Inertia::render('chambers/deposers', [
+            'chambers' => $chambers,
+        ]);
     }
 
     /**

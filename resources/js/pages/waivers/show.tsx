@@ -1,5 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeftIcon, ShieldCheckIcon, UserIcon, CalendarIcon, FileTextIcon, TrendingDownIcon } from 'lucide-react';
+import {
+    ArrowLeftIcon,
+    ShieldCheckIcon,
+    UserIcon,
+    CalendarIcon,
+    FileTextIcon,
+    TrendingDownIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCurrency, fmtCurrency } from '@/lib/currency';
@@ -45,7 +52,7 @@ export default function WaiverShow({ waiver }: Props) {
     return (
         <>
             <Head title={`Waiver ${waiver.id}`} />
-            <div className="space-y-6 p-6 max-w-5xl mx-auto">
+            <div className="mx-auto max-w-5xl space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <Button asChild variant="ghost" size="sm">
                         <Link href="/waivers">
@@ -58,24 +65,26 @@ export default function WaiverShow({ waiver }: Props) {
                 <div className="grid gap-6 md:grid-cols-3">
                     <Card className="md:col-span-2">
                         <CardHeader className="border-b border-border px-6 py-3">
-                            <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                                 <ShieldCheckIcon className="h-5 w-5 text-muted-foreground" />
                                 Waiver {waiver.id}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-6">
+                        <CardContent className="space-y-6 p-6">
                             <div className="flex justify-end">
                                 <div className="w-80 space-y-2 border-t border-border pt-4 text-sm">
                                     <div className="flex justify-between text-muted-foreground">
                                         <span>Amount Waived</span>
-                                        <span className="text-rose-600 dark:text-rose-400 font-medium">
+                                        <span className="font-medium text-destructive">
                                             -{fmtCurrency(amount, symbol)}
                                         </span>
                                     </div>
                                     {waiver.reason && (
-                                        <div className="pt-2 border-t border-border">
-                                            <span className="text-xs text-muted-foreground block uppercase font-medium">Reason</span>
-                                            <p className="mt-1 text-sm text-foreground whitespace-pre-line leading-relaxed">
+                                        <div className="border-t border-border pt-2">
+                                            <span className="block text-xs font-medium text-muted-foreground uppercase">
+                                                Reason
+                                            </span>
+                                            <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-foreground">
                                                 {waiver.reason}
                                             </p>
                                         </div>
@@ -88,23 +97,30 @@ export default function WaiverShow({ waiver }: Props) {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader className="border-b border-border px-6 py-3">
-                                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />
                                     Authorized By
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="p-6">
                                 <div>
-                                    <span className="text-xs text-muted-foreground block">Authorized By</span>
-                                    <span className="font-medium text-foreground text-sm">
-                                        {waiver.authorized_by_user?.name || 'System'}
+                                    <span className="block text-xs text-muted-foreground">
+                                        Authorized By
+                                    </span>
+                                    <span className="text-sm font-medium text-foreground">
+                                        {waiver.authorized_by_user?.name ||
+                                            'System'}
                                     </span>
                                 </div>
                                 <div className="mt-3">
-                                    <span className="text-xs text-muted-foreground block">Authorized At</span>
-                                    <span className="font-medium text-foreground text-sm flex items-center gap-1.5 mt-0.5">
+                                    <span className="block text-xs text-muted-foreground">
+                                        Authorized At
+                                    </span>
+                                    <span className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-foreground">
                                         <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                                        {new Date(waiver.authorized_at).toLocaleString()}
+                                        {new Date(
+                                            waiver.authorized_at,
+                                        ).toLocaleString()}
                                     </span>
                                 </div>
                             </CardContent>
@@ -112,7 +128,7 @@ export default function WaiverShow({ waiver }: Props) {
 
                         <Card>
                             <CardHeader className="border-b border-border px-6 py-3">
-                                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
                                     <FileTextIcon className="h-4 w-4 text-muted-foreground" />
                                     Applied Invoice
                                 </CardTitle>
@@ -121,29 +137,43 @@ export default function WaiverShow({ waiver }: Props) {
                                 {waiver.invoice ? (
                                     <div className="space-y-3">
                                         <div>
-                                            <span className="text-xs text-muted-foreground block">Invoice Number</span>
+                                            <span className="block text-xs text-muted-foreground">
+                                                Invoice Number
+                                            </span>
                                             <Link
                                                 href={`/invoices/${waiver.invoice.id}`}
-                                                className="font-semibold text-primary hover:underline text-sm"
+                                                className="text-sm font-semibold text-primary hover:underline"
                                             >
                                                 {waiver.invoice.invoice_number}
                                             </Link>
                                         </div>
                                         <div>
-                                            <span className="text-xs text-muted-foreground block">Invoice Total</span>
-                                            <span className="font-semibold text-foreground text-sm">
-                                                {fmtCurrency(parseFloat(waiver.invoice.total_amount as string), symbol)}
+                                            <span className="block text-xs text-muted-foreground">
+                                                Invoice Total
+                                            </span>
+                                            <span className="text-sm font-semibold text-foreground">
+                                                {fmtCurrency(
+                                                    parseFloat(
+                                                        waiver.invoice
+                                                            .total_amount as string,
+                                                    ),
+                                                    symbol,
+                                                )}
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-xs text-muted-foreground block">Invoice Status</span>
-                                            <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-500 border border-blue-500/20 mt-1">
+                                            <span className="block text-xs text-muted-foreground">
+                                                Invoice Status
+                                            </span>
+                                            <span className="mt-1 inline-flex items-center rounded-full border border-info/30 bg-info/15 px-2 py-0.5 text-xs font-bold text-info">
                                                 {waiver.invoice.status}
                                             </span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="text-sm text-muted-foreground">No invoice linked.</span>
+                                    <span className="text-sm text-muted-foreground">
+                                        No invoice linked.
+                                    </span>
                                 )}
                             </CardContent>
                         </Card>

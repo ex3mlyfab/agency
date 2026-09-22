@@ -1,5 +1,14 @@
 ﻿import { Head, Link, useForm, router } from '@inertiajs/react';
-import { ArrowLeftIcon, FileTextIcon, UserIcon, CalendarIcon, DollarSignIcon, PlusIcon, ShieldCheckIcon, PrinterIcon } from 'lucide-react';
+import {
+    ArrowLeftIcon,
+    FileTextIcon,
+    UserIcon,
+    CalendarIcon,
+    DollarSignIcon,
+    PlusIcon,
+    ShieldCheckIcon,
+    PrinterIcon,
+} from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
@@ -98,7 +107,12 @@ interface Props {
     };
 }
 
-export default function InvoiceShow({ invoice, paymentModes = [], walletBalance = 0, can }: Props) {
+export default function InvoiceShow({
+    invoice,
+    paymentModes = [],
+    walletBalance = 0,
+    can,
+}: Props) {
     const symbol = useCurrency();
     const total = parseFloat(invoice.total_amount as string);
     const paid = parseFloat(invoice.paid_amount as string);
@@ -177,21 +191,21 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'paid':
-                return 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+                return 'bg-success/15 text-success border border-success/30';
             case 'partially_paid':
             case 'partially paid':
-                return 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
+                return 'bg-warning/15 text-warning border border-warning/30';
             case 'unpaid':
-                return 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
+                return 'bg-destructive/15 text-destructive border border-destructive/30';
             default:
-                return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
+                return 'bg-info/15 text-info border border-info/30';
         }
     };
 
     return (
         <>
             <Head title={`Invoice ${invoice.invoice_number}`} />
-            <div className="space-y-6 p-6 max-w-5xl mx-auto">
+            <div className="mx-auto max-w-5xl space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <Button asChild variant="ghost" size="sm">
                         <Link href="/invoices">
@@ -200,25 +214,43 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                         </Link>
                     </Button>
                     <div className="flex items-center gap-3">
-                        {isUnsettled && (can?.managePayments !== false) && (
-                            <Button size="sm" onClick={() => setIsPaymentOpen(true)} className="flex items-center gap-1.5">
+                        {isUnsettled && can?.managePayments !== false && (
+                            <Button
+                                size="sm"
+                                onClick={() => setIsPaymentOpen(true)}
+                                className="flex items-center gap-1.5"
+                            >
                                 <PlusIcon className="h-4 w-4" />
                                 <span>Record Payment</span>
                             </Button>
                         )}
-                        {isUnsettled && balance > 0 && (can?.manageWaivers !== false) && (
-                            <Button size="sm" variant="destructive" onClick={() => setIsWaiverOpen(true)} className="flex items-center gap-1.5">
-                                <ShieldCheckIcon className="h-4 w-4" />
-                                <span>Apply Waiver</span>
-                            </Button>
-                        )}
-                        <Button asChild variant="outline" size="sm" className="flex items-center gap-1.5">
+                        {isUnsettled &&
+                            balance > 0 &&
+                            can?.manageWaivers !== false && (
+                                <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => setIsWaiverOpen(true)}
+                                    className="flex items-center gap-1.5"
+                                >
+                                    <ShieldCheckIcon className="h-4 w-4" />
+                                    <span>Apply Waiver</span>
+                                </Button>
+                            )}
+                        <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1.5"
+                        >
                             <Link href={`/invoices/${invoice.id}/print`}>
                                 <PrinterIcon className="h-4 w-4" />
                                 <span>Print</span>
                             </Link>
                         </Button>
-                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(invoice.status)}`}>
+                        <span
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(invoice.status)}`}
+                        >
                             {invoice.status}
                         </span>
                     </div>
@@ -228,27 +260,38 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                     <Card className="md:col-span-2">
                         <CardHeader className="border-b border-border px-6 py-3">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                                     <FileTextIcon className="h-5 w-5 text-muted-foreground" />
                                     Invoice {invoice.invoice_number}
                                 </CardTitle>
                                 <span className="text-xs text-muted-foreground">
-                                    Created on {new Date(invoice.created_at).toLocaleDateString()}
+                                    Created on{' '}
+                                    {new Date(
+                                        invoice.created_at,
+                                    ).toLocaleDateString()}
                                 </span>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-6">
+                        <CardContent className="space-y-6 p-6">
                             <div>
-                                <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase mb-3">
+                                <h3 className="mb-3 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Line Items
                                 </h3>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Service / Item</TableHead>
-                                            <TableHead className="text-right">Unit Price</TableHead>
-                                            <TableHead className="text-center">Qty</TableHead>
-                                            <TableHead className="text-right">Total</TableHead>
+                                            <TableHead>
+                                                Service / Item
+                                            </TableHead>
+                                            <TableHead className="text-right">
+                                                Unit Price
+                                            </TableHead>
+                                            <TableHead className="text-center">
+                                                Qty
+                                            </TableHead>
+                                            <TableHead className="text-right">
+                                                Total
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -258,18 +301,29 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                                     {item.name}
                                                     {item.service && (
                                                         <span className="block text-xs text-muted-foreground">
-                                                            Category: {item.service.name}
+                                                            Category:{' '}
+                                                            {item.service.name}
                                                         </span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-right text-foreground">
-                                                    {fmtCurrency(parseFloat(item.unit_price as string), symbol)}
+                                                    {fmtCurrency(
+                                                        parseFloat(
+                                                            item.unit_price as string,
+                                                        ),
+                                                        symbol,
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="text-center text-foreground">
                                                     {item.quantity}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium text-foreground">
-                                                    {fmtCurrency(parseFloat(item.total_price as string), symbol)}
+                                                    {fmtCurrency(
+                                                        parseFloat(
+                                                            item.total_price as string,
+                                                        ),
+                                                        symbol,
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -281,37 +335,67 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                 <div className="w-80 space-y-2 border-t border-border pt-4 text-sm">
                                     <div className="flex justify-between text-muted-foreground">
                                         <span>Subtotal</span>
-                                        <span>{fmtCurrency(parseFloat(invoice.subtotal as string), symbol)}</span>
+                                        <span>
+                                            {fmtCurrency(
+                                                parseFloat(
+                                                    invoice.subtotal as string,
+                                                ),
+                                                symbol,
+                                            )}
+                                        </span>
                                     </div>
-                                    {parseFloat(invoice.discount as string) > 0 && (
-                                        <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                                    {parseFloat(invoice.discount as string) >
+                                        0 && (
+                                        <div className="flex justify-between text-success">
                                             <span>Discount</span>
-                                            <span>-{fmtCurrency(parseFloat(invoice.discount as string), symbol)}</span>
+                                            <span>
+                                                -
+                                                {fmtCurrency(
+                                                    parseFloat(
+                                                        invoice.discount as string,
+                                                    ),
+                                                    symbol,
+                                                )}
+                                            </span>
                                         </div>
                                     )}
                                     {parseFloat(invoice.tax as string) > 0 && (
                                         <div className="flex justify-between text-muted-foreground">
                                             <span>Tax</span>
-                                            <span>+{fmtCurrency(parseFloat(invoice.tax as string), symbol)}</span>
+                                            <span>
+                                                +
+                                                {fmtCurrency(
+                                                    parseFloat(
+                                                        invoice.tax as string,
+                                                    ),
+                                                    symbol,
+                                                )}
+                                            </span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between font-semibold text-foreground text-base border-t border-border pt-2">
+                                    <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
                                         <span>Total Amount</span>
-                                        <span>{fmtCurrency(total, symbol)}</span>
+                                        <span>
+                                            {fmtCurrency(total, symbol)}
+                                        </span>
                                     </div>
-                                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                                    <div className="flex justify-between text-success">
                                         <span>Paid to Date</span>
                                         <span>{fmtCurrency(paid, symbol)}</span>
                                     </div>
                                     {waived > 0 && (
-                                        <div className="flex justify-between text-rose-600 dark:text-rose-400 text-xs pt-1">
+                                        <div className="flex justify-between pt-1 text-xs text-destructive">
                                             <span>Waived</span>
-                                            <span>-{fmtCurrency(waived, symbol)}</span>
+                                            <span>
+                                                -{fmtCurrency(waived, symbol)}
+                                            </span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between font-bold text-destructive text-base border-t border-dashed border-border pt-2">
+                                    <div className="flex justify-between border-t border-dashed border-border pt-2 text-base font-bold text-destructive">
                                         <span>Outstanding Balance</span>
-                                        <span>{fmtCurrency(balance, symbol)}</span>
+                                        <span>
+                                            {fmtCurrency(balance, symbol)}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -321,7 +405,7 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                     <div className="space-y-6">
                         <Card>
                             <CardHeader className="border-b border-border px-6 py-3">
-                                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />
                                     Deceased Details
                                 </CardTitle>
@@ -330,46 +414,61 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                 {invoice.deceased ? (
                                     <div className="space-y-3">
                                         <div>
-                                            <span className="text-xs text-muted-foreground block">Name</span>
+                                            <span className="block text-xs text-muted-foreground">
+                                                Name
+                                            </span>
                                             <Link
                                                 href={`/deceased/${invoice.deceased.id}`}
-                                                className="font-medium text-primary hover:underline text-sm"
+                                                className="text-sm font-medium text-primary hover:underline"
                                             >
-                                                {invoice.deceased.first_name} {invoice.deceased.last_name}
+                                                {invoice.deceased.first_name}{' '}
+                                                {invoice.deceased.last_name}
                                             </Link>
                                         </div>
                                         <div>
-                                            <span className="text-xs text-muted-foreground block">Date of Death</span>
-                                            <span className="font-medium text-foreground text-sm flex items-center gap-1.5 mt-0.5">
+                                            <span className="block text-xs text-muted-foreground">
+                                                Date of Death
+                                            </span>
+                                            <span className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-foreground">
                                                 <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                                                {new Date(invoice.deceased.date_of_death).toLocaleDateString()}
+                                                {new Date(
+                                                    invoice.deceased
+                                                        .date_of_death,
+                                                ).toLocaleDateString()}
                                             </span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="text-sm text-muted-foreground">No deceased record linked.</span>
+                                    <span className="text-sm text-muted-foreground">
+                                        No deceased record linked.
+                                    </span>
                                 )}
                             </CardContent>
                         </Card>
 
                         <Card>
                             <CardHeader className="border-b border-border px-6 py-3">
-                                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
                                     <DollarSignIcon className="h-4 w-4 text-muted-foreground" />
                                     Payment Meta
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-6 space-y-3 text-sm">
+                            <CardContent className="space-y-3 p-6 text-sm">
                                 <div>
-                                    <span className="text-xs text-muted-foreground block">Billed By</span>
+                                    <span className="block text-xs text-muted-foreground">
+                                        Billed By
+                                    </span>
                                     <span className="font-medium text-foreground">
-                                        {invoice.created_by_user?.name || 'System'}
+                                        {invoice.created_by_user?.name ||
+                                            'System'}
                                     </span>
                                 </div>
                                 {invoice.notes && (
-                                    <div className="pt-2 border-t border-border">
-                                        <span className="text-xs text-muted-foreground block">Notes</span>
-                                        <p className="mt-1 text-xs text-muted-foreground whitespace-pre-line leading-relaxed">
+                                    <div className="border-t border-border pt-2">
+                                        <span className="block text-xs text-muted-foreground">
+                                            Notes
+                                        </span>
+                                        <p className="mt-1 text-xs leading-relaxed whitespace-pre-line text-muted-foreground">
                                             {invoice.notes}
                                         </p>
                                     </div>
@@ -380,12 +479,16 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                 </div>
 
                 <Card>
-                    <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
                         <CardTitle className="text-sm font-semibold text-foreground">
                             Associated Payments & Transactions
                         </CardTitle>
-                        {isUnsettled && (can?.managePayments !== false) && (
-                            <Button size="sm" onClick={() => setIsPaymentOpen(true)} className="h-8 flex items-center gap-1">
+                        {isUnsettled && can?.managePayments !== false && (
+                            <Button
+                                size="sm"
+                                onClick={() => setIsPaymentOpen(true)}
+                                className="flex h-8 items-center gap-1"
+                            >
                                 <PlusIcon className="h-3.5 w-3.5" />
                                 Record Payment
                             </Button>
@@ -394,7 +497,8 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                     <CardContent className="p-0">
                         {invoice.payments.length === 0 ? (
                             <p className="p-6 text-sm text-muted-foreground">
-                                No payments have been recorded against this invoice yet.
+                                No payments have been recorded against this
+                                invoice yet.
                             </p>
                         ) : (
                             <Table>
@@ -402,28 +506,45 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                     <TableRow>
                                         <TableHead>Receipt #</TableHead>
                                         <TableHead>Payment Method</TableHead>
-                                        <TableHead>Transaction Reference</TableHead>
+                                        <TableHead>
+                                            Transaction Reference
+                                        </TableHead>
                                         <TableHead>Payment Date</TableHead>
-                                        <TableHead className="text-right">Amount Paid</TableHead>
+                                        <TableHead className="text-right">
+                                            Amount Paid
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {invoice.payments.map((payment) => (
                                         <TableRow key={payment.id}>
                                             <TableCell className="font-semibold text-foreground">
-                                                <Link href={`/payments/${payment.id}`} className="hover:underline text-primary">
+                                                <Link
+                                                    href={`/payments/${payment.id}`}
+                                                    className="text-primary hover:underline"
+                                                >
                                                     {payment.receipt_number}
                                                 </Link>
                                             </TableCell>
-                                            <TableCell className="text-foreground">{payment.payment_method}</TableCell>
-                                            <TableCell className="text-muted-foreground font-mono text-xs">
-                                                {payment.transaction_reference || '-'}
+                                            <TableCell className="text-foreground">
+                                                {payment.payment_method}
+                                            </TableCell>
+                                            <TableCell className="font-mono text-xs text-muted-foreground">
+                                                {payment.transaction_reference ||
+                                                    '-'}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {new Date(payment.payment_date).toLocaleString()}
+                                                {new Date(
+                                                    payment.payment_date,
+                                                ).toLocaleString()}
                                             </TableCell>
-                                            <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">
-                                                {fmtCurrency(parseFloat(payment.amount as string), symbol)}
+                                            <TableCell className="text-right font-medium text-success">
+                                                {fmtCurrency(
+                                                    parseFloat(
+                                                        payment.amount as string,
+                                                    ),
+                                                    symbol,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -437,40 +558,49 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
             <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Record Payment for Invoice {invoice.invoice_number}</DialogTitle>
+                        <DialogTitle>
+                            Record Payment for Invoice {invoice.invoice_number}
+                        </DialogTitle>
                         <DialogDescription>
-                            Apply a payment receipt to this invoice. Outstanding balance: {fmtCurrency(balance, symbol)}.
+                            Apply a payment receipt to this invoice. Outstanding
+                            balance: {fmtCurrency(balance, symbol)}.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
                         <div>
-                            <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
+                            <span className="block text-xs text-muted-foreground">
+                                Total Amount Expected
+                            </span>
                             <span className="font-semibold text-foreground">
                                 {fmtCurrency(total, symbol)}
                             </span>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs text-muted-foreground block">Total Paid</span>
-                            <span className="font-medium text-emerald-600">
+                            <span className="block text-xs text-muted-foreground">
+                                Total Paid
+                            </span>
+                            <span className="font-medium text-success">
                                 {fmtCurrency(paid, symbol)}
                             </span>
                         </div>
                         <div className="col-span-2">
-                            <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
-                            <span className="font-bold text-destructive text-base">
+                            <span className="block text-xs text-muted-foreground">
+                                Outstanding Balance
+                            </span>
+                            <span className="text-base font-bold text-destructive">
                                 {fmtCurrency(balance, symbol)}
                             </span>
                         </div>
                     </div>
 
                     {walletBalance > 0 && balance > 0 && (
-                        <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
+                        <div className="rounded-md border border-warning/30 bg-warning/10 p-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                <span className="text-xs font-bold text-warning">
                                     Wallet Balance Available
                                 </span>
-                                <span className="font-bold text-amber-600 dark:text-amber-400">
+                                <span className="font-bold text-foreground">
                                     {fmtCurrency(walletBalance, symbol)}
                                 </span>
                             </div>
@@ -482,31 +612,51 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                     onClick={handleApplyWalletToInvoice}
                                     disabled={isWalletApplying}
                                 >
-                                    {isWalletApplying ? 'Applying...' : 'Apply Wallet to Invoice'}
+                                    {isWalletApplying
+                                        ? 'Applying...'
+                                        : 'Apply Wallet to Invoice'}
                                 </Button>
                             </div>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                Apply {walletBalance >= balance ? 'full' : 'partial'} wallet funds ({fmtCurrency(walletBalance, symbol)}) toward the outstanding invoice balance ({fmtCurrency(balance, symbol)}).
+                                Apply{' '}
+                                {walletBalance >= balance ? 'full' : 'partial'}{' '}
+                                wallet funds (
+                                {fmtCurrency(walletBalance, symbol)}) toward the
+                                outstanding invoice balance (
+                                {fmtCurrency(balance, symbol)}).
                             </p>
                         </div>
                     )}
 
                     <form onSubmit={submitPayment} className="space-y-4">
                         <div className="space-y-1.5">
-                            <Label htmlFor="payment_mode_id">Payment Mode</Label>
+                            <Label htmlFor="payment_mode_id">
+                                Payment Mode
+                            </Label>
                             <select
                                 id="payment_mode_id"
                                 value={paymentForm.data.payment_mode_id}
-                                onChange={(e) => paymentForm.setData('payment_mode_id', e.target.value)}
-                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'payment_mode_id',
+                                        e.target.value,
+                                    )
+                                }
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 required
                             >
-                                <option value="" disabled>Select payment mode</option>
+                                <option value="" disabled>
+                                    Select payment mode
+                                </option>
                                 {paymentModes.map((mode) => (
-                                    <option key={mode.id} value={mode.id}>{mode.name}</option>
+                                    <option key={mode.id} value={mode.id}>
+                                        {mode.name}
+                                    </option>
                                 ))}
                             </select>
-                            <InputError message={paymentForm.errors.payment_mode_id} />
+                            <InputError
+                                message={paymentForm.errors.payment_mode_id}
+                            />
                         </div>
 
                         <div className="space-y-1.5">
@@ -518,7 +668,12 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                 min="0.01"
                                 max={balance}
                                 value={paymentForm.data.amount}
-                                onChange={(e) => paymentForm.setData('amount', e.target.value)}
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'amount',
+                                        e.target.value,
+                                    )
+                                }
                                 placeholder="Enter amount"
                                 required
                             />
@@ -526,14 +681,25 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="transaction_reference">Transaction Reference (Optional)</Label>
+                            <Label htmlFor="transaction_reference">
+                                Transaction Reference (Optional)
+                            </Label>
                             <Input
                                 id="transaction_reference"
                                 value={paymentForm.data.transaction_reference}
-                                onChange={(e) => paymentForm.setData('transaction_reference', e.target.value)}
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'transaction_reference',
+                                        e.target.value,
+                                    )
+                                }
                                 placeholder="Reference or bank code"
                             />
-                            <InputError message={paymentForm.errors.transaction_reference} />
+                            <InputError
+                                message={
+                                    paymentForm.errors.transaction_reference
+                                }
+                            />
                         </div>
 
                         <div className="space-y-1.5">
@@ -542,31 +708,51 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                 id="payment_date"
                                 type="date"
                                 value={paymentForm.data.payment_date}
-                                onChange={(e) => paymentForm.setData('payment_date', e.target.value)}
+                                onChange={(e) =>
+                                    paymentForm.setData(
+                                        'payment_date',
+                                        e.target.value,
+                                    )
+                                }
                                 required
                             />
-                            <InputError message={paymentForm.errors.payment_date} />
+                            <InputError
+                                message={paymentForm.errors.payment_date}
+                            />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="payment_notes">Notes (Optional)</Label>
+                            <Label htmlFor="payment_notes">
+                                Notes (Optional)
+                            </Label>
                             <textarea
                                 id="payment_notes"
                                 value={paymentForm.data.notes}
-                                onChange={(e) => paymentForm.setData('notes', e.target.value)}
+                                onChange={(e) =>
+                                    paymentForm.setData('notes', e.target.value)
+                                }
                                 rows={2}
                                 placeholder="Any additional remarks..."
-                                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                             />
                             <InputError message={paymentForm.errors.notes} />
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsPaymentOpen(false)}
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={paymentForm.processing}>
-                                {paymentForm.processing ? 'Recording...' : 'Record Payment'}
+                            <Button
+                                type="submit"
+                                disabled={paymentForm.processing}
+                            >
+                                {paymentForm.processing
+                                    ? 'Recording...'
+                                    : 'Record Payment'}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -576,36 +762,47 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
             <Dialog open={isWaiverOpen} onOpenChange={setIsWaiverOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Apply Waiver to Invoice {invoice.invoice_number}</DialogTitle>
+                        <DialogTitle>
+                            Apply Waiver to Invoice {invoice.invoice_number}
+                        </DialogTitle>
                         <DialogDescription>
-                            Waive an amount from the outstanding balance. Outstanding balance: {fmtCurrency(balance, symbol)}.
+                            Waive an amount from the outstanding balance.
+                            Outstanding balance: {fmtCurrency(balance, symbol)}.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
                         <div>
-                            <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
+                            <span className="block text-xs text-muted-foreground">
+                                Total Amount Expected
+                            </span>
                             <span className="font-semibold text-foreground">
                                 {fmtCurrency(total, symbol)}
                             </span>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs text-muted-foreground block">Total Paid</span>
-                            <span className="font-medium text-emerald-600">
+                            <span className="block text-xs text-muted-foreground">
+                                Total Paid
+                            </span>
+                            <span className="font-medium text-success">
                                 {fmtCurrency(paid, symbol)}
                             </span>
                         </div>
                         {waived > 0 && (
                             <div className="text-right">
-                                <span className="text-xs text-muted-foreground block">Already Waived</span>
-                                <span className="font-medium text-rose-600">
+                                <span className="block text-xs text-muted-foreground">
+                                    Already Waived
+                                </span>
+                                <span className="font-medium text-destructive">
                                     {fmtCurrency(waived, symbol)}
                                 </span>
                             </div>
                         )}
                         <div className="col-span-2">
-                            <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
-                            <span className="font-bold text-destructive text-base">
+                            <span className="block text-xs text-muted-foreground">
+                                Outstanding Balance
+                            </span>
+                            <span className="text-base font-bold text-destructive">
                                 {fmtCurrency(balance, symbol)}
                             </span>
                         </div>
@@ -613,7 +810,9 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
 
                     <form onSubmit={submitWaiver} className="space-y-4">
                         <div className="space-y-1.5">
-                            <Label htmlFor="waiver_amount">Waiver Amount ({symbol})</Label>
+                            <Label htmlFor="waiver_amount">
+                                Waiver Amount ({symbol})
+                            </Label>
                             <Input
                                 id="waiver_amount"
                                 type="number"
@@ -621,7 +820,9 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                                 min="0.01"
                                 max={balance}
                                 value={waiverForm.data.amount}
-                                onChange={(e) => waiverForm.setData('amount', e.target.value)}
+                                onChange={(e) =>
+                                    waiverForm.setData('amount', e.target.value)
+                                }
                                 placeholder="Enter amount to waive"
                                 required
                             />
@@ -629,24 +830,39 @@ export default function InvoiceShow({ invoice, paymentModes = [], walletBalance 
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="waiver_reason">Reason (Optional)</Label>
+                            <Label htmlFor="waiver_reason">
+                                Reason (Optional)
+                            </Label>
                             <textarea
                                 id="waiver_reason"
                                 value={waiverForm.data.reason}
-                                onChange={(e) => waiverForm.setData('reason', e.target.value)}
+                                onChange={(e) =>
+                                    waiverForm.setData('reason', e.target.value)
+                                }
                                 rows={3}
                                 placeholder="Provide a reason for this waiver..."
-                                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                             />
                             <InputError message={waiverForm.errors.reason} />
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsWaiverOpen(false)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsWaiverOpen(false)}
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={waiverForm.processing || isWaiverApplying}>
-                                {waiverForm.processing || isWaiverApplying ? 'Applying...' : 'Apply Waiver'}
+                            <Button
+                                type="submit"
+                                disabled={
+                                    waiverForm.processing || isWaiverApplying
+                                }
+                            >
+                                {waiverForm.processing || isWaiverApplying
+                                    ? 'Applying...'
+                                    : 'Apply Waiver'}
                             </Button>
                         </DialogFooter>
                     </form>

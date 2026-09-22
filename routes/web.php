@@ -34,6 +34,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('deceased/{deceased}/print', [DeceasedController::class, 'print'])
         ->name('deceased.print');
 
+    // Cold Rooms & Depositions
+    Route::get('chambers/deposers', [ChamberController::class, 'deposers'])
+        ->name('chambers.deposers');
+
     // Chambers CRUD + indicator index
     Route::resource('chambers', ChamberController::class)->except(['show']);
 

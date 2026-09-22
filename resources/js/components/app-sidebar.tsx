@@ -5,6 +5,7 @@ import {
     LayoutGrid,
     MoveRight,
     ScrollText,
+    Plus,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -41,18 +42,41 @@ export function AppSidebar() {
         ...(can['deceased.view'] !== false
             ? [
                   {
-                      title: 'Deceased',
+                      title: 'Record',
                       href: '/deceased',
                       icon: Users,
+                      children: [
+                          {
+                              title: 'Add New Record',
+                              href: '/deceased/create',
+                              icon: Plus,
+                          },
+                          {
+                              title: 'View Records',
+                              href: '/deceased',
+                          },
+                      ],
                   },
               ]
             : []),
         ...(can['chambers.view'] !== false
             ? [
                   {
-                      title: 'Chambers',
+                      title: 'Cold Rooms & Depositions',
                       href: '/chambers',
                       icon: Building2,
+                      children: [
+                          {
+                              title: 'Cold Rooms',
+                              href: '/chambers',
+                              icon: Building2,
+                          },
+                          {
+                              title: 'Depositions',
+                              href: '/chambers/deposers',
+                              icon: Users,
+                          },
+                      ],
                   },
               ]
             : []),

@@ -151,7 +151,14 @@ class PaymentController extends Controller
      */
     public function applyWalletToInvoice(StoreWalletApplicationRequest $request, ApplyWalletToInvoice $applyWalletToInvoice): RedirectResponse
     {
-        $applyWalletToInvoice->handle($request->validated(), (string) $request->user()->id);
+        $payment = $applyWalletToInvoice->handle($request->validated(), (string) $request->user()->id);
+
+        if (! $payment) {
+            return back()->with('flash', [
+                'type' => 'info',
+                'message' => 'No wallet balance was available to apply to this invoice.',
+            ]);
+        }
 
         return back()->with('flash', [
             'type' => 'success',

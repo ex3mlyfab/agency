@@ -79,8 +79,8 @@ interface Props {
 
 function formatDate(date: string): string {
     if (!date) {
-return '—';
-}
+        return '—';
+    }
 
     return new Date(date).toLocaleDateString('en-GB', {
         day: '2-digit',
@@ -91,22 +91,32 @@ return '—';
 
 function formatDateTime(date: string): string {
     if (!date) {
-return '—';
-}
+        return '—';
+    }
 
     const d = new Date(date);
 
-    return d.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }) + ' ' + d.toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    return (
+        d.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        }) +
+        ' ' +
+        d.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+    );
 }
 
-export default function TransfersIndex({ transfers, stats, filters, users, can }: Props) {
+export default function TransfersIndex({
+    transfers,
+    stats,
+    filters,
+    users,
+    can,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [eventType, setEventType] = useState(filters.event_type ?? 'all');
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
@@ -135,11 +145,15 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
         setEventType('all');
         setDateFrom('');
         setDateTo('');
-        router.get('/transfers', {}, {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['transfers', 'filters'],
-        });
+        router.get(
+            '/transfers',
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['transfers', 'filters'],
+            },
+        );
     }
 
     function hasActiveFilters() {
@@ -183,16 +197,16 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-5">
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-slate-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-muted-foreground" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-500/10">
-                                <ClockIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                <ClockIcon className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {stats.total}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Events
                                 </p>
                             </div>
@@ -200,16 +214,16 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-primary" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                                <LogInIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                <LogInIcon className="h-4 w-4 text-primary" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {stats.entered}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Admissions
                                 </p>
                             </div>
@@ -217,16 +231,16 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                                <ArrowRightLeftIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/10">
+                                <ArrowRightLeftIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {stats.transferred}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Transfers
                                 </p>
                             </div>
@@ -234,16 +248,16 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-success" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                                <LogOutIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10">
+                                <LogOutIcon className="h-4 w-4 text-success" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {stats.released}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Releases
                                 </p>
                             </div>
@@ -251,16 +265,16 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                     </Card>
 
                     <Card className="col-span-2 overflow-hidden lg:col-span-1">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-violet-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
-                                <UserIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
+                                <UserIcon className="h-4 w-4 text-highlight" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {users.length}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Staff
                                 </p>
                             </div>
@@ -273,15 +287,17 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                     <CardContent className="p-0">
                         {/* Top row: search + toggle */}
                         <div className="flex items-center gap-2 border-b border-border p-3">
-                            <div className="relative flex-1 min-w-0">
-                                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="relative min-w-0 flex-1">
+                                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="text"
                                     placeholder="Search by deceased name…"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                                    className="pl-9 pr-9"
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && applyFilters()
+                                    }
+                                    className="pr-9 pl-9"
                                     aria-label="Search deceased records"
                                 />
                                 {search && (
@@ -291,7 +307,7 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                             setSearch('');
                                             applyFilters();
                                         }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         aria-label="Clear search"
                                     >
                                         <XIcon className="h-4 w-4" />
@@ -309,7 +325,12 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                 <FilterIcon className="h-4 w-4" />
                             </Button>
                             {hasActiveFilters() && (
-                                <Button variant="ghost" size="sm" onClick={clearFilters} className="shrink-0">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="shrink-0"
+                                >
                                     Clear
                                 </Button>
                             )}
@@ -318,60 +339,94 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                         {/* Collapsible filter row */}
                         <div
                             className={`overflow-hidden transition-all duration-200 ${
-                                filtersOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+                                filtersOpen
+                                    ? 'max-h-64 opacity-100'
+                                    : 'max-h-0 opacity-0'
                             }`}
                         >
                             <div className="flex flex-wrap items-end gap-3 p-3">
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="event-type-filter" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="event-type-filter"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         Event Type
                                     </Label>
-                                    <Select value={eventType} onValueChange={setEventType}>
-                                        <SelectTrigger id="event-type-filter" className="w-[140px]">
+                                    <Select
+                                        value={eventType}
+                                        onValueChange={setEventType}
+                                    >
+                                        <SelectTrigger
+                                            id="event-type-filter"
+                                            className="w-[140px]"
+                                        >
                                             <SelectValue placeholder="All types" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all">All types</SelectItem>
-                                            <SelectItem value="Entered">Admitted</SelectItem>
-                                            <SelectItem value="Transferred">Transferred</SelectItem>
-                                            <SelectItem value="Released">Released</SelectItem>
+                                            <SelectItem value="all">
+                                                All types
+                                            </SelectItem>
+                                            <SelectItem value="Entered">
+                                                Admitted
+                                            </SelectItem>
+                                            <SelectItem value="Transferred">
+                                                Transferred
+                                            </SelectItem>
+                                            <SelectItem value="Released">
+                                                Released
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="date-from" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="date-from"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         From Date
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-from"
                                             type="date"
                                             value={dateFrom}
-                                            onChange={(e) => setDateFrom(e.target.value)}
-                                            className="pl-8 h-9"
+                                            onChange={(e) =>
+                                                setDateFrom(e.target.value)
+                                            }
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="date-to" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="date-to"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         To Date
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-to"
                                             type="date"
                                             value={dateTo}
-                                            onChange={(e) => setDateTo(e.target.value)}
-                                            className="pl-8 h-9"
+                                            onChange={(e) =>
+                                                setDateTo(e.target.value)
+                                            }
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
 
-                                <Button variant="default" size="sm" onClick={applyFilters} className="h-9 shrink-0">
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={applyFilters}
+                                    className="h-9 shrink-0"
+                                >
                                     <SearchIcon className="mr-1.5 h-3.5 w-3.5" />
                                     Apply
                                 </Button>
@@ -383,43 +438,77 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                 {/* Active filter badges */}
                 {hasActiveFilters() && (
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Active filters:</span>
+                        <span className="text-xs text-muted-foreground">
+                            Active filters:
+                        </span>
                         {search && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 Search: "{search}"
-                                <button onClick={() => {
- setSearch(''); applyFilters(); 
-}} className="ml-1.5 hover:text-destructive" aria-label="Remove search filter">
+                                <button
+                                    onClick={() => {
+                                        setSearch('');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove search filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {eventType !== 'all' && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 {eventType}
-                                <button onClick={() => {
- setEventType('all'); applyFilters(); 
-}} className="ml-1.5 hover:text-destructive" aria-label="Remove event type filter">
+                                <button
+                                    onClick={() => {
+                                        setEventType('all');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove event type filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {dateFrom && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 From {formatDate(dateFrom)}
-                                <button onClick={() => {
- setDateFrom(''); applyFilters(); 
-}} className="ml-1.5 hover:text-destructive" aria-label="Remove from date filter">
+                                <button
+                                    onClick={() => {
+                                        setDateFrom('');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove from date filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {dateTo && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 To {formatDate(dateTo)}
-                                <button onClick={() => {
- setDateTo(''); applyFilters(); 
-}} className="ml-1.5 hover:text-destructive" aria-label="Remove to date filter">
+                                <button
+                                    onClick={() => {
+                                        setDateTo('');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove to date filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
@@ -473,7 +562,9 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                         {items.map((t) => (
                                             <TableRow key={t.id}>
                                                 <TableCell>
-                                                    <StatusChip status={t.event_type} />
+                                                    <StatusChip
+                                                        status={t.event_type}
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="font-medium">
                                                     {t.deceased ? (
@@ -481,29 +572,43 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                                             href={`/deceased/${t.deceased.id}`}
                                                             className="hover:underline"
                                                         >
-                                                            {t.deceased.first_name}{' '}
-                                                            {t.deceased.last_name}
+                                                            {
+                                                                t.deceased
+                                                                    .first_name
+                                                            }{' '}
+                                                            {
+                                                                t.deceased
+                                                                    .last_name
+                                                            }
                                                         </Link>
                                                     ) : (
                                                         '—'
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground">
-                                                    {t.from_chamber?.name ?? '—'}
-                                                </TableCell>
-                                                <TableCell className="text-muted-foreground">
-                                                    {t.to_chamber?.name ??
-                                                        t.event_type === 'Released' ? 'Released' : '—'}
-                                                </TableCell>
-                                                <TableCell className="text-muted-foreground">
-                                                    {t.transferred_by_user?.name ??
+                                                    {t.from_chamber?.name ??
                                                         '—'}
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground whitespace-nowrap">
-                                                    {formatDateTime(t.transferred_at)}
+                                                <TableCell className="text-muted-foreground">
+                                                    {(t.to_chamber?.name ??
+                                                    t.event_type === 'Released')
+                                                        ? 'Released'
+                                                        : '—'}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground">
+                                                    {t.transferred_by_user
+                                                        ?.name ?? '—'}
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap text-muted-foreground">
+                                                    {formatDateTime(
+                                                        t.transferred_at,
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="max-w-[200px]">
-                                                    <div className="truncate text-muted-foreground" title={t.notes ?? ''}>
+                                                    <div
+                                                        className="truncate text-muted-foreground"
+                                                        title={t.notes ?? ''}
+                                                    >
                                                         {t.notes ?? '—'}
                                                     </div>
                                                 </TableCell>
@@ -513,18 +618,27 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                 </Table>
 
                                 {/* Mobile card list */}
-                                <div className="sm:hidden divide-y divide-border">
+                                <div className="divide-y divide-border sm:hidden">
                                     {items.map((t) => (
-                                        <div key={t.id} className="p-4 space-y-3">
+                                        <div
+                                            key={t.id}
+                                            className="space-y-3 p-4"
+                                        >
                                             <div className="flex items-start justify-between gap-2">
-                                                <StatusChip status={t.event_type} />
-                                                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                                    {formatDateTime(t.transferred_at)}
+                                                <StatusChip
+                                                    status={t.event_type}
+                                                />
+                                                <span className="text-xs whitespace-nowrap text-muted-foreground">
+                                                    {formatDateTime(
+                                                        t.transferred_at,
+                                                    )}
                                                 </span>
                                             </div>
                                             <div className="space-y-1 text-xs">
                                                 <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">Deceased:</span>
+                                                    <span className="text-muted-foreground">
+                                                        Deceased:
+                                                    </span>
                                                     <span className="font-medium">
                                                         {t.deceased
                                                             ? `${t.deceased.first_name} ${t.deceased.last_name}`
@@ -532,20 +646,33 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">From:</span>
-                                                    <span className="font-medium">{t.from_chamber?.name ?? '—'}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">To:</span>
+                                                    <span className="text-muted-foreground">
+                                                        From:
+                                                    </span>
                                                     <span className="font-medium">
-                                                        {t.to_chamber?.name ??
-                                                            t.event_type === 'Released' ? 'Released' : '—'}
+                                                        {t.from_chamber?.name ??
+                                                            '—'}
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">By:</span>
+                                                    <span className="text-muted-foreground">
+                                                        To:
+                                                    </span>
                                                     <span className="font-medium">
-                                                        {t.transferred_by_user?.name ?? '—'}
+                                                        {(t.to_chamber?.name ??
+                                                        t.event_type ===
+                                                            'Released')
+                                                            ? 'Released'
+                                                            : '—'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        By:
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        {t.transferred_by_user
+                                                            ?.name ?? '—'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -555,7 +682,7 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                                 </p>
                                             )}
                                             {t.deceased && (
-                                                <div className="pt-1 border-t border-border/50">
+                                                <div className="border-t border-border/50 pt-1">
                                                     <Link
                                                         href={`/deceased/${t.deceased.id}`}
                                                         className="text-xs font-medium text-primary hover:underline"
@@ -579,7 +706,11 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                                 <Button
                                                     key={link.label}
                                                     asChild={!!link.url}
-                                                    variant={link.active ? 'default' : 'outline'}
+                                                    variant={
+                                                        link.active
+                                                            ? 'default'
+                                                            : 'outline'
+                                                    }
                                                     size="sm"
                                                     disabled={!link.url}
                                                     className="h-7 min-w-7 px-1.5 text-xs"
@@ -587,10 +718,16 @@ export default function TransfersIndex({ transfers, stats, filters, users, can }
                                                     {link.url ? (
                                                         <Link
                                                             href={link.url}
-                                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: link.label,
+                                                            }}
                                                         />
                                                     ) : (
-                                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                                        <span
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: link.label,
+                                                            }}
+                                                        />
                                                     )}
                                                 </Button>
                                             ))}

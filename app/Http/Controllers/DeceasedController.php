@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateStorageFeeInvoice;
+use App\Actions\IssueRefund;
 use App\Http\Requests\StoreDeceasedRequest;
 use App\Http\Requests\UpdateDeceasedRequest;
 use App\Models\ApplicationSetting;
@@ -174,8 +175,14 @@ class DeceasedController extends Controller
             'transfers.toChamber',
             'transfers.transferredByUser',
             'invoices.invoiceItems.service',
+            // `payments` (not just `receivedByUser`) is eager-loaded so the
+            // ledger accessors can read invoice-attached payments without
+            // re-querying; the invoice + storageFeeLog nest supports the
+            // admission-scoped total_paid filter.
+            'payments.invoice.storageFeeLog',
             'payments.receivedByUser',
-            'storageFeeLogs.invoice',
+            'payments.paymentMode',
+            'storageFeeLogs.invoice.invoiceItems',
         ]);
 
         $lastStorageCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
@@ -188,6 +195,9 @@ class DeceasedController extends Controller
                 $query->whereNull('source')
                     ->orWhere('source', $deceased->source);
             })
+            // Storage fees are billed exclusively by the storage invoice engine,
+            // so the chamber's storage service is not offered as a manual line item.
+            ->when($storageServiceId, fn ($query) => $query->where('service_id', '!=', $storageServiceId))
             ->get()
             ->map(function ($sp) use ($deceased) {
                 $hasTiers = $sp->servicePriceTiers->isNotEmpty();
@@ -211,11 +221,17 @@ class DeceasedController extends Controller
             ->latest()
             ->get();
 
+        // Pass the current admission's storage fee logs (tagged via
+        // admission_started_at) so the frontend ledger can scope storage lines
+        // to this stay rather than summing the record's whole history.
+        $currentAdmissionStorageLogs = $deceased->storageFeeLogsForCurrentAdmission();
+
         return Inertia::render('deceased/show', [
             'deceased' => $deceased,
             'availableServices' => $availableServices,
             'storageServiceId' => $storageServiceId,
             'lastStorageCoveredDay' => $lastStorageCoveredDay,
+            'currentAdmissionStorageLogs' => $currentAdmissionStorageLogs,
             'paymentModes' => $paymentModes,
             'walletDeposits' => $walletDeposits,
             'walletBalance' => (float) $walletDeposits->sum('amount'),
@@ -298,14 +314,18 @@ class DeceasedController extends Controller
                     'transferred_at' => $storedAt ?? now(),
                 ]);
             } elseif ($oldChamberId) {
-                // Releasing via edit - enforce storage payment check
-                if (! $deceased->isStorageFullyPaid()) {
+                // Releasing via edit - enforce storage payment check (lifetime)
+                if (! $deceased->canReleaseStorage()) {
+                    $message = $deceased->isStorageFullyPaid()
+                        ? 'Cannot release: an outstanding storage balance of '.number_format($deceased->lifetimeStorageOutstanding(), 2).' remains across prior admissions.'
+                        : 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid for the current admission.';
+
                     return redirect()->back()
                         ->with('flash', [
                             'type' => 'error',
-                            'message' => 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid.',
+                            'message' => $message,
                         ])
-                        ->withErrors(['chamber_id' => 'Storage days must be fully paid before release.']);
+                        ->withErrors(['chamber_id' => 'Storage must be fully paid before release.']);
                 }
 
                 $data['status'] = 'Released';
@@ -319,6 +339,17 @@ class DeceasedController extends Controller
                     'event_type' => 'Released',
                     'transferred_at' => $storedAt ?? now(),
                 ]);
+
+                // Book a refund for any storage surplus on the release.
+                $surplus = $deceased->lifetimeStorageSurplus();
+                if ($surplus > 0) {
+                    app(IssueRefund::class)->handle(
+                        $deceased->id,
+                        $surplus,
+                        (string) auth()->id(),
+                        'Storage refund issued on release (via edit).',
+                    );
+                }
             }
         }
 
@@ -357,7 +388,7 @@ class DeceasedController extends Controller
                 ->with('flash', ['type' => 'error', 'message' => 'Deceased has already been released.']);
         }
 
-        $deceased->load(['chamber', 'invoice']);
+        $deceased->load(['chamber', 'invoices.invoiceItems.service']);
 
         return Inertia::render('deceased/release', [
             'deceased' => $deceased,
@@ -369,6 +400,7 @@ class DeceasedController extends Controller
                 'storage_days' => $deceased->days_in_storage,
                 'storage_days_paid' => $deceased->days_paid,
                 'storage_fully_paid' => $deceased->isStorageFullyPaid(),
+                'storage_surplus' => $deceased->lifetimeStorageSurplus(),
                 'can_bypass' => auth()->user()?->can('deceased.bypass-billing') ?? false,
             ],
         ]);
@@ -386,17 +418,25 @@ class DeceasedController extends Controller
                 ->with('flash', ['type' => 'error', 'message' => 'Deceased has already been released.']);
         }
 
-        // Validate billing status - storage days must be fully paid
-        if (! $deceased->isStorageFullyPaid() && ! $request->boolean('bypass_billing_restriction')) {
+        // Validate billing status - no admission may leave storage debt unpaid.
+        // The gate is lifetime; the days message is admission-aware.
+        $unpaidDays = ! $deceased->isStorageFullyPaid();
+        $openBalance = $deceased->lifetimeStorageOutstanding() > 0;
+
+        if (($unpaidDays || $openBalance) && ! $request->boolean('bypass_billing_restriction')) {
+            $message = $unpaidDays
+                ? 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid for the current admission.'
+                : 'Cannot release: an outstanding storage balance of '.number_format($deceased->lifetimeStorageOutstanding(), 2).' remains across prior admissions.';
+
             return redirect()->back()
                 ->with('flash', [
                     'type' => 'error',
-                    'message' => 'Cannot release: storage days ('.$deceased->days_in_storage.' days) are not fully paid. Only '.$deceased->days_paid.' days paid.',
+                    'message' => $message,
                 ])
-                ->withErrors(['billing' => 'Storage days must be fully paid before release.']);
+                ->withErrors(['billing' => 'Storage must be fully settled before release.']);
         }
 
-        if (! $deceased->isStorageFullyPaid() && $request->boolean('bypass_billing_restriction')) {
+        if (($unpaidDays || $openBalance) && $request->boolean('bypass_billing_restriction')) {
             Gate::authorize('deceased.bypass-billing');
         }
 
@@ -438,6 +478,19 @@ class DeceasedController extends Controller
                 'notes' => $validated['release_notes'] ?? ('Released to '.$validated['released_to_name'].' ('.$validated['released_to_relationship'].')'),
                 'transferred_at' => now(),
             ]);
+
+            // Book a refund for any storage surplus (money overpaid/waived
+            // beyond what was actually billed). The refund is a negative
+            // invoice + negative general receipt so the ledger nets to zero.
+            $surplus = $deceased->lifetimeStorageSurplus();
+            if ($surplus > 0) {
+                app(IssueRefund::class)->handle(
+                    $deceased->id,
+                    $surplus,
+                    (string) auth()->id(),
+                    'Storage refund issued on release for '.$validated['released_to_name'].' ('.$validated['released_to_relationship'].')',
+                );
+            }
         });
 
         return redirect()->route('deceased.show', $deceased)
@@ -454,6 +507,17 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
+        if ($deceased->status === 'Released') {
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'error',
+                    'message' => 'Cannot edit invoice: this deceased record has been released.',
+                ]);
+        }
+
+        // Storage fees are billed exclusively by the storage invoice engine.
+        $storageServiceId = $deceased->chamber?->service_id;
+
         // Block editing if any service invoice OR any storage invoice is paid or partially paid
         $blockedInvoices = collect()
             ->merge($deceased->invoices)
@@ -469,13 +533,22 @@ class DeceasedController extends Controller
                 ]);
         }
 
-        // Find or create the latest unpaid service invoice to edit
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.service_id' => ['required', 'exists:services,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        // Reject the chamber's storage service: storage fees are billed by the
+        // dedicated storage invoice engine, never by a manual service invoice.
+        if ($storageServiceId !== null && collect($validated['items'])->contains('service_id', $storageServiceId)) {
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'error',
+                    'message' => 'Storage fees are billed by the storage invoice, not a service invoice. Use "Generate Storage Invoice" instead.',
+                ]);
+        }
 
         DB::transaction(function () use ($validated, $deceased) {
             $invoice = $deceased->invoices->where('status', 'Unpaid')->first();
@@ -496,12 +569,8 @@ class DeceasedController extends Controller
 
             $invoice->invoiceItems()->delete();
             $subtotal = 0.0;
-            $storageServiceId = $deceased->chamber?->service_id;
-            $daysInStorage = $deceased->days_in_storage;
 
             foreach ($validated['items'] as $item) {
-                $isStorageService = (bool) $storageServiceId && $item['service_id'] == $storageServiceId;
-
                 $servicePrice = ServicePrice::where('service_id', $item['service_id'])
                     ->where('service_category_id', $deceased->service_category_id)
                     ->where(function ($query) use ($deceased) {
@@ -510,13 +579,8 @@ class DeceasedController extends Controller
                     })
                     ->first();
 
-                if ($isStorageService && $servicePrice && $servicePrice->servicePriceTiers->isNotEmpty()) {
-                    $unitPrice = (float) $servicePrice->calculateStorageCharge($daysInStorage);
-                    $totalPrice = $unitPrice;
-                } else {
-                    $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
-                    $totalPrice = $unitPrice * $item['quantity'];
-                }
+                $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
+                $totalPrice = $unitPrice * $item['quantity'];
 
                 $serviceName = Service::find($item['service_id'])?->name ?? 'Unknown Service';
                 $subtotal += $totalPrice;
@@ -525,7 +589,7 @@ class DeceasedController extends Controller
                     'service_id' => $item['service_id'],
                     'name' => $serviceName,
                     'unit_price' => $unitPrice,
-                    'quantity' => $isStorageService ? $daysInStorage : $item['quantity'],
+                    'quantity' => $item['quantity'],
                     'total_price' => $totalPrice,
                 ]);
             }
@@ -548,19 +612,16 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
-        // Block if any invoice (service or storage) is paid or partially paid
-        $allInvoices = collect()
-            ->merge($deceased->invoices)
-            ->merge($deceased->storageFeeLogs->pluck('invoice'))
-            ->filter(fn ($inv) => $inv !== null);
-
-        if ($allInvoices->filter(fn ($inv) => in_array($inv->status, ['Paid', 'Partially Paid'], true))->isNotEmpty()) {
+        if ($deceased->status === 'Released') {
             return redirect()->back()
                 ->with('flash', [
                     'type' => 'error',
-                    'message' => 'Cannot generate invoice: one or more invoices for this record are already paid or partially paid.',
+                    'message' => 'Cannot create invoice: this deceased record has been released.',
                 ]);
         }
+
+        // Storage fees are billed exclusively by the storage invoice engine.
+        $storageServiceId = $deceased->chamber?->service_id;
 
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
@@ -568,6 +629,16 @@ class DeceasedController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        // Reject the chamber's storage service: storage fees are billed by the
+        // dedicated storage invoice engine, never by a manual service invoice.
+        if ($storageServiceId !== null && collect($validated['items'])->contains('service_id', $storageServiceId)) {
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'error',
+                    'message' => 'Storage fees are billed by the storage invoice, not a service invoice. Use "Generate Storage Invoice" instead.',
+                ]);
+        }
 
         DB::transaction(function () use ($validated, $deceased) {
             $invoice = Invoice::create([
@@ -584,12 +655,8 @@ class DeceasedController extends Controller
             ]);
 
             $subtotal = 0.0;
-            $daysInStorage = $deceased->days_in_storage;
 
             foreach ($validated['items'] as $item) {
-                $storageServiceId = $deceased->chamber?->service_id;
-                $isStorageService = (bool) $storageServiceId && $item['service_id'] == $storageServiceId;
-
                 $servicePrice = ServicePrice::where('service_id', $item['service_id'])
                     ->where('service_category_id', $deceased->service_category_id)
                     ->where(function ($query) use ($deceased) {
@@ -598,13 +665,8 @@ class DeceasedController extends Controller
                     })
                     ->first();
 
-                if ($isStorageService && $servicePrice && $servicePrice->servicePriceTiers->isNotEmpty()) {
-                    $unitPrice = (float) $servicePrice->calculateStorageCharge($daysInStorage);
-                    $totalPrice = $unitPrice;
-                } else {
-                    $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
-                    $totalPrice = $unitPrice * $item['quantity'];
-                }
+                $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
+                $totalPrice = $unitPrice * $item['quantity'];
 
                 $serviceName = Service::find($item['service_id'])?->name ?? 'Unknown Service';
                 $subtotal += $totalPrice;
@@ -613,7 +675,7 @@ class DeceasedController extends Controller
                     'service_id' => $item['service_id'],
                     'name' => $serviceName,
                     'unit_price' => $unitPrice,
-                    'quantity' => $isStorageService ? $daysInStorage : $item['quantity'],
+                    'quantity' => $item['quantity'],
                     'total_price' => $totalPrice,
                 ]);
             }
@@ -635,6 +697,14 @@ class DeceasedController extends Controller
     public function generateStorageInvoice(CreateStorageFeeInvoice $action, Deceased $deceased): RedirectResponse
     {
         Gate::authorize('deceased.edit');
+
+        if ($deceased->status !== 'InChamber') {
+            return redirect()->back()
+                ->with('flash', [
+                    'type' => 'error',
+                    'message' => 'Storage invoices can only be created while the deceased is in a chamber.',
+                ]);
+        }
 
         $lastCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
         $invoice = $action->handle($deceased, auth()->id(), $lastCoveredDay);

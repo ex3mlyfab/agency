@@ -82,6 +82,65 @@ it('successfully registers deceased with service_category_id and source', functi
     ]);
 });
 
+it('creates a service invoice even when a storage invoice is already paid', function () {
+    $service = Service::create(['name' => 'Funeral Service']);
+    ServicePrice::create([
+        'service_id' => $service->id,
+        'service_category_id' => $this->category->id,
+        'price' => 25000.00,
+    ]);
+
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'status' => 'InChamber',
+    ]);
+
+    Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'STO-PAID-1',
+        'subtotal' => 10000.00,
+        'total_amount' => 10000.00,
+        'paid_amount' => 10000.00,
+        'status' => 'Paid',
+        'billing_type' => 'storage',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.generate', $deceased), [
+            'items' => [['service_id' => $service->id, 'quantity' => 1]],
+            'notes' => null,
+        ])
+        ->assertRedirect(route('deceased.show', $deceased));
+
+    expect(Invoice::where('deceased_id', $deceased->id)
+        ->where('billing_type', 'service')
+        ->count())->toBe(1);
+});
+
+it('does not create a service invoice after a deceased record is released', function () {
+    $service = Service::create(['name' => 'Funeral Service']);
+    ServicePrice::create([
+        'service_id' => $service->id,
+        'service_category_id' => $this->category->id,
+        'price' => 25000.00,
+    ]);
+
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'status' => 'Released',
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.generate', $deceased), [
+            'items' => [['service_id' => $service->id, 'quantity' => 1]],
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('flash.message', 'Cannot create invoice: this deceased record has been released.');
+
+    expect(Invoice::where('deceased_id', $deceased->id)->count())->toBe(0);
+});
+
 it('calculates tiered storage fees correctly', function () {
     $service = Service::create(['name' => 'Chamber Storage']);
     $price = ServicePrice::create([
@@ -132,18 +191,20 @@ it('computes ledger balance from deposits and invoices correctly', function () {
         'source' => 'Outside Hospital',
     ]);
 
-    // Invoice setup
+    // Invoice setup (billing_type service so it is counted in total_billed)
     $invoice = Invoice::create([
         'deceased_id' => $deceased->id,
         'invoice_number' => 'INV-TEST-01',
         'subtotal' => 150.00,
         'discount' => 10.00,
         'total_amount' => 140.00,
+        'billing_type' => 'service',
+        'status' => 'Unpaid',
         'created_by' => $this->superAdmin->id,
     ]);
 
     // Check balance with no payments
-    $deceased->load('invoice');
+    $deceased->load('invoices');
     expect($deceased->total_billed)->toEqual(140.00);
     expect($deceased->total_paid)->toEqual(0.00);
     expect($deceased->ledger_balance)->toEqual(140.00);
@@ -226,7 +287,7 @@ it('blocks release if storage days are not fully paid and no bypass is checked',
             'confirm_physical_verification' => true,
         ])
         ->assertSessionHasErrors(['billing'])
-        ->assertSessionHas('flash.message', 'Cannot release: storage days (5 days) are not fully paid. Only 0 days paid.');
+        ->assertSessionHas('flash.message', 'Cannot release: storage days (5 days) are not fully paid. Only 0 days paid for the current admission.');
 
     expect($deceased->fresh()->status)->toBe('InChamber');
 });
@@ -398,6 +459,7 @@ it('can create and update deceased invoices with correct category pricing', func
 
     $deceased = Deceased::factory()->create([
         'service_category_id' => $this->category->id,
+        'status' => 'InChamber',
     ]);
 
     // Create Invoice via POST
@@ -732,37 +794,26 @@ it('applies tiered pricing correctly when saving a deceased invoice', function (
 
     expect($deceased->fresh()->days_in_storage)->toEqual(7);
 
-    // Show route returns tiered price and has_tiers flag
+    // Show route no longer exposes the storage service as a manual line item,
+    // because storage fees are billed exclusively by the storage invoice engine.
     $this->actingAs($this->superAdmin)
         ->get(route('deceased.show', $deceased))
         ->assertInertia(fn ($page) => $page
-            ->has('availableServices', 1)
-            ->where('availableServices.0.service_id', (string) $chamberService->id)
-            ->where('availableServices.0.has_tiers', true)
-            ->where('availableServices.0.tiered_price', 80000)
+            ->where('availableServices', [])
             ->where('storageServiceId', (string) $chamberService->id)
         );
 
-    // Save invoice with storage service — should use tiered total, not flat price × qty
+    // Attempt to save a service invoice containing the storage service — it must be rejected.
     $this->actingAs($this->superAdmin)
         ->post(route('deceased.invoice.save', $deceased), [
             'items' => [['service_id' => $chamberService->id, 'quantity' => 1]],
-            'notes' => 'Tiered storage invoice',
-        ]);
+            'notes' => 'Storage via service invoice',
+        ])
+        ->assertRedirect(route('deceased.show', $deceased))
+        ->assertSessionHas('flash.message', 'Storage fees are billed by the storage invoice, not a service invoice. Use "Generate Storage Invoice" instead.');
 
-    $invoice = Invoice::where('deceased_id', $deceased->id)->first();
-
-    // 5 days × 10,000 + 2 days × 15,000 = 80,000
-    expect($invoice->total_amount)->toEqual(80000.00);
-    expect($invoice->subtotal)->toEqual(80000.00);
-
-    $this->assertDatabaseHas('invoice_items', [
-        'invoice_id' => $invoice->id,
-        'service_id' => $chamberService->id,
-        'unit_price' => 80000.00,
-        'quantity' => 7,
-        'total_price' => 80000.00,
-    ]);
+    // No service invoice should have been created for this deceased.
+    expect(Invoice::where('deceased_id', $deceased->id)->where('billing_type', 'service')->count())->toBe(0);
 });
 
 it('uses flat price when service has no tiers', function () {
@@ -773,7 +824,10 @@ it('uses flat price when service has no tiers', function () {
         'price' => 50000.00,
     ]);
 
-    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'status' => 'InChamber',
+    ]);
 
     $this->actingAs($this->superAdmin)
         ->post(route('deceased.invoice.save', $deceased), [
@@ -1101,4 +1155,173 @@ it('passes wallet balance to invoice show page', function () {
     $response->assertInertia(fn ($page) => $page
         ->where('walletBalance', 250)
     );
+});
+
+it('rejects the storage service in a generated service invoice', function () {
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::create([
+        'name' => 'Chamber X1',
+        'capacity' => 2,
+        'service_id' => $chamberService->id,
+    ]);
+
+    ServicePrice::create([
+        'service_id' => $chamberService->id,
+        'service_category_id' => $this->category->id,
+        'price' => 10000.00,
+    ]);
+
+    $otherService = Service::create(['name' => 'Embalming']);
+    ServicePrice::create([
+        'service_id' => $otherService->id,
+        'service_category_id' => $this->category->id,
+        'price' => 25000.00,
+    ]);
+
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'chamber_id' => $chamber->id,
+        'status' => 'InChamber',
+    ]);
+
+    // The chamber's storage service must be rejected from a service invoice.
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.generate', $deceased), [
+            'items' => [['service_id' => $chamberService->id, 'quantity' => 1]],
+        ])
+        ->assertSessionHas('flash.message', 'Storage fees are billed by the storage invoice, not a service invoice. Use "Generate Storage Invoice" instead.');
+
+    expect(Invoice::where('deceased_id', $deceased->id)->count())->toBe(0);
+
+    // A non-storage service is still billed correctly (row math: 25000 × 2).
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.generate', $deceased), [
+            'items' => [['service_id' => $otherService->id, 'quantity' => 2]],
+        ])
+        ->assertRedirect(route('deceased.show', $deceased));
+
+    $invoice = Invoice::where('deceased_id', $deceased->id)->first();
+    expect($invoice->subtotal)->toEqual(50000.00);
+    expect($invoice->total_amount)->toEqual(50000.00);
+
+    $item = $invoice->invoiceItems()->first();
+    expect((float) $item->unit_price)->toEqual(25000.00);
+    expect((int) $item->quantity)->toEqual(2);
+    expect((float) $item->total_price)->toEqual(50000.00);
+});
+
+it('bills storage fees only through the storage invoice engine', function () {
+    $chamberService = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::create([
+        'name' => 'Chamber X2',
+        'capacity' => 2,
+        'service_id' => $chamberService->id,
+    ]);
+
+    $price = ServicePrice::create([
+        'service_id' => $chamberService->id,
+        'service_category_id' => $this->category->id,
+        'price' => 10000.00,
+    ]);
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 1, 'end_day' => 5, 'price' => 10000.00]);
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 6, 'end_day' => 10, 'price' => 15000.00]);
+
+    $deceased = Deceased::factory()->create([
+        'service_category_id' => $this->category->id,
+        'chamber_id' => $chamber->id,
+        'status' => 'InChamber',
+    ]);
+
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(7),
+    ]);
+
+    expect($deceased->fresh()->days_in_storage)->toEqual(7);
+
+    // Storage invoice (days 1-7: 5×10000 + 2×15000 = 80000).
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.storage-invoice.generate', $deceased))
+        ->assertRedirect(route('deceased.show', $deceased));
+
+    $storageInvoice = Invoice::where('deceased_id', $deceased->id)->where('billing_type', 'storage')->first();
+    expect($storageInvoice)->not->toBeNull();
+    expect((float) $storageInvoice->total_amount)->toEqual(80000.00);
+
+    // No service invoice may exist that bills storage days.
+    expect(Invoice::where('deceased_id', $deceased->id)->where('billing_type', 'service')->count())->toBe(0);
+});
+
+it('applies a payment to a specific unpaid invoice and shows only its outstanding balance', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    // Two unpaid invoices with different outstanding balances.
+    $invA = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-SPEC-A',
+        'total_amount' => 1000.00,
+        'billing_type' => 'service',
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+    $invB = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-SPEC-B',
+        'total_amount' => 2000.00,
+        'billing_type' => 'service',
+        'status' => 'Unpaid',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    $mode = PaymentMode::first();
+
+    // Pay 250 toward invoice B only (its own outstanding, not the ledger total).
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.store'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invB->id,
+            'payment_mode_id' => $mode->id,
+            'amount' => 250.00,
+            'payment_date' => now()->toDateString(),
+        ])
+        ->assertRedirect();
+
+    expect($invB->fresh()->paid_amount)->toEqual(250.00);
+    expect($invB->fresh()->status)->toEqual('Partially Paid');
+    // Invoice A is untouched.
+    expect($invA->fresh()->paid_amount)->toEqual(0.00);
+    expect($invA->fresh()->status)->toEqual('Unpaid');
+});
+
+it('over-pays rejected when payment exceeds a single invoice balance', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-EXCEED',
+        'total_amount' => 500.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'billing_type' => 'service',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    $mode = PaymentMode::first();
+
+    // 800 > outstanding 500 must be rejected.
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.store'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+            'payment_mode_id' => $mode->id,
+            'amount' => 800.00,
+            'payment_date' => now()->toDateString(),
+        ])
+        ->assertSessionHasErrors('amount');
+
+    expect($invoice->fresh()->paid_amount)->toEqual(0.00);
+    expect($invoice->fresh()->status)->toEqual('Unpaid');
 });

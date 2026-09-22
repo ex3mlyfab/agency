@@ -20,6 +20,14 @@ class StorageFeeLog extends Model
         'amount',
         'paid_days_at_creation',
         'created_by',
+        'admission_started_at',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'admission_started_at' => 'datetime',
     ];
 
     public function deceased(): BelongsTo

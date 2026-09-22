@@ -91,12 +91,20 @@ interface Props {
     can: { manage: boolean };
 }
 
-export default function WaiversIndex({ waivers, filters, summary, authorizers, can }: Props) {
+export default function WaiversIndex({
+    waivers,
+    filters,
+    summary,
+    authorizers,
+    can,
+}: Props) {
     const symbol = useCurrency();
     const [search, setSearch] = useState(filters.search || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
-    const [authorizedBy, setAuthorizedBy] = useState(filters.authorized_by || 'all');
+    const [authorizedBy, setAuthorizedBy] = useState(
+        filters.authorized_by || 'all',
+    );
     const [filtersOpen, setFiltersOpen] = useState(false);
 
     function applyFilters() {
@@ -106,7 +114,8 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                 search: search || undefined,
                 date_from: dateFrom || undefined,
                 date_to: dateTo || undefined,
-                authorized_by: authorizedBy === 'all' ? undefined : authorizedBy,
+                authorized_by:
+                    authorizedBy === 'all' ? undefined : authorizedBy,
             },
             {
                 preserveState: true,
@@ -163,16 +172,16 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
 
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-violet-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
-                                <ShieldCheckIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
+                                <ShieldCheckIcon className="h-4 w-4 text-highlight" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.total_waivers}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Waivers
                                 </p>
                             </div>
@@ -180,16 +189,16 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-rose-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-destructive" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10">
-                                <TrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/15">
+                                <TrendingDownIcon className="h-4 w-4 text-destructive" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {fmtCurrency(summary.total_waived, symbol)}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Waived
                                 </p>
                             </div>
@@ -197,16 +206,16 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-info" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                                <FileTextIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/15">
+                                <FileTextIcon className="h-4 w-4 text-info" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.invoices_affected}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Invoices Affected
                                 </p>
                             </div>
@@ -214,16 +223,16 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                                <UserIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15">
+                                <UserIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.deceased_affected}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Records Affected
                                 </p>
                             </div>
@@ -234,15 +243,17 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                 <Card>
                     <CardContent className="p-0">
                         <div className="flex items-center gap-2 border-b border-border p-3">
-                            <div className="relative flex-1 min-w-0">
-                                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="relative min-w-0 flex-1">
+                                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="text"
                                     placeholder="Search by invoice #, deceased name, or reason…"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                                    className="pl-9 pr-9"
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && applyFilters()
+                                    }
+                                    className="pr-9 pl-9"
                                     aria-label="Search waivers"
                                 />
                                 {search && (
@@ -252,7 +263,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                             setSearch('');
                                             applyFilters();
                                         }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         aria-label="Clear search"
                                     >
                                         <XIcon className="h-4 w-4" />
@@ -297,7 +308,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                         From Date
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-from"
                                             type="date"
@@ -305,7 +316,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                             onChange={(e) =>
                                                 setDateFrom(e.target.value)
                                             }
-                                            className="pl-8 h-9"
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
@@ -318,7 +329,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                         To Date
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-to"
                                             type="date"
@@ -326,7 +337,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                             onChange={(e) =>
                                                 setDateTo(e.target.value)
                                             }
-                                            className="pl-8 h-9"
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
@@ -386,7 +397,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                         {search && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 Search: "{search}"
                                 <button
@@ -404,14 +415,17 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                         {dateFrom && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 From{' '}
-                                {new Date(dateFrom).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                })}
+                                {new Date(dateFrom).toLocaleDateString(
+                                    'en-GB',
+                                    {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    },
+                                )}
                                 <button
                                     onClick={() => {
                                         setDateFrom('');
@@ -427,7 +441,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                         {dateTo && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 To{' '}
                                 {new Date(dateTo).toLocaleDateString('en-GB', {
@@ -450,12 +464,13 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                         {authorizedBy !== 'all' && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 <UserIcon className="mr-1 h-3 w-3" />
                                 {
-                                    authorizers.find((u) => u.id === authorizedBy)
-                                        ?.name
+                                    authorizers.find(
+                                        (u) => u.id === authorizedBy,
+                                    )?.name
                                 }
                                 <button
                                     onClick={() => {
@@ -497,10 +512,14 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                         <TableRow>
                                             <TableHead>Invoice #</TableHead>
                                             <TableHead>Deceased</TableHead>
-                                            <TableHead className="text-right">Amount Waived</TableHead>
+                                            <TableHead className="text-right">
+                                                Amount Waived
+                                            </TableHead>
                                             <TableHead>Reason</TableHead>
                                             <TableHead>Authorized By</TableHead>
-                                            <TableHead>Date Authorized</TableHead>
+                                            <TableHead>
+                                                Date Authorized
+                                            </TableHead>
                                             <TableHead className="w-24 text-right">
                                                 Actions
                                             </TableHead>
@@ -518,22 +537,13 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                         {waiver.invoice ? (
                                                             <Link
                                                                 href={`/invoices/${waiver.invoice.id}`}
-                                                                className="hover:underline text-primary"
+                                                                className="text-primary hover:underline"
                                                             >
-                                                                {waiver.invoice.invoice_number}
-                                                            </Link>
-                                                        ) : (
-                                                            <span className="text-muted-foreground">—</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="font-medium text-foreground max-w-[160px]">
-                                                        {waiver.deceased ? (
-                                                            <Link
-                                                                href={`/deceased/${waiver.deceased.id}`}
-                                                                className="hover:underline text-primary"
-                                                            >
-                                                                {waiver.deceased.first_name}{' '}
-                                                                {waiver.deceased.last_name}
+                                                                {
+                                                                    waiver
+                                                                        .invoice
+                                                                        .invoice_number
+                                                                }
                                                             </Link>
                                                         ) : (
                                                             <span className="text-muted-foreground">
@@ -541,18 +551,46 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                             </span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-right font-medium text-rose-600 dark:text-rose-400">
-                                                        {fmtCurrency(-amount, symbol)}
+                                                    <TableCell className="max-w-[160px] font-medium text-foreground">
+                                                        {waiver.deceased ? (
+                                                            <Link
+                                                                href={`/deceased/${waiver.deceased.id}`}
+                                                                className="text-primary hover:underline"
+                                                            >
+                                                                {
+                                                                    waiver
+                                                                        .deceased
+                                                                        .first_name
+                                                                }{' '}
+                                                                {
+                                                                    waiver
+                                                                        .deceased
+                                                                        .last_name
+                                                                }
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">
+                                                                —
+                                                            </span>
+                                                        )}
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground text-xs max-w-[200px] truncate">
+                                                    <TableCell className="text-right font-medium text-destructive">
+                                                        {fmtCurrency(
+                                                            -amount,
+                                                            symbol,
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
                                                         {waiver.reason || '—'}
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground text-xs">
+                                                    <TableCell className="text-xs text-muted-foreground">
                                                         {waiver.authorized_by_user
-                                                            ? waiver.authorized_by_user.name
+                                                            ? waiver
+                                                                  .authorized_by_user
+                                                                  .name
                                                             : '—'}
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                                                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
                                                         {new Date(
                                                             waiver.authorized_at,
                                                         ).toLocaleDateString(
@@ -588,7 +626,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                     </TableBody>
                                 </Table>
 
-                                <div className="sm:hidden divide-y divide-border">
+                                <div className="divide-y divide-border sm:hidden">
                                     {waivers.data.map((waiver) => {
                                         const amount = parseFloat(
                                             waiver.amount as string,
@@ -597,13 +635,14 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                         return (
                                             <div
                                                 key={waiver.id}
-                                                className="p-4 space-y-3"
+                                                className="space-y-3 p-4"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0">
-                                                        <p className="font-semibold text-foreground truncate">
+                                                        <p className="truncate font-semibold text-foreground">
                                                             {waiver.invoice
-                                                                ? waiver.invoice.invoice_number
+                                                                ? waiver.invoice
+                                                                      .invoice_number
                                                                 : '—'}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
@@ -612,8 +651,11 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                                 : '—'}
                                                         </p>
                                                     </div>
-                                                    <span className="shrink-0 font-medium text-rose-600 dark:text-rose-400 text-sm">
-                                                        {fmtCurrency(-amount, symbol)}
+                                                    <span className="shrink-0 text-sm font-medium text-destructive">
+                                                        {fmtCurrency(
+                                                            -amount,
+                                                            symbol,
+                                                        )}
                                                     </span>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-x-4 gap-y-1.5 text-xs">
@@ -621,8 +663,9 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                         <span className="text-muted-foreground">
                                                             Reason
                                                         </span>
-                                                        <p className="font-medium text-foreground truncate">
-                                                            {waiver.reason || '—'}
+                                                        <p className="truncate font-medium text-foreground">
+                                                            {waiver.reason ||
+                                                                '—'}
                                                         </p>
                                                     </div>
                                                     <div>
@@ -630,7 +673,9 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                             Authorized
                                                         </span>
                                                         <p className="font-medium text-muted-foreground">
-                                                            {waiver.authorized_by_user?.name || '—'}
+                                                            {waiver
+                                                                .authorized_by_user
+                                                                ?.name || '—'}
                                                         </p>
                                                     </div>
                                                     <div>
@@ -651,7 +696,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
+                                                <div className="flex items-center justify-end gap-1 border-t border-border/50 pt-1">
                                                     <Button
                                                         asChild
                                                         variant="ghost"
@@ -660,7 +705,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
                                                         <Link
                                                             href={`/waivers/${waiver.id}`}
                                                         >
-                                                            <ShieldCheckIcon className="h-4 w-4 mr-1.5" />
+                                                            <ShieldCheckIcon className="mr-1.5 h-4 w-4" />
                                                             View
                                                         </Link>
                                                     </Button>
@@ -672,9 +717,7 @@ export default function WaiversIndex({ waivers, filters, summary, authorizers, c
 
                                 {waivers.last_page > 1 && (
                                     <div className="border-t border-border px-6 py-3">
-                                        <Pagination
-                                            links={waivers.links}
-                                        />
+                                        <Pagination links={waivers.links} />
                                     </div>
                                 )}
                             </>

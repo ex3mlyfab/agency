@@ -250,7 +250,12 @@ export function DeceasedForm({
                         {data.place_of_death === 'Others' && (
                             <Input
                                 id="place_of_death_other"
-                                value={data.place_of_death_other ?? ''}
+                                value={
+                                    typeof data.place_of_death_other ===
+                                    'string'
+                                        ? data.place_of_death_other
+                                        : ''
+                                }
                                 onChange={(e) =>
                                     setData(
                                         'place_of_death_other',

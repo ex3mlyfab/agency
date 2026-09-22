@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { Pagination } from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Pagination } from '@/components/pagination';
 
 interface Service {
     id: string;
@@ -233,7 +233,9 @@ export default function ServicesIndex({ services, filters, can }: Props) {
                             <Badge variant="outline" className="text-xs px-2 py-0.5">
                                 "{search}"
                                 <button
-                                    onClick={() => { setSearch(''); applyFilters(); }}
+                                    onClick={() => {
+ setSearch(''); applyFilters(); 
+}}
                                     className="ml-1.5 hover:text-destructive"
                                     aria-label="Remove search filter"
                                 >
@@ -245,7 +247,9 @@ export default function ServicesIndex({ services, filters, can }: Props) {
                             <Badge variant="outline" className="text-xs px-2 py-0.5">
                                 {getSortLabel(sort)}
                                 <button
-                                    onClick={() => { setSort('name_asc'); applyFilters(); }}
+                                    onClick={() => {
+ setSort('name_asc'); applyFilters(); 
+}}
                                     className="ml-1.5 hover:text-destructive"
                                     aria-label="Remove sort filter"
                                 >

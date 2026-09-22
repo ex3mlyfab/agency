@@ -1,7 +1,17 @@
 <?php
 
+use App\Actions\CreateStorageFeeInvoice;
+use App\Actions\RecordPayment;
 use App\Models\Chamber;
 use App\Models\Deceased;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\PaymentMode;
+use App\Models\Service;
+use App\Models\ServiceCategory;
+use App\Models\ServicePrice;
+use App\Models\ServicePriceTier;
+use App\Models\Transfer;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -102,4 +112,92 @@ it('successfully releases deceased when correct code is provided', function () {
         'event_type' => 'Released',
         'notes' => 'Handed over personal belongings.',
     ]);
+});
+
+it('issues a refund invoice for a storage surplus on release', function () {
+    $service = Service::create(['name' => 'Chamber Storage']);
+    $chamber = Chamber::factory()->create(['capacity' => 2, 'service_id' => $service->id]);
+    $category = ServiceCategory::factory()->create();
+
+    $price = ServicePrice::create([
+        'service_id' => $service->id,
+        'service_category_id' => $category->id,
+        'price' => 10000.00,
+    ]);
+    ServicePriceTier::create(['service_price_id' => $price->id, 'start_day' => 1, 'end_day' => null, 'price' => 10000.00]);
+
+    $deceased = Deceased::factory()->create([
+        'status' => 'InChamber',
+        'chamber_id' => $chamber->id,
+        'service_category_id' => $category->id,
+    ]);
+
+    Transfer::create([
+        'deceased_id' => $deceased->id,
+        'to_chamber_id' => $chamber->id,
+        'transferred_by' => $this->superAdmin->id,
+        'event_type' => 'Entered',
+        'transferred_at' => now()->subDays(5),
+    ]);
+
+    // Bill 5 days (50,000), pay it in full, then take a general wallet
+    // deposit of 20,000 that exceeds the storage total -> 20,000 surplus owed.
+    $action = app(CreateStorageFeeInvoice::class);
+    $invoice = $action->handle($deceased->fresh(), $this->superAdmin->id, 0);
+    expect((float) $invoice->total_amount)->toEqual(50000.00);
+
+    $mode = PaymentMode::firstOrCreate(['name' => 'Cash', 'is_active' => true]);
+    app(RecordPayment::class)->handle([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => $invoice->id,
+        'payment_mode_id' => $mode->id,
+        'amount' => 50000.00, // storage settled in full
+        'payment_date' => now()->toDateString(),
+        'notes' => null,
+    ], (string) $this->superAdmin->id);
+
+    // Overpay via a general (unattached) wallet deposit: 70,000 in, 50,000
+    // consumed by storage -> 20,000 surplus refunded on release.
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'payment_mode_id' => $mode->id,
+        'receipt_number' => 'REC-DEPOSIT-1',
+        'amount' => 20000.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    expect($deceased->fresh()->lifetimeStorageSurplus())->toEqual(20000.00);
+
+    // Release: a refund of the 20,000 surplus must be booked.
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.release', $deceased), [
+            'release_code' => $deceased->release_code,
+            'released_to_name' => 'Jane',
+            'released_to_phone' => '111',
+            'released_to_relationship' => 'Daughter',
+            'released_to_id_type' => 'Passport',
+            'released_to_id_number' => 'X1',
+            'confirm_physical_verification' => true,
+        ])
+        ->assertRedirect(route('deceased.show', $deceased));
+
+    $refund = Invoice::where('deceased_id', $deceased->id)
+        ->where('billing_type', 'refund')
+        ->first();
+    expect($refund)->not->toBeNull();
+    expect((float) $refund->total_amount)->toEqual(-20000.00);
+    expect($refund->status)->toBe('Refunded');
+
+    // And a negative general receipt records the money leaving the account.
+    $this->assertDatabaseHas('payments', [
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'amount' => -20000.00,
+    ]);
+
+    // The ledger now nets out: the refund cancels the surplus.
+    expect($deceased->fresh()->lifetimeStorageOutstanding())->toEqual(0.00);
 });

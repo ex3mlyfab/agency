@@ -45,7 +45,7 @@ return null;
         <SidebarGroup className="mt-4 px-2 py-0">
             <SidebarGroupLabel>Configuration</SidebarGroupLabel>
             <SidebarMenu>
-                <Collapsible asChild defaultOpen className="group/collapsible">
+                <Collapsible asChild className="group/collapsible">
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                             <SidebarMenuButton tooltip="Application Settings">

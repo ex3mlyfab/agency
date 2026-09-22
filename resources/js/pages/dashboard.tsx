@@ -160,12 +160,14 @@ export default function Dashboard({
                 {/* Key Metric Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Chamber Occupancy */}
-                    <Card className="group relative overflow-hidden">
+                    <Card className="group relative overflow-hidden border-l-4 border-l-primary bg-primary/[0.08]">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Chamber Occupancy
                             </CardTitle>
-                            <Building2 className="h-4 w-4 text-primary" />
+                            <span className="flex size-8 items-center justify-center rounded-full bg-primary/15">
+                                <Building2 className="h-4 w-4 text-primary" />
+                            </span>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-baseline gap-1.5">
@@ -195,7 +197,7 @@ export default function Dashboard({
                     </Card>
 
                     {/* Available Slots */}
-                    <Card>
+                    <Card className="border-l-4 border-l-success bg-success/[0.07]">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Available Slots
@@ -214,26 +216,26 @@ export default function Dashboard({
                     </Card>
 
                     {/* Pending Assignment */}
-                    <Card>
+                    <Card className="border-l-4 border-l-warning bg-warning/[0.07]">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Pending Admissions
                             </CardTitle>
-                            <Clock className="h-4 w-4 text-amber-500" />
+                            <Clock className="h-4 w-4 text-warning" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold tracking-tight">
                                 {stats.pendingAdmissions}
                             </div>
                             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-warning" />
                                 Awaiting chamber setup
                             </p>
                         </CardContent>
                     </Card>
 
                     {/* Total Released Cases */}
-                    <Card>
+                    <Card className="border-l-4 border-l-highlight bg-highlight/[0.07]">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                 Discharged Cases
@@ -254,7 +256,7 @@ export default function Dashboard({
                 {/* Main Content Grid: Chart & Quick Actions */}
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Trend Chart (2 cols) */}
-                    <Card className="md:col-span-2">
+                    <Card className="md:col-span-2 border-t-4 border-t-info bg-info/[0.035]">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -534,7 +536,7 @@ export default function Dashboard({
                     </Card>
 
                     {/* Quick Actions (1 col) */}
-                    <Card className="flex flex-col justify-between">
+                    <Card className="flex flex-col justify-between border-t-4 border-t-highlight bg-highlight/[0.035]">
                         <CardHeader>
                             <CardTitle className="text-base font-semibold">
                                 Quick Actions
@@ -564,7 +566,7 @@ export default function Dashboard({
                                     variant="outline"
                                 >
                                     <Link href="/transfers">
-                                        <ArrowRightLeft className="mr-2 h-4 w-4 text-indigo-500" />
+                                        <ArrowRightLeft className="mr-2 h-4 w-4 text-primary" />
                                         Transfer Chamber
                                     </Link>
                                 </Button>
@@ -576,7 +578,7 @@ export default function Dashboard({
                                 variant="outline"
                             >
                                 <Link href="/deceased">
-                                    <Users className="mr-2 h-4 w-4 text-emerald-500" />
+                                    <Users className="mr-2 h-4 w-4 text-success" />
                                     Release Deceased (Select Record)
                                 </Link>
                             </Button>
@@ -588,7 +590,7 @@ export default function Dashboard({
                                     variant="outline"
                                 >
                                     <Link href="/reports">
-                                        <ScrollText className="mr-2 h-4 w-4 text-amber-500" />
+                                        <ScrollText className="mr-2 h-4 w-4 text-warning" />
                                         Reports & Export
                                     </Link>
                                 </Button>
@@ -601,7 +603,7 @@ export default function Dashboard({
                                     variant="outline"
                                 >
                                     <Link href="/transfers">
-                                        <ClipboardList className="mr-2 h-4 w-4 text-slate-500" />
+                                        <ClipboardList className="mr-2 h-4 w-4 text-muted-foreground" />
                                         View Action History
                                     </Link>
                                 </Button>

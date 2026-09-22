@@ -48,7 +48,7 @@ return null;
             <SidebarGroupLabel>Accounts & Services</SidebarGroupLabel>
             <SidebarMenu>
                 {showAccounts && (
-                    <Collapsible asChild defaultOpen className="group/collapsible mb-2">
+                    <Collapsible asChild className="group/collapsible mb-2">
                         <SidebarMenuItem>
                             <CollapsibleTrigger asChild>
                                 <SidebarMenuButton tooltip="Accounts">
@@ -126,7 +126,7 @@ return null;
                 )}
 
                 {showBilling && (
-                    <Collapsible asChild defaultOpen className="group/collapsible">
+                    <Collapsible asChild className="group/collapsible">
                         <SidebarMenuItem>
                             <CollapsibleTrigger asChild>
                                 <SidebarMenuButton tooltip="Billing">

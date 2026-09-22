@@ -150,16 +150,16 @@ export default function InvoicesIndex({
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'paid':
-                return 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+                return 'bg-success/15 text-success border border-success/30';
             case 'partially_paid':
             case 'partially paid':
-                return 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
+                return 'bg-warning/15 text-warning border border-warning/30';
             case 'unpaid':
-                return 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
+                return 'bg-destructive/15 text-destructive border border-destructive/30';
             case 'draft':
-                return 'bg-slate-500/10 text-slate-500 border border-slate-500/20';
+                return 'bg-muted text-foreground border border-border';
             default:
-                return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
+                return 'bg-info/15 text-info border border-info/30';
         }
     };
 
@@ -192,16 +192,16 @@ export default function InvoicesIndex({
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-primary" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                                <FileTextIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                <FileTextIcon className="h-4 w-4 text-primary" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.total_invoices}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Invoices
                                 </p>
                             </div>
@@ -209,51 +209,60 @@ export default function InvoicesIndex({
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-success" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                                <CheckCircle2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10">
+                                <CheckCircle2Icon className="h-4 w-4 text-success" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.paid.count}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {fmtCurrency(summary.paid.total, symbol)} collected
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                    {fmtCurrency(summary.paid.total, symbol)}{' '}
+                                    collected
                                 </p>
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-rose-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-destructive" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10">
-                                <AlertCircleIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                                <AlertCircleIcon className="h-4 w-4 text-destructive" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.unpaid.count}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {fmtCurrency(summary.unpaid.balance, symbol)} outstanding
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                    {fmtCurrency(
+                                        summary.unpaid.balance,
+                                        symbol,
+                                    )}{' '}
+                                    outstanding
                                 </p>
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                                <WalletIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/10">
+                                <WalletIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.partially_paid.count}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {fmtCurrency(summary.partially_paid.balance, symbol)} remaining
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                    {fmtCurrency(
+                                        summary.partially_paid.balance,
+                                        symbol,
+                                    )}{' '}
+                                    remaining
                                 </p>
                             </div>
                         </CardContent>
@@ -265,15 +274,17 @@ export default function InvoicesIndex({
                     <CardContent className="p-0">
                         {/* Top row: search + toggle */}
                         <div className="flex items-center gap-2 border-b border-border p-3">
-                            <div className="relative flex-1 min-w-0">
-                                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="relative min-w-0 flex-1">
+                                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="text"
                                     placeholder="Search by invoice number or deceased name…"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                                    className="pl-9 pr-9"
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && applyFilters()
+                                    }
+                                    className="pr-9 pl-9"
                                     aria-label="Search invoices"
                                 />
                                 {search && (
@@ -283,7 +294,7 @@ export default function InvoicesIndex({
                                             setSearch('');
                                             applyFilters();
                                         }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         aria-label="Clear search"
                                     >
                                         <XIcon className="h-4 w-4" />
@@ -359,7 +370,7 @@ export default function InvoicesIndex({
                                         From Date
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-from"
                                             type="date"
@@ -367,7 +378,7 @@ export default function InvoicesIndex({
                                             onChange={(e) =>
                                                 setDateFrom(e.target.value)
                                             }
-                                            className="pl-8 h-9"
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
@@ -380,7 +391,7 @@ export default function InvoicesIndex({
                                         To Date
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-to"
                                             type="date"
@@ -388,7 +399,7 @@ export default function InvoicesIndex({
                                             onChange={(e) =>
                                                 setDateTo(e.target.value)
                                             }
-                                            className="pl-8 h-9"
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
@@ -449,7 +460,7 @@ export default function InvoicesIndex({
                         {search && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 Search: "{search}"
                                 <button
@@ -467,7 +478,7 @@ export default function InvoicesIndex({
                         {status !== 'all' && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 {status}
                                 <button
@@ -485,14 +496,17 @@ export default function InvoicesIndex({
                         {dateFrom && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 From{' '}
-                                {new Date(dateFrom).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                })}
+                                {new Date(dateFrom).toLocaleDateString(
+                                    'en-GB',
+                                    {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    },
+                                )}
                                 <button
                                     onClick={() => {
                                         setDateFrom('');
@@ -508,7 +522,7 @@ export default function InvoicesIndex({
                         {dateTo && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 To{' '}
                                 {new Date(dateTo).toLocaleDateString('en-GB', {
@@ -531,13 +545,10 @@ export default function InvoicesIndex({
                         {createdBy !== 'all' && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 <UserIcon className="mr-1 h-3 w-3" />
-                                {
-                                    creators.find((u) => u.id === createdBy)
-                                        ?.name
-                                }
+                                {creators.find((u) => u.id === createdBy)?.name}
                                 <button
                                     onClick={() => {
                                         setCreatedBy('all');
@@ -602,23 +613,30 @@ export default function InvoicesIndex({
                                             const waived = parseFloat(
                                                 invoice.waived_amount as string,
                                             );
-                                            const balance = total - paid - waived;
+                                            const balance =
+                                                total - paid - waived;
 
                                             return (
                                                 <TableRow key={invoice.id}>
                                                     <TableCell className="font-semibold text-foreground">
-                                                        {
-                                                            invoice.invoice_number
-                                                        }
+                                                        {invoice.invoice_number}
                                                     </TableCell>
-                                                    <TableCell className="font-medium text-foreground max-w-[160px]">
+                                                    <TableCell className="max-w-[160px] font-medium text-foreground">
                                                         {invoice.deceased ? (
                                                             <Link
                                                                 href={`/deceased/${invoice.deceased.id}`}
-                                                                className="hover:underline text-primary"
+                                                                className="text-primary hover:underline"
                                                             >
-                                                                {invoice.deceased.first_name}{' '}
-                                                                {invoice.deceased.last_name}
+                                                                {
+                                                                    invoice
+                                                                        .deceased
+                                                                        .first_name
+                                                                }{' '}
+                                                                {
+                                                                    invoice
+                                                                        .deceased
+                                                                        .last_name
+                                                                }
                                                             </Link>
                                                         ) : (
                                                             <span className="text-muted-foreground">
@@ -632,7 +650,7 @@ export default function InvoicesIndex({
                                                             symbol,
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-emerald-600 dark:text-emerald-400">
+                                                    <TableCell className="text-success">
                                                         {fmtCurrency(
                                                             paid,
                                                             symbol,
@@ -653,12 +671,14 @@ export default function InvoicesIndex({
                                                             {invoice.status}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground text-xs">
+                                                    <TableCell className="text-xs text-muted-foreground">
                                                         {invoice.created_by_user
-                                                            ? invoice.created_by_user.name
+                                                            ? invoice
+                                                                  .created_by_user
+                                                                  .name
                                                             : '—'}
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                                                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
                                                         {new Date(
                                                             invoice.created_at,
                                                         ).toLocaleDateString(
@@ -695,7 +715,7 @@ export default function InvoicesIndex({
                                 </Table>
 
                                 {/* Mobile card list */}
-                                <div className="sm:hidden divide-y divide-border">
+                                <div className="divide-y divide-border sm:hidden">
                                     {invoices.data.map((invoice) => {
                                         const total = parseFloat(
                                             invoice.total_amount as string,
@@ -711,11 +731,11 @@ export default function InvoicesIndex({
                                         return (
                                             <div
                                                 key={invoice.id}
-                                                className="p-4 space-y-3"
+                                                className="space-y-3 p-4"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0">
-                                                        <p className="font-semibold text-foreground truncate">
+                                                        <p className="truncate font-semibold text-foreground">
                                                             {
                                                                 invoice.invoice_number
                                                             }
@@ -750,7 +770,7 @@ export default function InvoicesIndex({
                                                         <span className="text-muted-foreground">
                                                             Paid
                                                         </span>
-                                                        <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                                                        <p className="font-medium text-success">
                                                             {fmtCurrency(
                                                                 paid,
                                                                 symbol,
@@ -791,12 +811,14 @@ export default function InvoicesIndex({
                                                         </span>
                                                         <p className="font-medium text-muted-foreground">
                                                             {invoice.created_by_user
-                                                                ? invoice.created_by_user.name
+                                                                ? invoice
+                                                                      .created_by_user
+                                                                      .name
                                                                 : '—'}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
+                                                <div className="flex items-center justify-end gap-1 border-t border-border/50 pt-1">
                                                     <Button
                                                         asChild
                                                         variant="ghost"
@@ -805,7 +827,7 @@ export default function InvoicesIndex({
                                                         <Link
                                                             href={`/invoices/${invoice.id}`}
                                                         >
-                                                            <EyeIcon className="h-4 w-4 mr-1.5" />
+                                                            <EyeIcon className="mr-1.5 h-4 w-4" />
                                                             View
                                                         </Link>
                                                     </Button>
@@ -818,9 +840,7 @@ export default function InvoicesIndex({
                                 {/* Pagination */}
                                 {invoices.last_page > 1 && (
                                     <div className="border-t border-border px-6 py-3">
-                                        <Pagination
-                                            links={invoices.links}
-                                        />
+                                        <Pagination links={invoices.links} />
                                     </div>
                                 )}
                             </>

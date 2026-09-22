@@ -35,8 +35,15 @@ interface Props {
     serviceCategories: SimpleItem[];
 }
 
-export default function ServicePriceEdit({ servicePrice, services, serviceCategories }: Props) {
-    const initialTiers = servicePrice.servicePriceTiers || servicePrice.service_price_tiers || [];
+export default function ServicePriceEdit({
+    servicePrice,
+    services,
+    serviceCategories,
+}: Props) {
+    const initialTiers =
+        servicePrice.servicePriceTiers ||
+        servicePrice.service_price_tiers ||
+        [];
     const [enableTiers, setEnableTiers] = useState(initialTiers.length > 0);
 
     const { data, setData, put, processing, errors } = useForm<{
@@ -67,8 +74,12 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
 
     function addTier() {
         const lastTier = data.tiers[data.tiers.length - 1];
-        const nextStart = lastTier ? (lastTier.end_day ? Number(lastTier.end_day) + 1 : lastTier.start_day + 1) : 1;
-        
+        const nextStart = lastTier
+            ? lastTier.end_day
+                ? Number(lastTier.end_day) + 1
+                : lastTier.start_day + 1
+            : 1;
+
         setData('tiers', [
             ...data.tiers,
             { start_day: nextStart, end_day: null, price: '' },
@@ -76,7 +87,10 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
     }
 
     function removeTier(index: number) {
-        setData('tiers', data.tiers.filter((_, i) => i !== index));
+        setData(
+            'tiers',
+            data.tiers.filter((_, i) => i !== index),
+        );
     }
 
     function updateTier(index: number, field: keyof PriceTier, value: any) {
@@ -118,17 +132,25 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
                         <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                             {/* Service select */}
                             <div className="space-y-1.5">
-                                <Label htmlFor="service_id" className="font-semibold">
-                                    Select Service <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="service_id"
+                                    className="font-semibold"
+                                >
+                                    Select Service{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="service_id"
                                     value={data.service_id}
-                                    onChange={(e) => setData('service_id', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('service_id', e.target.value)
+                                    }
                                     disabled={processing}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="">-- Choose a Service --</option>
+                                    <option value="">
+                                        -- Choose a Service --
+                                    </option>
                                     {services.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name}
@@ -140,52 +162,81 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
 
                             {/* Service Category select */}
                             <div className="space-y-1.5">
-                                <Label htmlFor="service_category_id" className="font-semibold">
-                                    Select Service Category <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="service_category_id"
+                                    className="font-semibold"
+                                >
+                                    Select Service Category{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="service_category_id"
                                     value={data.service_category_id}
-                                    onChange={(e) => setData('service_category_id', e.target.value)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'service_category_id',
+                                            e.target.value,
+                                        )
+                                    }
                                     disabled={processing}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="">-- Choose a Category --</option>
+                                    <option value="">
+                                        -- Choose a Category --
+                                    </option>
                                     {serviceCategories.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name}
                                         </option>
                                     ))}
                                 </select>
-                                <InputError message={errors.service_category_id} />
+                                <InputError
+                                    message={errors.service_category_id}
+                                />
                             </div>
 
                             {/* Source Applicability */}
                             <div className="space-y-1.5 sm:col-span-2">
-                                <Label htmlFor="source" className="font-semibold">
+                                <Label
+                                    htmlFor="source"
+                                    className="font-semibold"
+                                >
                                     Source Applicability (Optional)
                                 </Label>
                                 <select
                                     id="source"
                                     value={data.source}
-                                    onChange={(e) => setData('source', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('source', e.target.value)
+                                    }
                                     disabled={processing}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="">All Sources (Default)</option>
-                                    <option value="In Hospital">In Hospital</option>
-                                    <option value="Outside Hospital">Outside Hospital</option>
+                                    <option value="">
+                                        All Sources (Default)
+                                    </option>
+                                    <option value="In Hospital">
+                                        In Hospital
+                                    </option>
+                                    <option value="Outside Hospital">
+                                        Outside Hospital
+                                    </option>
                                 </select>
                                 <InputError message={errors.source} />
                                 <p className="text-xs text-muted-foreground">
-                                    Select a source if this price configuration is specific to where the deceased came from.
+                                    Select a source if this price configuration
+                                    is specific to where the deceased came from.
                                 </p>
                             </div>
 
                             {/* Base Price */}
                             <div className="space-y-1.5 sm:col-span-2">
-                                <Label htmlFor="price" className="font-semibold">
-                                    Base Price (â‚¦) <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="price"
+                                    className="font-semibold"
+                                >
+                                    Base Price (â‚¦){' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="price"
@@ -193,7 +244,9 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
                                     step="0.01"
                                     min="0"
                                     value={data.price}
-                                    onChange={(e) => setData('price', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('price', e.target.value)
+                                    }
                                     placeholder="0.00"
                                     disabled={processing}
                                 />
@@ -206,11 +259,17 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
                                     type="checkbox"
                                     id="enable_tiers"
                                     checked={enableTiers}
-                                    onChange={(e) => handleToggleTiers(e.target.checked)}
-                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    onChange={(e) =>
+                                        handleToggleTiers(e.target.checked)
+                                    }
+                                    className="h-4 w-4 cursor-pointer rounded border-input accent-primary"
                                 />
-                                <Label htmlFor="enable_tiers" className="font-semibold cursor-pointer">
-                                    Enable Tiered Pricing (e.g. storage rates changing over time)
+                                <Label
+                                    htmlFor="enable_tiers"
+                                    className="cursor-pointer font-semibold"
+                                >
+                                    Enable Tiered Pricing (e.g. storage rates
+                                    changing over time)
                                 </Label>
                             </div>
                         </CardContent>
@@ -219,55 +278,112 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
                     {/* Tier Builder */}
                     {enableTiers && (
                         <Card>
-                            <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
+                            <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
                                 <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Pricing Tiers
                                 </CardTitle>
-                                <Button type="button" variant="outline" size="sm" onClick={addTier}>
-                                    <PlusIcon className="h-4 w-4 mr-1" /> Add Tier
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addTier}
+                                >
+                                    <PlusIcon className="mr-1 h-4 w-4" /> Add
+                                    Tier
                                 </Button>
                             </CardHeader>
                             <CardContent className="space-y-4 px-6 py-6">
                                 {data.tiers.map((tier, index) => (
-                                    <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end border-b border-border/50 pb-4 last:border-b-0 last:pb-0">
+                                    <div
+                                        key={index}
+                                        className="grid grid-cols-1 items-end gap-4 border-b border-border/50 pb-4 last:border-b-0 last:pb-0 sm:grid-cols-4"
+                                    >
                                         <div className="space-y-1.5">
-                                            <Label className="font-semibold">Start Day</Label>
+                                            <Label className="font-semibold">
+                                                Start Day
+                                            </Label>
                                             <Input
                                                 type="number"
                                                 min="1"
                                                 value={tier.start_day}
-                                                onChange={(e) => updateTier(index, 'start_day', Number(e.target.value))}
+                                                onChange={(e) =>
+                                                    updateTier(
+                                                        index,
+                                                        'start_day',
+                                                        Number(e.target.value),
+                                                    )
+                                                }
                                                 placeholder="1"
                                                 disabled={processing}
                                             />
-                                            <InputError message={errors[`tiers.${index}.start_day` as keyof typeof errors]} />
+                                            <InputError
+                                                message={
+                                                    errors[
+                                                        `tiers.${index}.start_day` as keyof typeof errors
+                                                    ]
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="font-semibold">End Day (leave blank for open tier)</Label>
+                                            <Label className="font-semibold">
+                                                End Day (leave blank for open
+                                                tier)
+                                            </Label>
                                             <Input
                                                 type="number"
                                                 min={tier.start_day}
                                                 value={tier.end_day ?? ''}
-                                                onChange={(e) => updateTier(index, 'end_day', e.target.value === '' ? null : Number(e.target.value))}
+                                                onChange={(e) =>
+                                                    updateTier(
+                                                        index,
+                                                        'end_day',
+                                                        e.target.value === ''
+                                                            ? null
+                                                            : Number(
+                                                                  e.target
+                                                                      .value,
+                                                              ),
+                                                    )
+                                                }
                                                 placeholder="e.g. 5"
                                                 disabled={processing}
                                             />
-                                            <InputError message={errors[`tiers.${index}.end_day` as keyof typeof errors]} />
+                                            <InputError
+                                                message={
+                                                    errors[
+                                                        `tiers.${index}.end_day` as keyof typeof errors
+                                                    ]
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="font-semibold">Rate Per Day </Label>
+                                            <Label className="font-semibold">
+                                                Rate Per Day{' '}
+                                            </Label>
                                             <Input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 value={tier.price}
-                                                onChange={(e) => updateTier(index, 'price', e.target.value)}
+                                                onChange={(e) =>
+                                                    updateTier(
+                                                        index,
+                                                        'price',
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="0.00"
                                                 disabled={processing}
                                             />
-                                            <InputError message={errors[`tiers.${index}.price` as keyof typeof errors]} />
+                                            <InputError
+                                                message={
+                                                    errors[
+                                                        `tiers.${index}.price` as keyof typeof errors
+                                                    ]
+                                                }
+                                            />
                                         </div>
 
                                         <div className="flex justify-end sm:justify-start">
@@ -277,9 +393,12 @@ export default function ServicePriceEdit({ servicePrice, services, serviceCatego
                                                     variant="ghost"
                                                     size="sm"
                                                     className="text-destructive hover:text-destructive"
-                                                    onClick={() => removeTier(index)}
+                                                    onClick={() =>
+                                                        removeTier(index)
+                                                    }
                                                 >
-                                                    <TrashIcon className="h-4 w-4 mr-1" /> Remove
+                                                    <TrashIcon className="mr-1 h-4 w-4" />{' '}
+                                                    Remove
                                                 </Button>
                                             )}
                                         </div>

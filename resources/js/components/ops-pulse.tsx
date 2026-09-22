@@ -55,7 +55,7 @@ export function OpsPulse({
     return (
         <div className={cn('flex h-full flex-col gap-4', className)}>
             <div className="grid gap-4 md:grid-cols-3">
-                <Card className="md:col-span-1">
+                <Card className="border-t-4 border-t-success bg-success/[0.035] md:col-span-1">
                     <CardHeader>
                         <CardTitle className="text-base">
                             Chamber occupancy
@@ -63,7 +63,10 @@ export function OpsPulse({
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {!hasOccupancy ? (
-                            <Alert variant="default" className="rounded-lg">
+                            <Alert
+                                variant="default"
+                                className="rounded-lg border-2"
+                            >
                                 <AlertTitle>Snapshot unavailable</AlertTitle>
                                 <AlertDescription>
                                     No occupancy data was provided yet.
@@ -113,7 +116,7 @@ export function OpsPulse({
                     </CardContent>
                 </Card>
 
-                <Card className="md:col-span-2">
+                <Card className="border-t-4 border-t-warning bg-warning/[0.035] md:col-span-2">
                     <CardHeader className="flex flex-row items-start justify-between gap-4">
                         <div className="space-y-1">
                             <CardTitle className="text-base">
@@ -137,7 +140,10 @@ export function OpsPulse({
                     </CardHeader>
                     <CardContent>
                         {!hasEvents ? (
-                            <Alert variant="default" className="rounded-lg">
+                            <Alert
+                                variant="default"
+                                className="rounded-lg border-2"
+                            >
                                 <AlertTitle>No recent events</AlertTitle>
                                 <AlertDescription>
                                     Once operations occur, audit events will

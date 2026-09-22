@@ -1,5 +1,19 @@
 ﻿import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { PencilIcon, MoveRightIcon, ShieldCheckIcon, PlusIcon, Trash2Icon, ReceiptIcon, CreditCardIcon, CalendarIcon, AlertTriangleIcon, ClockIcon, FileTextIcon, EyeIcon, PrinterIcon } from 'lucide-react';
+import {
+    PencilIcon,
+    MoveRightIcon,
+    ShieldCheckIcon,
+    PlusIcon,
+    Trash2Icon,
+    ReceiptIcon,
+    CreditCardIcon,
+    CalendarIcon,
+    AlertTriangleIcon,
+    ClockIcon,
+    FileTextIcon,
+    EyeIcon,
+    PrinterIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
 import { StatusChip } from '@/components/status-chip';
@@ -15,14 +29,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 
 interface Transfer {
     id: number;
@@ -148,14 +154,19 @@ interface WalletDeposit {
 interface Props {
     deceased: Deceased;
     availableServices: AvailableService[];
-    storageServiceId: string | null;
-    lastStorageCoveredDay: number;
+    currentAdmissionStorageLogs: StorageFeeLog[];
     paymentModes: PaymentMode[];
     walletDeposits: WalletDeposit[];
     walletBalance: number;
-    can: { edit: boolean; delete: boolean; transfer: boolean; managePayments: boolean; manageWaivers: boolean; createStorageInvoice: boolean };
+    can: {
+        edit: boolean;
+        delete: boolean;
+        transfer: boolean;
+        managePayments: boolean;
+        manageWaivers: boolean;
+        createStorageInvoice: boolean;
+    };
 }
-
 
 function Field({
     label,
@@ -169,24 +180,37 @@ function Field({
             <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {label}
             </dt>
-            <dd className="text-sm text-foreground">{value ?? '�'}</dd>
+            <dd className="text-sm text-foreground">{value ?? 'N/A'}</dd>
         </div>
     );
 }
 
-export default function DeceasedShow({ deceased, availableServices, storageServiceId, lastStorageCoveredDay, paymentModes, walletDeposits, walletBalance, can }: Props) {
+export default function DeceasedShow({
+    deceased,
+    availableServices,
+    currentAdmissionStorageLogs,
+    paymentModes,
+    walletDeposits,
+    walletBalance,
+    can,
+}: Props) {
     const { branding } = usePage().props as any;
     const currencySymbol = branding?.currency_symbol ?? '?';
+
+    const firstUnpaidServiceInvoice = deceased.invoices?.find((inv) =>
+        ['Unpaid', 'Partially Paid'].includes(inv.status),
+    );
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isWaiverOpen, setIsWaiverOpen] = useState(false);
     const [isGenerateOpen, setIsGenerateOpen] = useState(false);
     const [isWalletApplying, setIsWalletApplying] = useState(false);
-    const [isStorageInvoiceGenerating, setIsStorageInvoiceGenerating] = useState(false);
+    const [isStorageInvoiceGenerating, setIsStorageInvoiceGenerating] =
+        useState(false);
 
     const paymentForm = useForm({
         deceased_id: deceased.id,
-        invoice_id: deceased.invoices?.[0]?.id || '',
+        invoice_id: firstUnpaidServiceInvoice?.id || '',
         payment_mode_id: '',
         amount: '',
         transaction_reference: '',
@@ -194,21 +218,69 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
         notes: '',
     });
 
-    const serviceInvoicesTotal = deceased.invoices?.reduce((sum, inv) => sum + Number(inv.total_amount), 0) || 0;
-    const storageInvoicesTotal = deceased.storage_fee_logs?.reduce((sum, log) => sum + Number(log.invoice?.total_amount || 0), 0) || 0;
-    const totalPaid = deceased.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-    const totalWaived = (deceased.invoices?.reduce((sum, inv) => sum + Number(inv.waived_amount || 0), 0) || 0) +
-        (deceased.storage_fee_logs?.reduce((sum, log) => sum + Number(log.invoice?.waived_amount || 0), 0) || 0);
+    const serviceInvoicesTotal =
+        deceased.invoices?.reduce(
+            (sum, inv) => sum + Number(inv.total_amount),
+            0,
+        ) || 0;
+    // Storage lines are scoped to the current admission; service invoices are
+    // lifetime (account-level).
+    const storageInvoicesTotal = currentAdmissionStorageLogs.reduce(
+        (sum, log) => sum + Number(log.invoice?.total_amount || 0),
+        0,
+    );
+    const totalPaid =
+        deceased.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    const totalWaived =
+        (deceased.invoices?.reduce(
+            (sum, inv) => sum + Number(inv.waived_amount || 0),
+            0,
+        ) || 0) +
+        currentAdmissionStorageLogs.reduce(
+            (sum, log) => sum + Number(log.invoice?.waived_amount || 0),
+            0,
+        );
     const totalBilled = serviceInvoicesTotal + storageInvoicesTotal;
     const ledgerBalance = totalBilled - totalPaid - totalWaived;
 
-    const invoiceOutstanding = serviceInvoicesTotal + storageInvoicesTotal - totalPaid - totalWaived;
+    const invoiceOutstanding =
+        serviceInvoicesTotal + storageInvoicesTotal - totalPaid - totalWaived;
 
     const outstandingInvoices = [
-        ...(deceased.invoices ?? []).filter(inv => ['Unpaid', 'Partially Paid'].includes(inv.status)),
-        ...(deceased.storage_fee_logs ?? []).map(log => log.invoice).filter(Boolean) as Invoice[],
+        ...(deceased.invoices ?? []).filter((inv) =>
+            ['Unpaid', 'Partially Paid'].includes(inv.status),
+        ),
+        ...currentAdmissionStorageLogs
+            .map((log) => log.invoice)
+            .filter((invoice): invoice is Invoice =>
+                Boolean(
+                    invoice &&
+                    ['Unpaid', 'Partially Paid'].includes(invoice.status),
+                ),
+            ),
     ];
-    const firstOutstandingInvoice = outstandingInvoices[0];
+    // De-duplicate (a storage log and its invoice share the same id).
+    const unpaidInvoices = outstandingInvoices.filter(
+        (inv, idx, arr) => arr.findIndex((o) => o.id === inv.id) === idx,
+    );
+    const invoiceOutstandingFor = (inv: Invoice) =>
+        Math.max(
+            0,
+            Number(inv.total_amount) -
+                Number(inv.paid_amount) -
+                Number(inv.waived_amount),
+        );
+    const selectedUnpaidInvoice = unpaidInvoices.find(
+        (inv) =>
+            String(inv.id) === String(paymentForm.data.invoice_id ?? ''),
+    );
+    const selectedInvoiceOutstanding = selectedUnpaidInvoice
+        ? invoiceOutstandingFor(selectedUnpaidInvoice)
+        : 0;
+    const firstOutstandingInvoice = unpaidInvoices[0];
+    const firstOutstandingBalance = firstOutstandingInvoice
+        ? invoiceOutstandingFor(firstOutstandingInvoice)
+        : 0;
 
     const waiverForm = useForm({
         deceased_id: deceased.id,
@@ -218,7 +290,9 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
     });
 
     const isWalletMode = paymentForm.data.payment_mode_id
-        ? paymentModes.find((m) => String(m.id) === String(paymentForm.data.payment_mode_id))?.name === 'Hospital Wallet'
+        ? paymentModes.find(
+              (m) => String(m.id) === String(paymentForm.data.payment_mode_id),
+          )?.name === 'Hospital Wallet'
         : false;
 
     const { data, setData, post, processing, errors } = useForm<{
@@ -248,9 +322,30 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
             },
             onSuccess: () => {
                 setIsGenerateOpen(false);
-                setData({ items: [{ service_id: availableServices[0]?.service_id ?? '', quantity: 1 }], notes: '' });
+                setData({
+                    items: [
+                        {
+                            service_id: availableServices[0]?.service_id ?? '',
+                            quantity: 1,
+                        },
+                    ],
+                    notes: '',
+                });
             },
         });
+    };
+
+    const openCreateInvoiceModal = () => {
+        setData({
+            items: [
+                {
+                    service_id: availableServices[0]?.service_id ?? '',
+                    quantity: 1,
+                },
+            ],
+            notes: '',
+        });
+        setIsGenerateOpen(true);
     };
 
     const submitPayment = (e: React.FormEvent) => {
@@ -265,6 +360,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
 
     const handleApplyWalletToInvoice = () => {
         const targetInvoice = outstandingInvoices[0];
+
         if (!targetInvoice || walletBalance <= 0) {
             return;
         }
@@ -293,7 +389,7 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
     const openInvoiceModal = () => {
         if (deceased.invoices?.[0] && deceased.invoices[0].invoice_items) {
             setData({
-                items: deceased.invoices[0].invoice_items.map(item => ({
+                items: deceased.invoices[0].invoice_items.map((item) => ({
                     service_id: item.service_id,
                     quantity: item.quantity,
                 })),
@@ -301,15 +397,24 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
             });
         } else {
             setData({
-                items: [{ service_id: availableServices[0]?.service_id ?? '', quantity: 1 }],
+                items: [
+                    {
+                        service_id: availableServices[0]?.service_id ?? '',
+                        quantity: 1,
+                    },
+                ],
                 notes: '',
             });
         }
+
         setIsInvoiceOpen(true);
     };
 
     const handleAddItem = () => {
-        setData('items', [...data.items, { service_id: availableServices[0]?.service_id ?? '', quantity: 1 }]);
+        setData('items', [
+            ...data.items,
+            { service_id: availableServices[0]?.service_id ?? '', quantity: 1 },
+        ]);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -318,7 +423,11 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
         setData('items', newItems);
     };
 
-    const handleItemChange = (index: number, field: 'service_id' | 'quantity', value: any) => {
+    const handleItemChange = (
+        index: number,
+        field: 'service_id' | 'quantity',
+        value: any,
+    ) => {
         const newItems = [...data.items];
         newItems[index] = { ...newItems[index], [field]: value };
         setData('items', newItems);
@@ -331,31 +440,45 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
         });
     };
 
+    const rowLineTotal = (
+        service: AvailableService | undefined,
+        quantity: number,
+    ) => (service ? service.price * (Number(quantity) || 0) : 0);
+
     const calculatedTotal = data.items.reduce((sum, item) => {
-        const service = availableServices.find(s => String(s.service_id) === String(item.service_id));
-        if (!service) return sum;
-        if (service.has_tiers && service.tiered_price !== null) {
-            return sum + service.tiered_price;
-        }
-        return sum + (service.price * Number(item.quantity || 0));
+        const service = availableServices.find(
+            (s) => String(s.service_id) === String(item.service_id),
+        );
+
+        return sum + rowLineTotal(service, item.quantity);
     }, 0);
 
-    const hasStorageInvoice = deceased.storage_fee_logs && deceased.storage_fee_logs.length > 0;
-    const hasUncoveredStorageDays = deceased.days_in_storage > deceased.days_paid;
-    const storageFullyPaid = deceased.days_in_storage > 0 && deceased.days_paid >= deceased.days_in_storage;
+    const hasStorageInvoice = currentAdmissionStorageLogs.length > 0;
+    const hasUncoveredStorageDays =
+        deceased.days_in_storage > deceased.days_paid;
+    const storageFullyPaid =
+        deceased.days_in_storage > 0 &&
+        deceased.days_paid >= deceased.days_in_storage;
 
-    // True when any invoice (service or storage) is paid or partially paid � blocks all editing
+    // True when any invoice (service or storage) is paid or partially paid - blocks all editing
     const hasPaidOrPartiallyPaidInvoice = (() => {
         if (deceased.invoices) {
             for (const inv of deceased.invoices) {
-                if (['Paid', 'Partially Paid'].includes(inv.status)) return true;
+                if (['Paid', 'Partially Paid'].includes(inv.status)) {
+                    return true;
+                }
             }
         }
-        if (deceased.storage_fee_logs) {
-            for (const log of deceased.storage_fee_logs) {
-                if (log.invoice && ['Paid', 'Partially Paid'].includes(log.invoice.status)) return true;
+
+        for (const log of currentAdmissionStorageLogs) {
+            if (
+                log.invoice &&
+                ['Paid', 'Partially Paid'].includes(log.invoice.status)
+            ) {
+                return true;
             }
         }
+
         return false;
     })();
 
@@ -373,78 +496,115 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                             <StatusChip status={deceased.status} />
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Date of death: {(deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '�')}
+                            Date of death:{' '}
+                            {deceased.date_of_death
+                                ? new Date(
+                                      deceased.date_of_death,
+                                  ).toLocaleString(undefined, {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                  })
+                                : 'N/A'}
                             {deceased.chamber &&
-                                ` � Chamber: ${deceased.chamber.name}`}
+                                ` - Chamber: ${deceased.chamber.name}`}
                         </p>
                     </div>
-                    <div className="flex shrink-0 gap-2 flex-wrap">
+                    <div className="flex shrink-0 flex-wrap gap-2">
                         <div className="grid gap-2 lg:grid-cols-3">
-                        {can.edit && deceased.status !== 'Released' && (
-                            <Button
-                                asChild
-                                className="border-none bg-success text-white hover:bg-success/90"
-                            >
-                                <Link href={`/deceased/${deceased.id}/release`}>
-                                    <ShieldCheckIcon className="mr-2 h-4 w-4" />
-                                    Release
-                                </Link>
-                            </Button>
-                        )}
-                        {can.transfer && deceased.status !== 'Released' && (
-                            <Button asChild variant="secondary">
-                                <Link href={`/transfers/create?deceased_id=${deceased.id}`}>
-                                    <MoveRightIcon className="mr-2 h-4 w-4" />
-                                    Transfer
-                                </Link>
-                            </Button>
-                        )}
-                        {can.edit && (
+                            {can.edit && deceased.status !== 'Released' && (
+                                <Button
+                                    asChild
+                                    className="border-2 border-success bg-success text-success-foreground hover:brightness-110"
+                                >
+                                    <Link
+                                        href={`/deceased/${deceased.id}/release`}
+                                    >
+                                        <ShieldCheckIcon className="mr-2 h-4 w-4" />
+                                        Release
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.transfer && deceased.status !== 'Released' && (
+                                <Button asChild variant="secondary">
+                                    <Link
+                                        href={`/transfers/create?deceased_id=${deceased.id}`}
+                                    >
+                                        <MoveRightIcon className="mr-2 h-4 w-4" />
+                                        Transfer
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.edit && (
+                                <Button asChild variant="outline">
+                                    <Link
+                                        href={`/deceased/${deceased.id}/edit`}
+                                    >
+                                        <PencilIcon className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </Link>
+                                </Button>
+                            )}
                             <Button asChild variant="outline">
-                                <Link href={`/deceased/${deceased.id}/edit`}>
-                                    <PencilIcon className="mr-2 h-4 w-4" />
-                                    Edit
+                                <Link href={`/deceased/${deceased.id}/print`}>
+                                    <PrinterIcon className="mr-2 h-4 w-4" />
+                                    Print
                                 </Link>
                             </Button>
-                        )}
-                        <Button asChild variant="outline">
-                            <Link href={`/deceased/${deceased.id}/print`}>
-                                <PrinterIcon className="mr-2 h-4 w-4" />
-                                Print
-                            </Link>
-                        </Button>
 
-                        {/* Generate Service Invoice button � available only when no invoice is paid/partially paid */}
-                        {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
-                            <Button onClick={() => setIsGenerateOpen(true)} variant="default">
-                                <PlusIcon className="mr-2 h-4 w-4" />
-                                Generate Service Invoice
-                            </Button>
-                        )}
+                            {/* Service invoice creation is available until the record is released. */}
+                            {can.edit && deceased.status !== 'Released' && (
+                                <Button
+                                    onClick={openCreateInvoiceModal}
+                                    variant="default"
+                                >
+                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                    Create Invoice
+                                </Button>
+                            )}
 
-                        {/* Storage Invoice button � always show when InChamber and user has permission */}
-                        {can.createStorageInvoice && deceased.status === 'InChamber' && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={storageFullyPaid || isStorageInvoiceGenerating}
-                                onClick={() => {
-                                    setIsStorageInvoiceGenerating(true);
-                                    router.post(`/deceased/${deceased.id}/storage-invoice`, {}, {
-                                        preserveScroll: true,
-                                        onSuccess: () => setIsStorageInvoiceGenerating(false),
-                                        onError: () => setIsStorageInvoiceGenerating(false),
-                                    });
-                                }}
-                            >
-                                <FileTextIcon className="mr-2 h-4 w-4" />
-                                {isStorageInvoiceGenerating ? 'Generating...' : hasStorageInvoice && hasUncoveredStorageDays
-                                    ? 'Generate Next Storage Invoice'
-                                    : hasStorageInvoice
-                                    ? 'Storage Fully Covered'
-                                    : 'Generate Storage Invoice'}
-                            </Button>
-                        )}
+                            {/* Storage Invoice button - always show when InChamber and user has permission */}
+                            {can.createStorageInvoice &&
+                                deceased.status === 'InChamber' && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={
+                                            storageFullyPaid ||
+                                            isStorageInvoiceGenerating
+                                        }
+                                        onClick={() => {
+                                            setIsStorageInvoiceGenerating(true);
+                                            router.post(
+                                                `/deceased/${deceased.id}/storage-invoice`,
+                                                {},
+                                                {
+                                                    preserveScroll: true,
+                                                    onSuccess: () =>
+                                                        setIsStorageInvoiceGenerating(
+                                                            false,
+                                                        ),
+                                                    onError: () =>
+                                                        setIsStorageInvoiceGenerating(
+                                                            false,
+                                                        ),
+                                                },
+                                            );
+                                        }}
+                                    >
+                                        <FileTextIcon className="mr-2 h-4 w-4" />
+                                        {isStorageInvoiceGenerating
+                                            ? 'Generating...'
+                                            : hasStorageInvoice &&
+                                                hasUncoveredStorageDays
+                                              ? 'Generate Next Storage Invoice'
+                                              : hasStorageInvoice
+                                                ? 'Storage Fully Covered'
+                                                : 'Generate Storage Invoice'}
+                                    </Button>
+                                )}
                         </div>
                     </div>
                 </div>
@@ -459,23 +619,56 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                         </CardHeader>
                         <CardContent className="px-6 py-6">
                             <dl className="grid grid-cols-2 gap-4">
-                                <Field label="First Name" value={deceased.first_name} />
-                                <Field label="Last Name" value={deceased.last_name} />
+                                <Field
+                                    label="First Name"
+                                    value={deceased.first_name}
+                                />
+                                <Field
+                                    label="Last Name"
+                                    value={deceased.last_name}
+                                />
                                 <Field
                                     label="Date of Birth"
-                                    value={deceased.date_of_birth ? new Date(deceased.date_of_birth).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' }) : null}
+                                    value={
+                                        deceased.date_of_birth
+                                            ? new Date(
+                                                  deceased.date_of_birth,
+                                              ).toLocaleDateString(undefined, {
+                                                  year: 'numeric',
+                                                  month: 'short',
+                                                  day: '2-digit',
+                                              })
+                                            : null
+                                    }
                                 />
                                 <Field
                                     label="Date of Death"
-                                    value={deceased.date_of_death ? new Date(deceased.date_of_death).toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : null}
+                                    value={
+                                        deceased.date_of_death
+                                            ? new Date(
+                                                  deceased.date_of_death,
+                                              ).toLocaleString(undefined, {
+                                                  year: 'numeric',
+                                                  month: 'short',
+                                                  day: '2-digit',
+                                                  hour: '2-digit',
+                                                  minute: '2-digit',
+                                              })
+                                            : null
+                                    }
                                 />
                                 <Field label="Gender" value={deceased.gender} />
-                                <Field label="Cause of Death" value={deceased.cause_of_death} />
+                                <Field
+                                    label="Cause of Death"
+                                    value={deceased.cause_of_death}
+                                />
                                 <div className="col-span-2 space-y-1">
                                     <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                         Notes
                                     </dt>
-                                    <dd className="text-sm text-foreground">{deceased.notes ?? '�'}</dd>
+                                    <dd className="text-sm text-foreground">
+                                        {deceased.notes ?? 'N/A'}
+                                    </dd>
                                 </div>
                                 <div className="col-span-2 space-y-1 rounded-md border border-border bg-secondary/10 p-3">
                                     <dt className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -500,10 +693,22 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                             </CardHeader>
                             <CardContent className="px-6 py-6">
                                 <dl className="grid grid-cols-2 gap-4">
-                                    <Field label="Name" value={deceased.relative_name} />
-                                    <Field label="Relationship" value={deceased.relative_relationship} />
-                                    <Field label="Phone" value={deceased.relative_phone} />
-                                    <Field label="Address" value={deceased.relative_address} />
+                                    <Field
+                                        label="Name"
+                                        value={deceased.relative_name}
+                                    />
+                                    <Field
+                                        label="Relationship"
+                                        value={deceased.relative_relationship}
+                                    />
+                                    <Field
+                                        label="Phone"
+                                        value={deceased.relative_phone}
+                                    />
+                                    <Field
+                                        label="Address"
+                                        value={deceased.relative_address}
+                                    />
                                 </dl>
                             </CardContent>
                         </Card>
@@ -518,14 +723,42 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                 </CardHeader>
                                 <CardContent className="px-6 py-6">
                                     <dl className="grid grid-cols-2 gap-4">
-                                        <Field label="Released To" value={deceased.released_to_name} />
-                                        <Field label="Relationship" value={deceased.released_to_relationship} />
-                                        <Field label="Phone" value={deceased.released_to_phone} />
-                                        <Field label="Released At" value={deceased.released_at} />
-                                        <Field label="Verified ID Type" value={deceased.released_to_id_type} />
-                                        <Field label="Verified ID Number" value={deceased.released_to_id_number} />
+                                        <Field
+                                            label="Released To"
+                                            value={deceased.released_to_name}
+                                        />
+                                        <Field
+                                            label="Relationship"
+                                            value={
+                                                deceased.released_to_relationship
+                                            }
+                                        />
+                                        <Field
+                                            label="Phone"
+                                            value={deceased.released_to_phone}
+                                        />
+                                        <Field
+                                            label="Released At"
+                                            value={deceased.released_at}
+                                        />
+                                        <Field
+                                            label="Verified ID Type"
+                                            value={deceased.released_to_id_type}
+                                        />
+                                        <Field
+                                            label="Verified ID Number"
+                                            value={
+                                                deceased.released_to_id_number
+                                            }
+                                        />
                                         <div className="col-span-2">
-                                            <Field label="Authorized By Staff" value={deceased.released_by_user?.name} />
+                                            <Field
+                                                label="Authorized By Staff"
+                                                value={
+                                                    deceased.released_by_user
+                                                        ?.name
+                                                }
+                                            />
                                         </div>
                                     </dl>
                                 </CardContent>
@@ -537,23 +770,25 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                 {/* Storage Duration & Payment Tracker */}
                 <Card className="overflow-hidden border border-border">
                     <CardHeader className="border-b border-border px-6 py-3">
-                        <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             <ClockIcon className="h-4 w-4 text-primary" />
                             Storage Fee Tracker
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-6 py-6">
-                        <div className="grid gap-6 md:grid-cols-3 items-center">
+                        <div className="grid items-center gap-6 md:grid-cols-3">
                             {/* Days Spent */}
                             <div className="space-y-2 rounded-lg border border-border bg-secondary/10 p-4 text-center">
-                                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Days Spent in Storage
                                 </div>
-                                <div className="flex justify-center items-baseline gap-1 text-3xl font-bold tracking-tight text-foreground">
+                                <div className="flex items-baseline justify-center gap-1 text-3xl font-bold tracking-tight text-foreground">
                                     {deceased.days_in_storage}
-                                    <span className="text-sm font-medium text-muted-foreground">days</span>
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        days
+                                    </span>
                                 </div>
-                                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                                <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
                                     <CalendarIcon className="h-3 w-3" />
                                     Since placement in chamber
                                 </p>
@@ -561,12 +796,14 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
 
                             {/* Days Paid */}
                             <div className="space-y-2 rounded-lg border border-border bg-secondary/10 p-4 text-center">
-                                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Days Paid For
                                 </div>
-                                <div className="flex justify-center items-baseline gap-1 text-3xl font-bold tracking-tight text-success">
+                                <div className="flex items-baseline justify-center gap-1 text-3xl font-bold tracking-tight text-success">
                                     {deceased.days_paid}
-                                    <span className="text-sm font-medium text-muted-foreground">days</span>
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        days
+                                    </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     From settled storage invoices
@@ -576,46 +813,82 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                             {/* Status & Action */}
                             <div className="space-y-3">
                                 <div>
-                                    <div className="flex justify-between text-xs font-semibold mb-1">
-                                        <span className="text-muted-foreground">Coverage Progress</span>
-                                        <span className={deceased.days_paid >= deceased.days_in_storage ? "text-success font-bold" : "text-amber-500 font-bold"}>
+                                    <div className="mb-1 flex justify-between text-xs font-semibold">
+                                        <span className="text-muted-foreground">
+                                            Coverage Progress
+                                        </span>
+                                        <span
+                                            className={
+                                                deceased.days_paid >=
+                                                deceased.days_in_storage
+                                                    ? 'font-bold text-success'
+                                                    : 'font-bold text-warning'
+                                            }
+                                        >
                                             {deceased.days_in_storage > 0
-                                                ? Math.min(100, Math.round((deceased.days_paid / deceased.days_in_storage) * 100))
-                                                : 100}%
+                                                ? Math.min(
+                                                      100,
+                                                      Math.round(
+                                                          (deceased.days_paid /
+                                                              deceased.days_in_storage) *
+                                                              100,
+                                                      ),
+                                                  )
+                                                : 100}
+                                            %
                                         </span>
                                     </div>
-                                    <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
+                                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
                                         <div
                                             className={`h-2.5 rounded-full ${
-                                                deceased.days_paid >= deceased.days_in_storage
+                                                deceased.days_paid >=
+                                                deceased.days_in_storage
                                                     ? 'bg-success'
-                                                    : 'bg-amber-500'
+                                                    : 'bg-warning'
                                             }`}
                                             style={{
-                                                width: `${deceased.days_in_storage > 0
-                                                    ? Math.min(100, (deceased.days_paid / deceased.days_in_storage) * 100)
-                                                    : 100}%`
+                                                width: `${
+                                                    deceased.days_in_storage > 0
+                                                        ? Math.min(
+                                                              100,
+                                                              (deceased.days_paid /
+                                                                  deceased.days_in_storage) *
+                                                                  100,
+                                                          )
+                                                        : 100
+                                                }%`,
                                             }}
                                         />
                                     </div>
                                 </div>
 
-                                {deceased.status === 'InChamber' && deceased.days_in_storage > deceased.days_paid ? (
-                                    <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-700 dark:text-amber-400">
-                                        <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5" />
+                                {deceased.status === 'InChamber' &&
+                                deceased.days_in_storage >
+                                    deceased.days_paid ? (
+                                    <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2.5 text-xs text-foreground">
+                                        <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
                                         <div>
-                                            <span className="font-semibold">Unpaid Storage:</span>{' '}
-                                            {deceased.days_in_storage - deceased.days_paid} day(s) outstanding.{' '}
+                                            <span className="font-semibold">
+                                                Unpaid Storage:
+                                            </span>{' '}
+                                            {deceased.days_in_storage -
+                                                deceased.days_paid}{' '}
+                                            day(s) outstanding.{' '}
                                             {!hasStorageInvoice
                                                 ? 'Generate a storage invoice to begin billing.'
                                                 : 'A new storage invoice will be generated automatically when the current one is paid.'}
                                         </div>
                                     </div>
-                                ) : deceased.days_in_storage > 0 && deceased.days_paid >= deceased.days_in_storage ? (
-                                    <div className="flex items-start gap-2 rounded-md bg-success/10 border border-success/20 p-2.5 text-xs text-success dark:text-success">
-                                        <ShieldCheckIcon className="h-4 w-4 shrink-0 mt-0.5" />
+                                ) : deceased.days_in_storage > 0 &&
+                                  deceased.days_paid >=
+                                      deceased.days_in_storage ? (
+                                    <div className="flex items-start gap-2 rounded-md border border-success/20 bg-success/10 p-2.5 text-xs text-success dark:text-success">
+                                        <ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
                                         <div>
-                                            <span className="font-semibold">Fully Covered:</span> All storage days are paid.
+                                            <span className="font-semibold">
+                                                Fully Covered:
+                                            </span>{' '}
+                                            All storage days are paid.
                                         </div>
                                     </div>
                                 ) : null}
@@ -627,139 +900,255 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Service Invoicing Card */}
                     <Card>
-                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
-                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
+                            <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 <ReceiptIcon className="h-4 w-4" />
                                 Service Invoices
                             </CardTitle>
                             <div className="flex gap-2">
-                                {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
-                                    <Button onClick={openInvoiceModal} variant="outline" size="sm">
-                                        <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
-                                        Edit Latest
-                                    </Button>
-                                )}
-                                {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
-                                    <Button onClick={() => setIsGenerateOpen(true)} size="sm">
+                                {can.edit &&
+                                    deceased.status !== 'Released' &&
+                                    !hasPaidOrPartiallyPaidInvoice && (
+                                        <Button
+                                            onClick={openInvoiceModal}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
+                                            Edit Latest
+                                        </Button>
+                                    )}
+                                {can.edit && deceased.status !== 'Released' && (
+                                    <Button
+                                        onClick={openCreateInvoiceModal}
+                                        size="sm"
+                                    >
                                         <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
-                                        Generate New
+                                        Create Invoice
                                     </Button>
                                 )}
                             </div>
                         </CardHeader>
-                        <CardContent className="px-6 py-6 space-y-4">
-                            {deceased.invoices && deceased.invoices.length === 0 ? (
-                                <div className="text-center py-6">
-                                    <p className="text-sm text-muted-foreground mb-4">
-                                        No service invoices have been created for this record yet.
+                        <CardContent className="space-y-4 px-6 py-6">
+                            {deceased.invoices &&
+                            deceased.invoices.length === 0 ? (
+                                <div className="py-6 text-center">
+                                    <p className="mb-4 text-sm text-muted-foreground">
+                                        No service invoices have been created
+                                        for this record yet.
                                     </p>
-                                    {can.edit && deceased.status !== 'Released' && !hasPaidOrPartiallyPaidInvoice && (
-                                        <Button onClick={() => setIsGenerateOpen(true)} size="sm">
-                                            <PlusIcon className="mr-2 h-4 w-4" />
-                                            Generate Service Invoice
-                                        </Button>
-                                    )}
+                                    {can.edit &&
+                                        deceased.status !== 'Released' && (
+                                            <Button
+                                                onClick={openCreateInvoiceModal}
+                                                size="sm"
+                                            >
+                                                <PlusIcon className="mr-2 h-4 w-4" />
+                                                Create Invoice
+                                            </Button>
+                                        )}
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {deceased.invoices.map((inv) => (
-                                        <div key={inv.id} className="rounded-md border border-border bg-secondary/5 p-3 space-y-2">
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="font-mono text-muted-foreground font-semibold">
+                                    {deceased.invoices?.map((inv) => (
+                                        <div
+                                            key={inv.id}
+                                            className="space-y-2 rounded-md border border-border bg-secondary/5 p-3"
+                                        >
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="font-mono font-semibold text-muted-foreground">
                                                     {inv.invoice_number}
                                                 </span>
-                                                <span className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
-                                                    inv.status === 'Paid'
-                                                        ? 'bg-success/10 text-success border-success/20'
-                                                        : inv.status === 'Partially Paid'
-                                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                                                        : 'bg-destructive/10 text-destructive border-destructive/20'
-                                                }`}>
+                                                <span
+                                                    className={`rounded border px-1.5 py-0.5 text-xs font-semibold ${
+                                                        inv.status === 'Paid'
+                                                            ? 'border-success/20 bg-success/10 text-success'
+                                                            : inv.status ===
+                                                                'Partially Paid'
+                                                              ? 'border-warning/30 bg-warning/15 text-warning'
+                                                              : 'border-destructive/20 bg-destructive/10 text-destructive'
+                                                    }`}
+                                                >
                                                     {inv.status}
                                                 </span>
                                             </div>
-                                            {inv.invoice_items && inv.invoice_items.length > 0 && (
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-xs text-left">
-                                                        <thead>
-                                                            <tr className="text-muted-foreground uppercase tracking-wider">
-                                                                <th className="py-1 font-semibold">Service</th>
-                                                                <th className="py-1 font-semibold text-right">Rate</th>
-                                                                <th className="py-1 font-semibold text-center">Qty</th>
-                                                                <th className="py-1 font-semibold text-right">Total</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {inv.invoice_items.slice(0, 3).map((item) => (
-                                                                <tr key={item.id} className="border-t border-border/50">
-                                                                    <td className="py-1 font-medium text-foreground">{item.name}</td>
-                                                                    <td className="py-1 text-right text-muted-foreground">{currencySymbol}{Number(item.unit_price).toLocaleString()}</td>
-                                                                    <td className="py-1 text-center text-muted-foreground">{item.quantity}</td>
-                                                                    <td className="py-1 text-right font-medium text-foreground">{currencySymbol}{Number(item.total_price).toLocaleString()}</td>
+                                            {inv.invoice_items &&
+                                                inv.invoice_items.length >
+                                                    0 && (
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-left text-xs">
+                                                            <thead>
+                                                                <tr className="tracking-wider text-muted-foreground uppercase">
+                                                                    <th className="py-1 font-semibold">
+                                                                        Service
+                                                                    </th>
+                                                                    <th className="py-1 text-right font-semibold">
+                                                                        Rate
+                                                                    </th>
+                                                                    <th className="py-1 text-center font-semibold">
+                                                                        Qty
+                                                                    </th>
+                                                                    <th className="py-1 text-right font-semibold">
+                                                                        Total
+                                                                    </th>
                                                                 </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                    {inv.invoice_items.length > 3 && (
-                                                        <p className="text-xs text-muted-foreground mt-1">+{inv.invoice_items.length - 3} more items</p>
-                                                    )}
-                                                </div>
-                                            )}
+                                                            </thead>
+                                                            <tbody>
+                                                                {inv.invoice_items
+                                                                    .slice(0, 3)
+                                                                    .map(
+                                                                        (
+                                                                            item,
+                                                                        ) => (
+                                                                            <tr
+                                                                                key={
+                                                                                    item.id
+                                                                                }
+                                                                                className="border-t border-border/50"
+                                                                            >
+                                                                                <td className="py-1 font-medium text-foreground">
+                                                                                    {
+                                                                                        item.name
+                                                                                    }
+                                                                                </td>
+                                                                                <td className="py-1 text-right text-muted-foreground">
+                                                                                    {
+                                                                                        currencySymbol
+                                                                                    }
+                                                                                    {Number(
+                                                                                        item.unit_price,
+                                                                                    ).toLocaleString()}
+                                                                                </td>
+                                                                                <td className="py-1 text-center text-muted-foreground">
+                                                                                    {
+                                                                                        item.quantity
+                                                                                    }
+                                                                                </td>
+                                                                                <td className="py-1 text-right font-medium text-foreground">
+                                                                                    {
+                                                                                        currencySymbol
+                                                                                    }
+                                                                                    {Number(
+                                                                                        item.total_price,
+                                                                                    ).toLocaleString()}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ),
+                                                                    )}
+                                                            </tbody>
+                                                        </table>
+                                                        {inv.invoice_items
+                                                            .length > 3 && (
+                                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                                +
+                                                                {inv
+                                                                    .invoice_items
+                                                                    .length -
+                                                                    3}{' '}
+                                                                more items
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
                                             {inv.notes && (
-                                                <p className="text-xs text-muted-foreground">{inv.notes}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {inv.notes}
+                                                </p>
                                             )}
-                                            <div className="flex justify-between items-center text-sm border-t border-border/50 pt-2">
+                                            <div className="flex items-center justify-between border-t border-border/50 pt-2 text-sm">
                                                 <div className="flex gap-1">
-                                                    <Link href={`/invoices/${inv.id}`}>
-                                                        <Button variant="ghost" size="sm" className="h-7 text-xs">
+                                                    <Link
+                                                        href={`/invoices/${inv.id}`}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 text-xs"
+                                                        >
                                                             <EyeIcon className="mr-1.5 h-3 w-3" />
                                                             View Invoice
                                                         </Button>
                                                     </Link>
-                                                    <Link href={`/invoices/${inv.id}/print`}>
-                                                        <Button variant="ghost" size="sm" className="h-7 text-xs">
+                                                    <Link
+                                                        href={`/invoices/${inv.id}/print`}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 text-xs"
+                                                        >
                                                             <PrinterIcon className="mr-1.5 h-3 w-3" />
                                                             Print
                                                         </Button>
                                                     </Link>
                                                 </div>
                                                 <span className="font-semibold text-foreground">
-                                                    {currencySymbol}{Number(inv.total_amount).toLocaleString()}
+                                                    {currencySymbol}
+                                                    {Number(
+                                                        inv.total_amount,
+                                                    ).toLocaleString()}
                                                 </span>
                                             </div>
                                         </div>
                                     ))}
 
                                     {/* Summary */}
-                                    <div className="border-t border-border pt-3 space-y-1.5">
+                                    <div className="space-y-1.5 border-t border-border pt-3">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Service Invoices Billed:</span>
+                                            <span className="text-muted-foreground">
+                                                Service Invoices Billed:
+                                            </span>
                                             <span className="font-semibold text-foreground">
-                                                {currencySymbol}{serviceInvoicesTotal.toLocaleString()}
+                                                {currencySymbol}
+                                                {serviceInvoicesTotal.toLocaleString()}
                                             </span>
                                         </div>
                                         {hasStorageInvoice && (
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Storage Invoices Billed:</span>
+                                                <span className="text-muted-foreground">
+                                                    Storage Invoices Billed:
+                                                </span>
                                                 <span className="font-semibold text-foreground">
-                                                    {currencySymbol}{storageInvoicesTotal.toLocaleString()}
+                                                    {currencySymbol}
+                                                    {storageInvoicesTotal.toLocaleString()}
                                                 </span>
                                             </div>
                                         )}
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Total Settled:</span>
-                                            <span className="font-semibold text-success">{currencySymbol}{totalPaid.toLocaleString()}</span>
+                                            <span className="text-muted-foreground">
+                                                Total Settled:
+                                            </span>
+                                            <span className="font-semibold text-success">
+                                                {currencySymbol}
+                                                {totalPaid.toLocaleString()}
+                                            </span>
                                         </div>
                                         {totalWaived > 0 && (
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Total Waived:</span>
-                                                <span className="font-semibold text-rose-600 dark:text-rose-400">-{currencySymbol}{Number(totalWaived).toLocaleString()}</span>
+                                                <span className="text-muted-foreground">
+                                                    Total Waived:
+                                                </span>
+                                                <span className="font-semibold text-destructive">
+                                                    -{currencySymbol}
+                                                    {Number(
+                                                        totalWaived,
+                                                    ).toLocaleString()}
+                                                </span>
                                             </div>
                                         )}
                                         <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold">
-                                            <span className="text-foreground">Ledger Balance:</span>
-                                            <span className={ledgerBalance > 0 ? "text-destructive" : "text-success"}>
-                                                {currencySymbol}{ledgerBalance.toLocaleString()}
+                                            <span className="text-foreground">
+                                                Ledger Balance:
+                                            </span>
+                                            <span
+                                                className={
+                                                    ledgerBalance > 0
+                                                        ? 'text-destructive'
+                                                        : 'text-success'
+                                                }
+                                            >
+                                                {currencySymbol}
+                                                {ledgerBalance.toLocaleString()}
                                             </span>
                                         </div>
                                     </div>
@@ -770,25 +1159,34 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
 
                     {/* Payment History Card */}
                     <Card>
-                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
-                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
+                            <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 <CreditCardIcon className="h-4 w-4" />
                                 Payment & Settled Receipts
                             </CardTitle>
                             <div className="flex gap-2">
-                                {firstOutstandingInvoice && invoiceOutstanding > 0 && can.manageWaivers && !hasPaidOrPartiallyPaidInvoice && (
+                                {firstOutstandingInvoice &&
+                                    invoiceOutstanding > 0 &&
+                                    can.manageWaivers &&
+                                    !hasPaidOrPartiallyPaidInvoice && (
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() =>
+                                                setIsWaiverOpen(true)
+                                            }
+                                            className="flex h-8 items-center gap-1"
+                                        >
+                                            <ShieldCheckIcon className="h-3.5 w-3.5" />
+                                            Apply Waiver
+                                        </Button>
+                                    )}
+                                {(can.managePayments || can.edit) && (
                                     <Button
                                         size="sm"
-                                        variant="destructive"
-                                        onClick={() => setIsWaiverOpen(true)}
-                                        className="h-8 flex items-center gap-1"
+                                        onClick={() => setIsPaymentOpen(true)}
+                                        className="flex h-8 items-center gap-1"
                                     >
-                                        <ShieldCheckIcon className="h-3.5 w-3.5" />
-                                        Apply Waiver
-                                    </Button>
-                                )}
-                                {(can.managePayments || can.edit) && (
-                                    <Button size="sm" onClick={() => setIsPaymentOpen(true)} className="h-8 flex items-center gap-1">
                                         <PlusIcon className="h-3.5 w-3.5" />
                                         Record Payment
                                     </Button>
@@ -796,61 +1194,115 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                             </div>
                         </CardHeader>
                         <CardContent className="px-6 py-6">
-                            {!deceased.payments || deceased.payments.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-6">
+                            {!deceased.payments ||
+                            deceased.payments.length === 0 ? (
+                                <p className="py-6 text-center text-sm text-muted-foreground">
                                     No payments settled on this record yet.
                                 </p>
                             ) : (
                                 <div className="space-y-4">
                                     <div className="overflow-x-auto">
-                                        <table className="w-full text-sm text-left">
+                                        <table className="w-full text-left text-sm">
                                             <thead>
-                                                <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
-                                                    <th className="py-2 font-semibold">Receipt #</th>
-                                                    <th className="py-2 font-semibold">Date</th>
-                                                    <th className="py-2 font-semibold">Method</th>
-                                                    <th className="py-2 font-semibold">Ref</th>
-                                                    <th className="py-2 text-right font-semibold">Amount</th>
+                                                <tr className="border-b border-border text-xs tracking-wider text-muted-foreground uppercase">
+                                                    <th className="py-2 font-semibold">
+                                                        Receipt #
+                                                    </th>
+                                                    <th className="py-2 font-semibold">
+                                                        Date
+                                                    </th>
+                                                    <th className="py-2 font-semibold">
+                                                        Method
+                                                    </th>
+                                                    <th className="py-2 font-semibold">
+                                                        Ref
+                                                    </th>
+                                                    <th className="py-2 text-right font-semibold">
+                                                        Amount
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {deceased.payments.map((payment) => (
-                                                    <tr key={payment.id} className="border-b border-border/50">
-                                                        <td className="py-2 font-medium text-foreground">{payment.receipt_number}</td>
-                                                        <td className="py-2 text-muted-foreground">
-                                                            {new Date(payment.payment_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}
-                                                        </td>
-                                                        <td className="py-2 text-foreground">{payment.payment_method}</td>
-                                                        <td className="py-2 font-mono text-xs text-muted-foreground">
-                                                            {payment.transaction_reference || '�'}
-                                                        </td>
-                                                        <td className="py-2 text-right font-semibold text-success">
-                                                            {currencySymbol}{Number(payment.amount).toLocaleString()}
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {deceased.payments.map(
+                                                    (payment) => (
+                                                        <tr
+                                                            key={payment.id}
+                                                            className="border-b border-border/50"
+                                                        >
+                                                            <td className="py-2 font-medium text-foreground">
+                                                                {
+                                                                    payment.receipt_number
+                                                                }
+                                                            </td>
+                                                            <td className="py-2 text-muted-foreground">
+                                                                {new Date(
+                                                                    payment.payment_date,
+                                                                ).toLocaleDateString(
+                                                                    undefined,
+                                                                    {
+                                                                        year: 'numeric',
+                                                                        month: 'short',
+                                                                        day: '2-digit',
+                                                                    },
+                                                                )}
+                                                            </td>
+                                                            <td className="py-2 text-foreground">
+                                                                {
+                                                                    payment.payment_method
+                                                                }
+                                                            </td>
+                                                            <td className="py-2 font-mono text-xs text-muted-foreground">
+                                                                {payment.transaction_reference ||
+                                                                    'N/A'}
+                                                            </td>
+                                                            <td className="py-2 text-right font-semibold text-success">
+                                                                {currencySymbol}
+                                                                {Number(
+                                                                    payment.amount,
+                                                                ).toLocaleString()}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="border-t border-border pt-4 space-y-2">
+                                    <div className="space-y-2 border-t border-border pt-4">
                                         <div className="flex justify-between text-sm">
-                                            <span className="font-semibold text-muted-foreground">Total Payments:</span>
-                                            <span className="font-bold text-success text-base">
-                                                {currencySymbol}{totalPaid.toLocaleString()}
+                                            <span className="font-semibold text-muted-foreground">
+                                                Total Payments:
+                                            </span>
+                                            <span className="text-base font-bold text-success">
+                                                {currencySymbol}
+                                                {totalPaid.toLocaleString()}
                                             </span>
                                         </div>
                                         {totalWaived > 0 && (
                                             <div className="flex justify-between text-sm">
-                                                <span className="font-semibold text-muted-foreground">Total Waived:</span>
-                                                <span className="font-bold text-rose-600 dark:text-rose-400 text-base">
-                                                    -{currencySymbol}{Number(totalWaived).toLocaleString()}
+                                                <span className="font-semibold text-muted-foreground">
+                                                    Total Waived:
+                                                </span>
+                                                <span className="text-base font-bold text-destructive">
+                                                    -{currencySymbol}
+                                                    {Number(
+                                                        totalWaived,
+                                                    ).toLocaleString()}
                                                 </span>
                                             </div>
                                         )}
                                         <div className="flex justify-between border-t border-border pt-2 text-base font-bold">
-                                            <span className="text-foreground">Ledger Balance:</span>
-                                            <span className={ledgerBalance > 0 ? "text-destructive" : "text-success"}>
-                                                {currencySymbol}{ledgerBalance.toLocaleString()}
+                                            <span className="text-foreground">
+                                                Ledger Balance:
+                                            </span>
+                                            <span
+                                                className={
+                                                    ledgerBalance > 0
+                                                        ? 'text-destructive'
+                                                        : 'text-success'
+                                                }
+                                            >
+                                                {currencySymbol}
+                                                {ledgerBalance.toLocaleString()}
                                             </span>
                                         </div>
                                     </div>
@@ -861,138 +1313,240 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                 </div>
 
                 {/* Storage Fee Invoices Card */}
-                {can.createStorageInvoice && deceased.storage_fee_logs && deceased.storage_fee_logs.length > 0 && (
-                    <Card>
-                        <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between">
-                            <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase flex items-center gap-2">
-                                <FileTextIcon className="h-4 w-4" />
-                                Storage Fee Invoices
-                            </CardTitle>
-                            {can.createStorageInvoice && deceased.status === 'InChamber' && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={storageFullyPaid || isStorageInvoiceGenerating}
-                                    onClick={() => {
-                                        setIsStorageInvoiceGenerating(true);
-                                        router.post(`/deceased/${deceased.id}/storage-invoice`, {}, {
-                                            preserveScroll: true,
-                                            onSuccess: () => setIsStorageInvoiceGenerating(false),
-                                            onError: () => setIsStorageInvoiceGenerating(false),
-                                        });
-                                    }}
-                                >
-                                    <PlusIcon className="mr-2 h-3.5 w-3.5" />
-                                    {isStorageInvoiceGenerating ? 'Generating...' : storageFullyPaid ? 'All Covered' : 'Generate Next'}
-                                </Button>
-                            )}
-                        </CardHeader>
-                        <CardContent className="px-6 py-6">
-                            <div className="space-y-3">
-                                {deceased.storage_fee_logs.map((log) => (
-                                    <div key={log.id} className="flex items-center justify-between rounded-md border border-border bg-secondary/10 p-3">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                {log.invoice ? (
-                                                    <Link href={`/invoices/${log.invoice.id}`}>
-                                                        <span className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer">
-                                                            {log.invoice.invoice_number}
+                {can.createStorageInvoice &&
+                    deceased.storage_fee_logs &&
+                    deceased.storage_fee_logs.length > 0 && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                                    <FileTextIcon className="h-4 w-4" />
+                                    Storage Fee Invoices
+                                </CardTitle>
+                                {can.createStorageInvoice &&
+                                    deceased.status === 'InChamber' && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={
+                                                storageFullyPaid ||
+                                                isStorageInvoiceGenerating
+                                            }
+                                            onClick={() => {
+                                                setIsStorageInvoiceGenerating(
+                                                    true,
+                                                );
+                                                router.post(
+                                                    `/deceased/${deceased.id}/storage-invoice`,
+                                                    {},
+                                                    {
+                                                        preserveScroll: true,
+                                                        onSuccess: () =>
+                                                            setIsStorageInvoiceGenerating(
+                                                                false,
+                                                            ),
+                                                        onError: () =>
+                                                            setIsStorageInvoiceGenerating(
+                                                                false,
+                                                            ),
+                                                    },
+                                                );
+                                            }}
+                                        >
+                                            <PlusIcon className="mr-2 h-3.5 w-3.5" />
+                                            {isStorageInvoiceGenerating
+                                                ? 'Generating...'
+                                                : storageFullyPaid
+                                                  ? 'All Covered'
+                                                  : 'Generate Next'}
+                                        </Button>
+                                    )}
+                            </CardHeader>
+                            <CardContent className="px-6 py-6">
+                                <div className="space-y-3">
+                                    {deceased.storage_fee_logs.map((log) => (
+                                        <div
+                                            key={log.id}
+                                            className="flex items-center justify-between rounded-md border border-border bg-secondary/10 p-3"
+                                        >
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    {log.invoice ? (
+                                                        <Link
+                                                            href={`/invoices/${log.invoice.id}`}
+                                                        >
+                                                            <span className="cursor-pointer font-mono text-xs font-semibold text-primary hover:underline">
+                                                                {
+                                                                    log.invoice
+                                                                        .invoice_number
+                                                                }
+                                                            </span>
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="font-mono text-xs font-semibold text-muted-foreground">
+                                                            N/A
                                                         </span>
-                                                    </Link>
-                                                ) : (
-                                                    <span className="font-mono text-xs font-semibold text-muted-foreground">�</span>
-                                                )}
-                                                {log.invoice && (
-                                                    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
-                                                        log.invoice.status === 'Paid'
-                                                            ? 'bg-success/10 text-success border-success/20'
-                                                            : log.invoice.status === 'Partially Paid'
-                                                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                                                            : 'bg-destructive/10 text-destructive border-destructive/20'
-                                                    }`}>
-                                                        {log.invoice.status}
-                                                    </span>
-                                                )}
+                                                    )}
+                                                    {log.invoice && (
+                                                        <span
+                                                            className={`rounded border px-1.5 py-0.5 text-xs font-semibold ${
+                                                                log.invoice
+                                                                    .status ===
+                                                                'Paid'
+                                                                    ? 'border-success/20 bg-success/10 text-success'
+                                                                    : log
+                                                                            .invoice
+                                                                            .status ===
+                                                                        'Partially Paid'
+                                                                      ? 'border border-warning/30 bg-warning/15 text-warning'
+                                                                      : 'border-destructive/20 bg-destructive/10 text-destructive'
+                                                            }`}
+                                                        >
+                                                            {log.invoice.status}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Days {log.days_covered_from}
+                                                    -{log.days_covered_to} -
+                                                    Billed: {log.days_billed}{' '}
+                                                    day(s)
+                                                </p>
                                             </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Days {log.days_covered_from}�{log.days_covered_to} � Billed: {log.days_billed} day(s)
-                                            </p>
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold text-foreground">
+                                                    {currencySymbol}
+                                                    {Number(
+                                                        log.amount,
+                                                    ).toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Paid days at creation:{' '}
+                                                    {log.paid_days_at_creation}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="text-sm font-semibold text-foreground">
-                                                {currencySymbol}{Number(log.amount).toLocaleString()}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                Paid days at creation: {log.paid_days_at_creation}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                 {/* Configure Service Invoice Dialog */}
                 <Dialog open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen}>
-                    <DialogContent className="max-w-2xl bg-card border border-border">
+                    <DialogContent className="max-w-2xl border border-border bg-card">
                         <DialogHeader>
                             <DialogTitle>Configure Service Invoice</DialogTitle>
                             <DialogDescription>
-                                Add service line items to create or update the invoice. Storage fees are billed separately via the Storage Fee Tracker below.
+                                Add service line items to create or update the
+                                invoice. Storage fees are billed separately via
+                                the Storage Fee Tracker below.
                             </DialogDescription>
                         </DialogHeader>
 
                         <form onSubmit={submitInvoice} className="space-y-4">
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                                <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider pb-1 border-b border-border/50">
+                            <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
+                                <div className="grid grid-cols-12 gap-2 border-b border-border/50 pb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     <div className="col-span-6">Service</div>
-                                    <div className="col-span-2 text-right">Price</div>
-                                    <div className="col-span-2 text-center">Qty</div>
-                                    <div className="col-span-2 text-right">Action</div>
+                                    <div className="col-span-2 text-right">
+                                        Price
+                                    </div>
+                                    <div className="col-span-2 text-center">
+                                        Qty
+                                    </div>
+                                    <div className="col-span-2 text-right">
+                                        Action
+                                    </div>
                                 </div>
 
                                 {data.items.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-4">
-                                        No services added yet. Add a service to begin.
+                                    <p className="py-4 text-center text-sm text-muted-foreground">
+                                        No services added yet. Add a service to
+                                        begin.
                                     </p>
                                 ) : (
                                     data.items.map((item, index) => {
-                                        const selectedService = availableServices.find(
-                                            (s) => String(s.service_id) === String(item.service_id)
+                                        const selectedService =
+                                            availableServices.find(
+                                                (s) =>
+                                                    String(s.service_id) ===
+                                                    String(item.service_id),
+                                            );
+                                        const price =
+                                            selectedService?.price ?? 0;
+                                        const lineTotal = rowLineTotal(
+                                            selectedService,
+                                            item.quantity,
                                         );
-                                        const isStorage = selectedService?.has_tiers === true;
-                                        const price = isStorage && selectedService?.tiered_price !== null
-                                            ? selectedService.tiered_price
-                                            : (selectedService ? selectedService.price : 0);
 
                                         return (
-                                            <div key={index} className="grid grid-cols-12 gap-2 items-center py-1">
+                                            <div
+                                                key={index}
+                                                className="grid grid-cols-12 items-center gap-2 py-1"
+                                            >
                                                 <div className="col-span-6">
                                                     <select
                                                         value={item.service_id}
-                                                        onChange={(e) => handleItemChange(index, 'service_id', e.target.value)}
-                                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        onChange={(e) =>
+                                                            handleItemChange(
+                                                                index,
+                                                                'service_id',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                         required
                                                     >
-                                                        <option value="" disabled>-- Select Service --</option>
-                                                        {availableServices.map((s) => (
-                                                            <option key={s.service_id} value={s.service_id}>
-                                                                {s.name}
-                                                            </option>
-                                                        ))}
+                                                        <option
+                                                            value=""
+                                                            disabled
+                                                        >
+                                                            -- Select Service --
+                                                        </option>
+                                                        {availableServices.map(
+                                                            (s) => (
+                                                                <option
+                                                                    key={
+                                                                        s.service_id
+                                                                    }
+                                                                    value={
+                                                                        s.service_id
+                                                                    }
+                                                                >
+                                                                    {s.name}
+                                                                </option>
+                                                            ),
+                                                        )}
                                                     </select>
                                                 </div>
                                                 <div className="col-span-2 text-right text-sm font-medium text-muted-foreground">
-                                                    {currencySymbol}{price.toLocaleString()}
+                                                    {currencySymbol}
+                                                    {price.toLocaleString()}
+                                                    <span className="block text-xs text-muted-foreground">
+                                                        ×{Number(item.quantity) ||
+                                                            0} ={' '}
+                                                        {currencySymbol}
+                                                        {lineTotal.toLocaleString()}
+                                                    </span>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <Input
                                                         type="number"
                                                         min="1"
                                                         value={item.quantity}
-                                                        onChange={(e) => handleItemChange(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
-                                                        className="text-center h-9"
+                                                        onChange={(e) =>
+                                                            handleItemChange(
+                                                                index,
+                                                                'quantity',
+                                                                Math.max(
+                                                                    1,
+                                                                    parseInt(
+                                                                        e.target
+                                                                            .value,
+                                                                    ) || 1,
+                                                                ),
+                                                            )
+                                                        }
+                                                        className="h-9 text-center"
                                                         required
                                                     />
                                                 </div>
@@ -1001,8 +1555,12 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => handleRemoveItem(index)}
-                                                        className="text-destructive hover:bg-destructive/10 h-9 w-9"
+                                                        onClick={() =>
+                                                            handleRemoveItem(
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="h-9 w-9 text-destructive hover:bg-destructive/10"
                                                     >
                                                         <Trash2Icon className="h-4 w-4" />
                                                     </Button>
@@ -1013,36 +1571,59 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                 )}
                             </div>
 
-                            <div className="flex justify-between items-center border-t border-border pt-3">
-                                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                            <div className="flex items-center justify-between border-t border-border pt-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddItem}
+                                >
                                     <PlusIcon className="mr-2 h-4 w-4" />
                                     Add Service Line
                                 </Button>
                                 <div className="text-sm font-semibold">
                                     Total Estimate:{' '}
-                                    <span className="text-primary font-bold text-base">{currencySymbol}{calculatedTotal.toLocaleString()}</span>
+                                    <span className="text-base font-bold text-primary">
+                                        {currencySymbol}
+                                        {calculatedTotal.toLocaleString()}
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="notes">Invoice Notes (Optional)</Label>
+                                <Label htmlFor="notes">
+                                    Invoice Notes (Optional)
+                                </Label>
                                 <textarea
                                     id="notes"
                                     value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('notes', e.target.value)
+                                    }
                                     rows={2}
                                     placeholder="Add any instructions, terms, or remarks..."
                                     className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 <InputError message={errors.notes} />
-                                {errors.items && <InputError message={errors.items} />}
+                                {errors.items && (
+                                    <InputError message={errors.items} />
+                                )}
                             </div>
 
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsInvoiceOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsInvoiceOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={processing || data.items.length === 0}>
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        processing || data.items.length === 0
+                                    }
+                                >
                                     {processing ? 'Saving...' : 'Save Invoice'}
                                 </Button>
                             </DialogFooter>
@@ -1056,7 +1637,8 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                         <DialogHeader>
                             <DialogTitle>Record Payment / Deposit</DialogTitle>
                             <DialogDescription>
-                                Add a payment receipt to reduce this record's outstanding ledger balance.
+                                Add a payment receipt to reduce this record's
+                                outstanding ledger balance.
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={submitPayment} className="space-y-4">
@@ -1064,156 +1646,301 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                 <Label htmlFor="payment_type">Apply To</Label>
                                 <select
                                     id="payment_type"
-                                    value={paymentForm.data.invoice_id ? 'invoice' : 'general'}
+                                    value={
+                                        paymentForm.data.invoice_id || 'general'
+                                    }
                                     onChange={(e) => {
-                                        if (e.target.value === 'general') {
-                                            paymentForm.setData('invoice_id', '');
+                                        const selectedId = e.target.value;
+
+                                        if (selectedId === 'general') {
+                                            paymentForm.setData(
+                                                'invoice_id',
+                                                '',
+                                            );
+                                            paymentForm.setData('amount', '');
                                         } else {
-                                            paymentForm.setData('invoice_id', deceased.invoices?.[0]?.id || '');
-                                            if (invoiceOutstanding > 0) {
-                                                paymentForm.setData('amount', invoiceOutstanding.toFixed(2));
-                                            }
+                                            paymentForm.setData(
+                                                'invoice_id',
+                                                selectedId,
+                                            );
+                                            const targetInvoice =
+                                                unpaidInvoices.find(
+                                                    (inv) =>
+                                                        String(inv.id) ===
+                                                        selectedId,
+                                                );
+                                            const expected = targetInvoice
+                                                ? invoiceOutstandingFor(
+                                                      targetInvoice,
+                                                  )
+                                                : 0;
+                                            paymentForm.setData(
+                                                'amount',
+                                                expected
+                                                    ? expected.toFixed(2)
+                                                    : '',
+                                            );
                                         }
                                     }}
-                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 >
-                                    {deceased.invoices?.map((inv) => (
+                                    {unpaidInvoices.map((inv) => (
                                         <option key={inv.id} value={inv.id}>
-                                            Service Invoice ({inv.invoice_number}) � {inv.status}
+                                            {inv.billing_type === 'storage'
+                                                ? 'Storage'
+                                                : 'Service'}{' '}
+                                            Invoice ({inv.invoice_number}) - {inv.status} -{' '}
+                                            {currencySymbol}
+                                            {invoiceOutstandingFor(
+                                                inv,
+                                            ).toLocaleString()}{' '}
+                                            outstanding
                                         </option>
                                     ))}
-                                    {deceased.storage_fee_logs?.map((log) => (
-                                        <option key={log.invoice?.id} value={log.invoice?.id || ''}>
-                                            Storage Invoice ({log.invoice?.invoice_number}) � {log.days_covered_from}�{log.days_covered_to} days
-                                        </option>
-                                    ))}
-                                    <option value="general">General Account Deposit (Ledger)</option>
+                                    <option value="general">
+                                        General Account Deposit (Ledger)
+                                    </option>
                                 </select>
+                                {unpaidInvoices.length === 0 && (
+                                    <p className="text-xs text-muted-foreground">
+                                        No unpaid invoices. Select "General
+                                        Account Deposit" to record a ledger
+                                        credit.
+                                    </p>
+                                )}
                             </div>
 
-                            {paymentForm.data.invoice_id && (
+                            {selectedUnpaidInvoice && (
                                 <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
                                     <div>
-                                        <span className="text-xs text-muted-foreground block">Invoice #</span>
+                                        <span className="block text-xs text-muted-foreground">
+                                            Invoice #
+                                        </span>
                                         <span className="font-mono text-foreground">
-                                            {(() => {
-                                                const storedInv = deceased.invoices?.find(inv => String(inv.id) === String(paymentForm.data.invoice_id));
-                                                const storedLog = deceased.storage_fee_logs?.find(l => String(l.invoice?.id) === String(paymentForm.data.invoice_id));
-                                                return storedInv?.invoice_number || storedLog?.invoice?.invoice_number || deceased.invoice?.invoice_number || '';
-                                            })()}
+                                            {selectedUnpaidInvoice.invoice_number}{' '}
+                                            ({selectedUnpaidInvoice.billing_type ===
+                                            'storage'
+                                                ? 'Storage'
+                                                : 'Service'}
+                                            )
                                         </span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
+                                        <span className="block text-xs text-muted-foreground">
+                                            Outstanding Balance
+                                        </span>
                                         <span className="font-semibold text-destructive">
-                                            {currencySymbol}{invoiceOutstanding.toLocaleString()}
+                                            {currencySymbol}
+                                            {selectedInvoiceOutstanding.toLocaleString(
+                                                undefined,
+                                                {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                },
+                                            )}
                                         </span>
                                     </div>
                                 </div>
                             )}
 
                             {walletBalance > 0 && (
-                                <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3 text-sm">
+                                <div className="rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-                                            Wallet Balance Available
-                                        </span>
-                                        <span className="font-bold text-amber-600 dark:text-amber-400">
-                                            {currencySymbol}{walletBalance.toLocaleString()}
-                                        </span>
+                                        <div>
+                                            <span className="text-xs font-bold text-warning">
+                                                Wallet Balance Available
+                                            </span>
+                                            <span className="block font-bold text-foreground">
+                                                {currencySymbol}
+                                                {walletBalance.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        {can.managePayments &&
+                                            firstOutstandingInvoice &&
+                                            firstOutstandingBalance > 0 && (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={isWalletApplying}
+                                                    onClick={
+                                                        handleApplyWalletToInvoice
+                                                    }
+                                                    className="border-warning/40 bg-background text-warning hover:bg-warning/10"
+                                                >
+                                                    <CreditCardIcon className="mr-1.5 h-3.5 w-3.5" />
+                                                    {isWalletApplying
+                                                        ? 'Applying...'
+                                                        : 'Apply to Invoice'}
+                                                </Button>
+                                            )}
                                     </div>
                                     {walletDeposits.map((deposit) => (
-                                        <div key={deposit.id} className="mt-1 text-xs text-muted-foreground">
-                                            Receipt {deposit.receipt_number} � {currencySymbol}{Number(deposit.amount).toLocaleString()} via {deposit.payment_method}
+                                        <div
+                                            key={deposit.id}
+                                            className="mt-1 text-xs text-muted-foreground"
+                                        >
+                                            Receipt {deposit.receipt_number} -{' '}
+                                            {currencySymbol}
+                                            {Number(
+                                                deposit.amount,
+                                            ).toLocaleString()}{' '}
+                                            via {deposit.payment_method}
                                         </div>
                                     ))}
                                 </div>
                             )}
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="payment_mode_id">Payment Mode</Label>
+                                <Label htmlFor="payment_mode_id">
+                                    Payment Mode
+                                </Label>
                                 <select
                                     id="payment_mode_id"
                                     value={paymentForm.data.payment_mode_id}
                                     onChange={(e) => {
-                                        paymentForm.setData('payment_mode_id', e.target.value);
+                                        paymentForm.setData(
+                                            'payment_mode_id',
+                                            e.target.value,
+                                        );
+
                                         if (isWalletMode) {
-                                            paymentForm.setData('invoice_id', '');
+                                            paymentForm.setData(
+                                                'invoice_id',
+                                                '',
+                                            );
                                         }
                                     }}
-                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                     required
                                 >
-                                    <option value="" disabled>Select payment mode</option>
+                                    <option value="" disabled>
+                                        Select payment mode
+                                    </option>
                                     {paymentModes.map((mode) => (
-                                        <option key={mode.id} value={mode.id}>{mode.name}</option>
+                                        <option key={mode.id} value={mode.id}>
+                                            {mode.name}
+                                        </option>
                                     ))}
                                 </select>
-                                <InputError message={paymentForm.errors.payment_mode_id} />
+                                <InputError
+                                    message={paymentForm.errors.payment_mode_id}
+                                />
                                 {isWalletMode && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Hospital Wallet deposits are recorded as general account credit (not linked to an invoice).
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Hospital Wallet deposits are recorded as
+                                        general account credit (not linked to an
+                                        invoice).
                                     </p>
                                 )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="amount">Amount ({currencySymbol})</Label>
+                                <Label htmlFor="amount">
+                                    Amount ({currencySymbol})
+                                </Label>
                                 <Input
                                     id="amount"
                                     type="number"
                                     step="0.01"
                                     min="0.01"
                                     value={paymentForm.data.amount}
-                                    onChange={(e) => paymentForm.setData('amount', e.target.value)}
+                                    onChange={(e) =>
+                                        paymentForm.setData(
+                                            'amount',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter amount"
                                     required
                                 />
-                                <InputError message={paymentForm.errors.amount} />
+                                <InputError
+                                    message={paymentForm.errors.amount}
+                                />
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="transaction_reference">Transaction Reference (Optional)</Label>
+                                <Label htmlFor="transaction_reference">
+                                    Transaction Reference (Optional)
+                                </Label>
                                 <Input
                                     id="transaction_reference"
-                                    value={paymentForm.data.transaction_reference}
-                                    onChange={(e) => paymentForm.setData('transaction_reference', e.target.value)}
+                                    value={
+                                        paymentForm.data.transaction_reference
+                                    }
+                                    onChange={(e) =>
+                                        paymentForm.setData(
+                                            'transaction_reference',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Reference or bank code"
                                 />
-                                <InputError message={paymentForm.errors.transaction_reference} />
+                                <InputError
+                                    message={
+                                        paymentForm.errors.transaction_reference
+                                    }
+                                />
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="payment_date">Payment Date</Label>
+                                <Label htmlFor="payment_date">
+                                    Payment Date
+                                </Label>
                                 <Input
                                     id="payment_date"
                                     type="date"
                                     value={paymentForm.data.payment_date}
-                                    onChange={(e) => paymentForm.setData('payment_date', e.target.value)}
+                                    onChange={(e) =>
+                                        paymentForm.setData(
+                                            'payment_date',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
-                                <InputError message={paymentForm.errors.payment_date} />
+                                <InputError
+                                    message={paymentForm.errors.payment_date}
+                                />
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="payment_notes">Notes (Optional)</Label>
+                                <Label htmlFor="payment_notes">
+                                    Notes (Optional)
+                                </Label>
                                 <textarea
                                     id="payment_notes"
                                     value={paymentForm.data.notes}
-                                    onChange={(e) => paymentForm.setData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        paymentForm.setData(
+                                            'notes',
+                                            e.target.value,
+                                        )
+                                    }
                                     rows={2}
                                     placeholder="Any additional remarks..."
-                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 />
-                                <InputError message={paymentForm.errors.notes} />
+                                <InputError
+                                    message={paymentForm.errors.notes}
+                                />
                             </div>
 
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsPaymentOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={paymentForm.processing}>
-                                    {paymentForm.processing ? 'Recording...' : 'Record Payment'}
+                                <Button
+                                    type="submit"
+                                    disabled={paymentForm.processing}
+                                >
+                                    {paymentForm.processing
+                                        ? 'Recording...'
+                                        : 'Record Payment'}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -1224,44 +1951,66 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                 <Dialog open={isWaiverOpen} onOpenChange={setIsWaiverOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Apply Waiver to Invoice {firstOutstandingInvoice?.invoice_number ?? ''}</DialogTitle>
+                            <DialogTitle>
+                                Apply Waiver to Invoice{' '}
+                                {firstOutstandingInvoice?.invoice_number ?? ''}
+                            </DialogTitle>
                             <DialogDescription>
-                                Waive an amount from the outstanding balance. Outstanding balance: {currencySymbol}{invoiceOutstanding.toLocaleString()}.
+                                Waive an amount from the outstanding balance.
+                                Outstanding balance: {currencySymbol}
+                                {invoiceOutstanding.toLocaleString()}.
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-secondary/10 p-3 text-sm">
                             <div>
-                                <span className="text-xs text-muted-foreground block">Total Amount Expected</span>
+                                <span className="block text-xs text-muted-foreground">
+                                    Total Amount Expected
+                                </span>
                                 <span className="font-semibold text-foreground">
-                                    {currencySymbol}{Number(firstOutstandingInvoice?.total_amount || 0).toLocaleString()}
+                                    {currencySymbol}
+                                    {Number(
+                                        firstOutstandingInvoice?.total_amount ||
+                                            0,
+                                    ).toLocaleString()}
                                 </span>
                             </div>
                             <div className="text-right">
-                                <span className="text-xs text-muted-foreground block">Total Paid</span>
+                                <span className="block text-xs text-muted-foreground">
+                                    Total Paid
+                                </span>
                                 <span className="font-medium text-success">
-                                    {currencySymbol}{totalPaid.toLocaleString()}
+                                    {currencySymbol}
+                                    {totalPaid.toLocaleString()}
                                 </span>
                             </div>
                             {totalWaived > 0 && (
                                 <div className="text-right">
-                                    <span className="text-xs text-muted-foreground block">Already Waived</span>
-                                    <span className="font-medium text-rose-600 dark:text-rose-400">
-                                        {currencySymbol}{Number(totalWaived).toLocaleString()}
+                                    <span className="block text-xs text-muted-foreground">
+                                        Already Waived
+                                    </span>
+                                    <span className="font-medium text-destructive">
+                                        {currencySymbol}
+                                        {Number(totalWaived).toLocaleString()}
                                     </span>
                                 </div>
                             )}
                             <div className="col-span-2">
-                                <span className="text-xs text-muted-foreground block">Outstanding Balance</span>
-                                <span className="font-bold text-destructive text-base">
-                                    {currencySymbol}{invoiceOutstanding.toLocaleString()}
+                                <span className="block text-xs text-muted-foreground">
+                                    Outstanding Balance
+                                </span>
+                                <span className="text-base font-bold text-destructive">
+                                    {currencySymbol}
+                                    {invoiceOutstanding.toLocaleString()}
                                 </span>
                             </div>
                         </div>
 
                         <form onSubmit={submitWaiver} className="space-y-4">
                             <div className="space-y-1.5">
-                                <Label htmlFor="waiver_amount">Waiver Amount ({currencySymbol})</Label>
+                                <Label htmlFor="waiver_amount">
+                                    Waiver Amount ({currencySymbol})
+                                </Label>
                                 <Input
                                     id="waiver_amount"
                                     type="number"
@@ -1269,98 +2018,181 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                     min="0.01"
                                     max={invoiceOutstanding}
                                     value={waiverForm.data.amount}
-                                    onChange={(e) => waiverForm.setData('amount', e.target.value)}
+                                    onChange={(e) =>
+                                        waiverForm.setData(
+                                            'amount',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter amount to waive"
                                     required
                                 />
-                                <InputError message={waiverForm.errors.amount} />
+                                <InputError
+                                    message={waiverForm.errors.amount}
+                                />
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="waiver_reason">Reason (Optional)</Label>
+                                <Label htmlFor="waiver_reason">
+                                    Reason (Optional)
+                                </Label>
                                 <textarea
                                     id="waiver_reason"
                                     value={waiverForm.data.reason}
-                                    onChange={(e) => waiverForm.setData('reason', e.target.value)}
+                                    onChange={(e) =>
+                                        waiverForm.setData(
+                                            'reason',
+                                            e.target.value,
+                                        )
+                                    }
                                     rows={3}
                                     placeholder="Provide a reason for this waiver..."
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 />
-                                <InputError message={waiverForm.errors.reason} />
+                                <InputError
+                                    message={waiverForm.errors.reason}
+                                />
                             </div>
 
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsWaiverOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsWaiverOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={waiverForm.processing}>
-                                    {waiverForm.processing ? 'Applying...' : 'Apply Waiver'}
+                                <Button
+                                    type="submit"
+                                    disabled={waiverForm.processing}
+                                >
+                                    {waiverForm.processing
+                                        ? 'Applying...'
+                                        : 'Apply Waiver'}
                                 </Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
 
-                {/* Generate Service Invoice Dialog */}
+                {/* Create Service Invoice Dialog */}
                 <Dialog open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>
-                    <DialogContent className="max-w-2xl bg-card border border-border">
+                    <DialogContent className="max-w-2xl border border-border bg-card">
                         <DialogHeader>
-                            <DialogTitle>Generate Service Invoice</DialogTitle>
+                            <DialogTitle>Create Service Invoice</DialogTitle>
                             <DialogDescription>
-                                Add service line items to create a new invoice. Storage fees are billed separately.
+                                Add service line items to create a new invoice.
+                                Storage fees are billed separately.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={submitGenerateInvoice} className="space-y-4">
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                                <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider pb-1 border-b border-border/50">
+                        <form
+                            onSubmit={submitGenerateInvoice}
+                            className="space-y-4"
+                        >
+                            <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
+                                <div className="grid grid-cols-12 gap-2 border-b border-border/50 pb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     <div className="col-span-6">Service</div>
-                                    <div className="col-span-2 text-right">Price</div>
-                                    <div className="col-span-2 text-center">Qty</div>
-                                    <div className="col-span-2 text-right">Action</div>
+                                    <div className="col-span-2 text-right">
+                                        Price
+                                    </div>
+                                    <div className="col-span-2 text-center">
+                                        Qty
+                                    </div>
+                                    <div className="col-span-2 text-right">
+                                        Action
+                                    </div>
                                 </div>
 
                                 {data.items.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-4">
-                                        No services added yet. Add a service to begin.
+                                    <p className="py-4 text-center text-sm text-muted-foreground">
+                                        No services added yet. Add a service to
+                                        begin.
                                     </p>
                                 ) : (
                                     data.items.map((item, index) => {
-                                        const selectedService = availableServices.find(
-                                            (s) => String(s.service_id) === String(item.service_id)
+                                        const selectedService =
+                                            availableServices.find(
+                                                (s) =>
+                                                    String(s.service_id) ===
+                                                    String(item.service_id),
+                                            );
+                                        const price =
+                                            selectedService?.price ?? 0;
+                                        const lineTotal = rowLineTotal(
+                                            selectedService,
+                                            item.quantity,
                                         );
-                                        const isStorage = selectedService?.has_tiers === true;
-                                        const price = isStorage && selectedService?.tiered_price !== null
-                                            ? selectedService.tiered_price
-                                            : (selectedService ? selectedService.price : 0);
 
                                         return (
-                                            <div key={index} className="grid grid-cols-12 gap-2 items-center py-1">
+                                            <div
+                                                key={index}
+                                                className="grid grid-cols-12 items-center gap-2 py-1"
+                                            >
                                                 <div className="col-span-6">
                                                     <select
                                                         value={item.service_id}
-                                                        onChange={(e) => handleItemChange(index, 'service_id', e.target.value)}
-                                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        onChange={(e) =>
+                                                            handleItemChange(
+                                                                index,
+                                                                'service_id',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                         required
                                                     >
-                                                        <option value="" disabled>-- Select Service --</option>
-                                                        {availableServices.map((s) => (
-                                                            <option key={s.service_id} value={s.service_id}>
-                                                                {s.name}
-                                                            </option>
-                                                        ))}
+                                                        <option
+                                                            value=""
+                                                            disabled
+                                                        >
+                                                            -- Select Service --
+                                                        </option>
+                                                        {availableServices.map(
+                                                            (s) => (
+                                                                <option
+                                                                    key={
+                                                                        s.service_id
+                                                                    }
+                                                                    value={
+                                                                        s.service_id
+                                                                    }
+                                                                >
+                                                                    {s.name}
+                                                                </option>
+                                                            ),
+                                                        )}
                                                     </select>
                                                 </div>
                                                 <div className="col-span-2 text-right text-sm font-medium text-muted-foreground">
-                                                    {currencySymbol}{price.toLocaleString()}
+                                                    {currencySymbol}
+                                                    {price.toLocaleString()}
+                                                    <span className="block text-xs text-muted-foreground">
+                                                        ×{Number(item.quantity) ||
+                                                            0} ={' '}
+                                                        {currencySymbol}
+                                                        {lineTotal.toLocaleString()}
+                                                    </span>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <Input
                                                         type="number"
                                                         min="1"
                                                         value={item.quantity}
-                                                        onChange={(e) => handleItemChange(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
-                                                        className="text-center h-9"
+                                                        onChange={(e) =>
+                                                            handleItemChange(
+                                                                index,
+                                                                'quantity',
+                                                                Math.max(
+                                                                    1,
+                                                                    parseInt(
+                                                                        e.target
+                                                                            .value,
+                                                                    ) || 1,
+                                                                ),
+                                                            )
+                                                        }
+                                                        className="h-9 text-center"
                                                         required
                                                     />
                                                 </div>
@@ -1369,8 +2201,12 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => handleRemoveItem(index)}
-                                                        className="text-destructive hover:bg-destructive/10 h-9 w-9"
+                                                        onClick={() =>
+                                                            handleRemoveItem(
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="h-9 w-9 text-destructive hover:bg-destructive/10"
                                                     >
                                                         <Trash2Icon className="h-4 w-4" />
                                                     </Button>
@@ -1382,35 +2218,58 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="generate_notes">Notes (Optional)</Label>
+                                <Label htmlFor="generate_notes">
+                                    Notes (Optional)
+                                </Label>
                                 <textarea
                                     id="generate_notes"
                                     value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('notes', e.target.value)
+                                    }
                                     rows={2}
                                     placeholder="Any additional remarks..."
-                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 />
                                 <InputError message={errors.notes} />
                             </div>
 
-                            <div className="flex justify-between items-center border-t border-border pt-3">
-                                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                            <div className="flex items-center justify-between border-t border-border pt-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddItem}
+                                >
                                     <PlusIcon className="mr-2 h-4 w-4" />
                                     Add Service Line
                                 </Button>
                                 <div className="text-sm font-semibold">
                                     Total Estimate:{' '}
-                                    <span className="text-primary font-bold text-base">{currencySymbol}{calculatedTotal.toLocaleString()}</span>
+                                    <span className="text-base font-bold text-primary">
+                                        {currencySymbol}
+                                        {calculatedTotal.toLocaleString()}
+                                    </span>
                                 </div>
                             </div>
 
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsGenerateOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsGenerateOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={processing}>
-                                    {processing ? 'Generating...' : 'Generate Invoice'}
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        processing || data.items.length === 0
+                                    }
+                                >
+                                    {processing
+                                        ? 'Creating...'
+                                        : 'Create Invoice'}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -1441,16 +2300,17 @@ export default function DeceasedShow({ deceased, availableServices, storageServi
                                             </span>
                                             {t.transferred_by_user && (
                                                 <span className="text-xs text-muted-foreground">
-                                                    � by{' '}
+                                                    - by{' '}
                                                     {t.transferred_by_user.name}
                                                 </span>
                                             )}
                                         </div>
                                         {(t.from_chamber || t.to_chamber) && (
                                             <p className="mt-1 text-sm text-foreground">
-                                                {t.from_chamber?.name ?? '�'}
-                                                {' ? '}
-                                                {t.to_chamber?.name ?? 'Released'}
+                                                {t.from_chamber?.name ?? 'N/A'}
+                                                {' -> '}
+                                                {t.to_chamber?.name ??
+                                                    'Released'}
                                             </p>
                                         )}
                                         {t.notes && (

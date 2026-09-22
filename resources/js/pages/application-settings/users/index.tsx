@@ -113,7 +113,13 @@ function initials(name: string): string {
         .toUpperCase();
 }
 
-export default function UsersIndex({ users, roles, stats, filters, can }: Props) {
+export default function UsersIndex({
+    users,
+    roles,
+    stats,
+    filters,
+    can,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [role, setRole] = useState(filters.role ?? 'all');
     const [verified, setVerified] = useState(filters.verified ?? 'all');
@@ -147,11 +153,15 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
         setVerified('all');
         setDateFrom('');
         setDateTo('');
-        router.get('/settings/application-settings/users', {}, {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['users', 'filters'],
-        });
+        router.get(
+            '/settings/application-settings/users',
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['users', 'filters'],
+            },
+        );
     }
 
     function handleDelete() {
@@ -213,16 +223,16 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-5">
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-info" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                                <UsersIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/15">
+                                <UsersIcon className="h-4 w-4 text-info" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {total}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Users
                                 </p>
                             </div>
@@ -230,16 +240,16 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-violet-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
-                                <ShieldCheckIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
+                                <ShieldCheckIcon className="h-4 w-4 text-highlight" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {superAdmins}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Super Admins
                                 </p>
                             </div>
@@ -247,16 +257,16 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-success" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                                <CheckCircleIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/15">
+                                <CheckCircleIcon className="h-4 w-4 text-success" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {verifiedCount}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Verified
                                 </p>
                             </div>
@@ -264,16 +274,16 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                                <ClockIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15">
+                                <ClockIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {unverifiedCount}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Unverified
                                 </p>
                             </div>
@@ -281,16 +291,16 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                     </Card>
 
                     <Card className="col-span-2 overflow-hidden lg:col-span-1">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-slate-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-info" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-500/10">
-                                <UserPlusIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/15">
+                                <UserPlusIcon className="h-4 w-4 text-info" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {newThisMonth}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     New This Month
                                 </p>
                             </div>
@@ -303,15 +313,17 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                     <CardContent className="p-0">
                         {/* Top row: search + toggle */}
                         <div className="flex items-center gap-2 border-b border-border p-3">
-                            <div className="relative flex-1 min-w-0">
-                                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="relative min-w-0 flex-1">
+                                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="text"
                                     placeholder="Search by name or email…"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                                    className="pl-9 pr-9"
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && applyFilters()
+                                    }
+                                    className="pr-9 pl-9"
                                     aria-label="Search users"
                                 />
                                 {search && (
@@ -321,7 +333,7 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                             setSearch('');
                                             applyFilters();
                                         }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         aria-label="Clear search"
                                     >
                                         <XIcon className="h-4 w-4" />
@@ -339,7 +351,12 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                 <FilterIcon className="h-4 w-4" />
                             </Button>
                             {hasActiveFilters() && (
-                                <Button variant="ghost" size="sm" onClick={clearFilters} className="shrink-0">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="shrink-0"
+                                >
                                     Clear
                                 </Button>
                             )}
@@ -348,22 +365,38 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                         {/* Collapsible filter row */}
                         <div
                             className={`overflow-hidden transition-all duration-200 ${
-                                filtersOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
+                                filtersOpen
+                                    ? 'max-h-60 opacity-100'
+                                    : 'max-h-0 opacity-0'
                             }`}
                         >
                             <div className="flex flex-wrap items-end gap-3 p-3">
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="role-filter" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="role-filter"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         Role
                                     </Label>
-                                    <Select value={role} onValueChange={setRole}>
-                                        <SelectTrigger id="role-filter" className="w-[160px]">
+                                    <Select
+                                        value={role}
+                                        onValueChange={setRole}
+                                    >
+                                        <SelectTrigger
+                                            id="role-filter"
+                                            className="w-[160px]"
+                                        >
                                             <SelectValue placeholder="All roles" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all">All roles</SelectItem>
+                                            <SelectItem value="all">
+                                                All roles
+                                            </SelectItem>
                                             {roles.map((option) => (
-                                                <SelectItem key={option.id} value={option.name}>
+                                                <SelectItem
+                                                    key={option.id}
+                                                    value={option.name}
+                                                >
                                                     {option.name}
                                                 </SelectItem>
                                             ))}
@@ -372,54 +405,84 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="verified-filter" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="verified-filter"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         Email Status
                                     </Label>
-                                    <Select value={verified} onValueChange={setVerified}>
-                                        <SelectTrigger id="verified-filter" className="w-[150px]">
+                                    <Select
+                                        value={verified}
+                                        onValueChange={setVerified}
+                                    >
+                                        <SelectTrigger
+                                            id="verified-filter"
+                                            className="w-[150px]"
+                                        >
                                             <SelectValue placeholder="Any status" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all">Any status</SelectItem>
-                                            <SelectItem value="verified">Verified</SelectItem>
-                                            <SelectItem value="unverified">Unverified</SelectItem>
+                                            <SelectItem value="all">
+                                                Any status
+                                            </SelectItem>
+                                            <SelectItem value="verified">
+                                                Verified
+                                            </SelectItem>
+                                            <SelectItem value="unverified">
+                                                Unverified
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="date-from" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="date-from"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         Created From
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-from"
                                             type="date"
                                             value={dateFrom}
-                                            onChange={(e) => setDateFrom(e.target.value)}
-                                            className="pl-8 h-9"
+                                            onChange={(e) =>
+                                                setDateFrom(e.target.value)
+                                            }
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor="date-to" className="text-xs font-medium text-muted-foreground">
+                                    <Label
+                                        htmlFor="date-to"
+                                        className="text-xs font-medium text-muted-foreground"
+                                    >
                                         Created To
                                     </Label>
                                     <div className="relative">
-                                        <CalendarIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        <CalendarIcon className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             id="date-to"
                                             type="date"
                                             value={dateTo}
-                                            onChange={(e) => setDateTo(e.target.value)}
-                                            className="pl-8 h-9"
+                                            onChange={(e) =>
+                                                setDateTo(e.target.value)
+                                            }
+                                            className="h-9 pl-8"
                                         />
                                     </div>
                                 </div>
 
-                                <Button variant="default" size="sm" onClick={applyFilters} className="h-9 shrink-0">
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={applyFilters}
+                                    className="h-9 shrink-0"
+                                >
                                     <SearchIcon className="mr-1.5 h-3.5 w-3.5" />
                                     Apply
                                 </Button>
@@ -431,58 +494,97 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                 {/* Active filter badges */}
                 {hasActiveFilters() && (
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Active filters:</span>
+                        <span className="text-xs text-muted-foreground">
+                            Active filters:
+                        </span>
                         {search && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 Search: "{search}"
-                                <button onClick={() => {
-                                    setSearch('');
-                                    applyFilters();
-                                }} className="ml-1.5 hover:text-destructive" aria-label="Remove search filter">
+                                <button
+                                    onClick={() => {
+                                        setSearch('');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove search filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {role !== 'all' && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 Role: {role}
-                                <button onClick={() => {
-                                    setRole('all');
-                                    applyFilters();
-                                }} className="ml-1.5 hover:text-destructive" aria-label="Remove role filter">
+                                <button
+                                    onClick={() => {
+                                        setRole('all');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove role filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {verified !== 'all' && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
-                                {verified === 'verified' ? 'Verified' : 'Unverified'}
-                                <button onClick={() => {
-                                    setVerified('all');
-                                    applyFilters();
-                                }} className="ml-1.5 hover:text-destructive" aria-label="Remove status filter">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
+                                {verified === 'verified'
+                                    ? 'Verified'
+                                    : 'Unverified'}
+                                <button
+                                    onClick={() => {
+                                        setVerified('all');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove status filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {dateFrom && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 From {formatDate(dateFrom)}
-                                <button onClick={() => {
-                                    setDateFrom('');
-                                    applyFilters();
-                                }} className="ml-1.5 hover:text-destructive" aria-label="Remove from date filter">
+                                <button
+                                    onClick={() => {
+                                        setDateFrom('');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove from date filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
                         )}
                         {dateTo && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs"
+                            >
                                 To {formatDate(dateTo)}
-                                <button onClick={() => {
-                                    setDateTo('');
-                                    applyFilters();
-                                }} className="ml-1.5 hover:text-destructive" aria-label="Remove to date filter">
+                                <button
+                                    onClick={() => {
+                                        setDateTo('');
+                                        applyFilters();
+                                    }}
+                                    className="ml-1.5 hover:text-destructive"
+                                    aria-label="Remove to date filter"
+                                >
                                     <XIcon className="h-3 w-3" />
                                 </button>
                             </Badge>
@@ -523,7 +625,9 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                             <TableHead>Role</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Joined</TableHead>
-                                            <TableHead className="text-right w-28">Actions</TableHead>
+                                            <TableHead className="w-28 text-right">
+                                                Actions
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -533,64 +637,101 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-8 w-8">
                                                             <AvatarFallback className="text-[10px]">
-                                                                {initials(user.name)}
+                                                                {initials(
+                                                                    user.name,
+                                                                )}
                                                             </AvatarFallback>
                                                         </Avatar>
-                                                        <span className="font-medium">{user.name}</span>
+                                                        <span className="font-medium">
+                                                            {user.name}
+                                                        </span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground max-w-[200px]">
-                                                    <div className="truncate">{user.email}</div>
+                                                <TableCell className="max-w-[200px] text-muted-foreground">
+                                                    <div className="truncate">
+                                                        {user.email}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-wrap gap-1">
-                                                        {user.roles.length > 0 ? (
-                                                            user.roles.map((userRole) => (
-                                                                <span
-                                                                    key={userRole}
-                                                                    className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary border border-primary/20 capitalize"
-                                                                >
-                                                                    {userRole}
-                                                                </span>
-                                                            ))
+                                                        {user.roles.length >
+                                                        0 ? (
+                                                            user.roles.map(
+                                                                (userRole) => (
+                                                                    <span
+                                                                        key={
+                                                                            userRole
+                                                                        }
+                                                                        className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary capitalize"
+                                                                    >
+                                                                        {
+                                                                            userRole
+                                                                        }
+                                                                    </span>
+                                                                ),
+                                                            )
                                                         ) : (
-                                                            <span className="text-xs text-muted-foreground">No role</span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                No role
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     {user.email_verified_at ? (
-                                                        <Badge variant="secondary" className="text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="border border-success/30 bg-success/15 text-xs font-bold text-success"
+                                                        >
                                                             <CheckCircleIcon className="mr-1 h-3 w-3" />
                                                             Verified
                                                         </Badge>
                                                     ) : (
-                                                        <Badge variant="secondary" className="text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="border border-warning/30 bg-warning/15 text-xs font-bold text-warning"
+                                                        >
                                                             <ClockIcon className="mr-1 h-3 w-3" />
                                                             Unverified
                                                         </Badge>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                                                    {formatDate(user.created_at)}
+                                                <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                                                    {formatDate(
+                                                        user.created_at,
+                                                    )}
                                                 </TableCell>
                                                 {can.manage && (
                                                     <TableCell>
                                                         <div className="flex items-center justify-end gap-1">
-                                                            <Button asChild variant="ghost" size="sm">
-                                                                <Link href={`/settings/application-settings/users/${user.id}/edit`}>
+                                                            <Button
+                                                                asChild
+                                                                variant="ghost"
+                                                                size="sm"
+                                                            >
+                                                                <Link
+                                                                    href={`/settings/application-settings/users/${user.id}/edit`}
+                                                                >
                                                                     <PencilIcon className="h-4 w-4" />
-                                                                    <span className="sr-only">Edit</span>
+                                                                    <span className="sr-only">
+                                                                        Edit
+                                                                    </span>
                                                                 </Link>
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 className="text-destructive hover:text-destructive"
-                                                                onClick={() => setDeleteTarget(user.id)}
+                                                                onClick={() =>
+                                                                    setDeleteTarget(
+                                                                        user.id,
+                                                                    )
+                                                                }
                                                             >
                                                                 <TrashIcon className="h-4 w-4" />
-                                                                <span className="sr-only">Delete</span>
+                                                                <span className="sr-only">
+                                                                    Delete
+                                                                </span>
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -601,9 +742,12 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                 </Table>
 
                                 {/* Mobile card list */}
-                                <div className="sm:hidden divide-y divide-border">
+                                <div className="divide-y divide-border sm:hidden">
                                     {users.data.map((user) => (
-                                        <div key={user.id} className="p-4 space-y-3">
+                                        <div
+                                            key={user.id}
+                                            className="space-y-3 p-4"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-10 w-10 shrink-0">
                                                     <AvatarFallback>
@@ -611,42 +755,65 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="font-medium truncate">{user.name}</p>
-                                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                                    <p className="truncate font-medium">
+                                                        {user.name}
+                                                    </p>
+                                                    <p className="truncate text-xs text-muted-foreground">
+                                                        {user.email}
+                                                    </p>
                                                 </div>
                                                 {user.email_verified_at ? (
-                                                    <Badge variant="secondary" className="text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="border border-success/30 bg-success/15 text-[10px] font-bold text-success"
+                                                    >
                                                         Verified
                                                     </Badge>
                                                 ) : (
-                                                    <Badge variant="secondary" className="text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="border border-warning/30 bg-warning/15 text-[10px] font-bold text-warning"
+                                                    >
                                                         Unverified
                                                     </Badge>
                                                 )}
                                             </div>
                                             <div className="flex flex-wrap gap-1">
                                                 {user.roles.length > 0 ? (
-                                                    user.roles.map((userRole) => (
-                                                        <span
-                                                            key={userRole}
-                                                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary border border-primary/20 capitalize"
-                                                        >
-                                                            {userRole}
-                                                        </span>
-                                                    ))
+                                                    user.roles.map(
+                                                        (userRole) => (
+                                                            <span
+                                                                key={userRole}
+                                                                className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary capitalize"
+                                                            >
+                                                                {userRole}
+                                                            </span>
+                                                        ),
+                                                    )
                                                 ) : (
-                                                    <span className="text-xs text-muted-foreground">No role</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        No role
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                                            <div className="flex items-center justify-between border-t border-border/50 pt-1">
                                                 <span className="text-xs text-muted-foreground">
-                                                    Joined {formatDate(user.created_at)}
+                                                    Joined{' '}
+                                                    {formatDate(
+                                                        user.created_at,
+                                                    )}
                                                 </span>
                                                 {can.manage && (
                                                     <div className="flex items-center gap-1">
-                                                        <Button asChild variant="ghost" size="sm">
-                                                            <Link href={`/settings/application-settings/users/${user.id}/edit`}>
-                                                                <PencilIcon className="h-4 w-4 mr-1.5" />
+                                                        <Button
+                                                            asChild
+                                                            variant="ghost"
+                                                            size="sm"
+                                                        >
+                                                            <Link
+                                                                href={`/settings/application-settings/users/${user.id}/edit`}
+                                                            >
+                                                                <PencilIcon className="mr-1.5 h-4 w-4" />
                                                                 Edit
                                                             </Link>
                                                         </Button>
@@ -654,9 +821,13 @@ export default function UsersIndex({ users, roles, stats, filters, can }: Props)
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-destructive hover:text-destructive"
-                                                            onClick={() => setDeleteTarget(user.id)}
+                                                            onClick={() =>
+                                                                setDeleteTarget(
+                                                                    user.id,
+                                                                )
+                                                            }
                                                         >
-                                                            <TrashIcon className="h-4 w-4 mr-1.5" />
+                                                            <TrashIcon className="mr-1.5 h-4 w-4" />
                                                             Delete
                                                         </Button>
                                                     </div>

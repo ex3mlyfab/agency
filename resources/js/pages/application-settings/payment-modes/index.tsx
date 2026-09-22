@@ -1,5 +1,12 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { Search, Plus, Edit2, Trash2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import {
+    Search,
+    Plus,
+    Edit2,
+    Trash2,
+    ShieldCheck,
+    ShieldAlert,
+} from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { InputError } from '@/components/input-error';
@@ -24,7 +31,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import type {BreadcrumbItem} from '@/types';
+import type { BreadcrumbItem } from '@/types';
 
 interface PaymentMode {
     id: string;
@@ -45,7 +52,10 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Application Settings', href: '#' },
-    { title: 'Payment Modes', href: '/settings/application-settings/payment-modes' },
+    {
+        title: 'Payment Modes',
+        href: '/settings/application-settings/payment-modes',
+    },
 ];
 
 export default function PaymentModesIndex({ paymentModes, filters }: Props) {
@@ -66,10 +76,14 @@ export default function PaymentModesIndex({ paymentModes, filters }: Props) {
 
     const handleSearch = (e: FormEvent) => {
         e.preventDefault();
-        router.get('/settings/application-settings/payment-modes', { search }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/settings/application-settings/payment-modes',
+            { search },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleCreateSubmit = (e: FormEvent) => {
@@ -95,21 +109,26 @@ export default function PaymentModesIndex({ paymentModes, filters }: Props) {
         e.preventDefault();
 
         if (!selectedMode) {
-return;
-}
+            return;
+        }
 
-        editForm.put(`/settings/application-settings/payment-modes/${selectedMode.id}`, {
-            onSuccess: () => {
-                setIsEditOpen(false);
-                setSelectedMode(null);
-                editForm.reset();
+        editForm.put(
+            `/settings/application-settings/payment-modes/${selectedMode.id}`,
+            {
+                onSuccess: () => {
+                    setIsEditOpen(false);
+                    setSelectedMode(null);
+                    editForm.reset();
+                },
             },
-        });
+        );
     };
 
     const handleDelete = (mode: PaymentMode) => {
         if (confirm(`Are you sure you want to delete "${mode.name}"?`)) {
-            router.delete(`/settings/application-settings/payment-modes/${mode.id}`);
+            router.delete(
+                `/settings/application-settings/payment-modes/${mode.id}`,
+            );
         }
     };
 
@@ -128,11 +147,18 @@ return;
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-64"
                             />
-                            <Button type="submit" variant="secondary" size="icon">
+                            <Button
+                                type="submit"
+                                variant="secondary"
+                                size="icon"
+                            >
                                 <Search className="h-4 w-4" />
                             </Button>
                         </form>
-                        <Button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-1.5">
+                        <Button
+                            onClick={() => setIsCreateOpen(true)}
+                            className="flex items-center gap-1.5"
+                        >
                             <Plus className="h-4 w-4" />
                             <span>Add Mode</span>
                         </Button>
@@ -146,7 +172,9 @@ return;
                                 <TableHead>Name</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Created At</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -154,7 +182,7 @@ return;
                                 <TableRow>
                                     <TableCell
                                         colSpan={4}
-                                        className="text-center py-6 text-muted-foreground"
+                                        className="py-6 text-center text-muted-foreground"
                                     >
                                         No payment modes found.
                                     </TableCell>
@@ -162,36 +190,44 @@ return;
                             ) : (
                                 paymentModes.data.map((mode) => (
                                     <TableRow key={mode.id}>
-                                        <TableCell className="font-medium">{mode.name}</TableCell>
+                                        <TableCell className="font-medium">
+                                            {mode.name}
+                                        </TableCell>
                                         <TableCell>
                                             {mode.is_active ? (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-500 border border-emerald-500/20">
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/15 px-2 py-0.5 text-xs font-bold text-success">
                                                     <ShieldCheck className="h-3 w-3" />
                                                     Active
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-500/10 px-2 py-0.5 text-xs font-semibold text-zinc-500 border border-zinc-500/20">
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-bold text-foreground">
                                                     <ShieldAlert className="h-3 w-3" />
                                                     Inactive
                                                 </span>
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {new Date(mode.created_at).toLocaleDateString()}
+                                            {new Date(
+                                                mode.created_at,
+                                            ).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleEditClick(mode)}
+                                                    onClick={() =>
+                                                        handleEditClick(mode)
+                                                    }
                                                 >
                                                     <Edit2 className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleDelete(mode)}
+                                                    onClick={() =>
+                                                        handleDelete(mode)
+                                                    }
                                                     className="text-destructive hover:text-destructive"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -213,16 +249,22 @@ return;
                     <DialogHeader>
                         <DialogTitle>Add Payment Mode</DialogTitle>
                         <DialogDescription>
-                            Create a new payment mode for processing invoices and deposits.
+                            Create a new payment mode for processing invoices
+                            and deposits.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleCreateSubmit} className="space-y-4 py-2">
+                    <form
+                        onSubmit={handleCreateSubmit}
+                        className="space-y-4 py-2"
+                    >
                         <div className="space-y-1">
                             <Label htmlFor="create-name">Name</Label>
                             <Input
                                 id="create-name"
                                 value={createForm.data.name}
-                                onChange={(e) => createForm.setData('name', e.target.value)}
+                                onChange={(e) =>
+                                    createForm.setData('name', e.target.value)
+                                }
                                 placeholder="e.g. POS, Hospital Wallet"
                                 required
                             />
@@ -233,10 +275,18 @@ return;
                                 type="checkbox"
                                 id="create-is_active"
                                 checked={createForm.data.is_active}
-                                onChange={(e) => createForm.setData('is_active', e.target.checked)}
-                                className="rounded border-input text-primary focus:ring-ring h-4 w-4"
+                                onChange={(e) =>
+                                    createForm.setData(
+                                        'is_active',
+                                        e.target.checked,
+                                    )
+                                }
+                                className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                             />
-                            <Label htmlFor="create-is_active" className="font-normal cursor-pointer select-none">
+                            <Label
+                                htmlFor="create-is_active"
+                                className="cursor-pointer font-normal select-none"
+                            >
                                 Active (Available for selection in payment form)
                             </Label>
                             <InputError message={createForm.errors.is_active} />
@@ -249,7 +299,10 @@ return;
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={createForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={createForm.processing}
+                            >
                                 Create Payment Mode
                             </Button>
                         </DialogFooter>
@@ -263,16 +316,22 @@ return;
                     <DialogHeader>
                         <DialogTitle>Edit Payment Mode</DialogTitle>
                         <DialogDescription>
-                            Update the details or active status of the payment mode.
+                            Update the details or active status of the payment
+                            mode.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleEditSubmit} className="space-y-4 py-2">
+                    <form
+                        onSubmit={handleEditSubmit}
+                        className="space-y-4 py-2"
+                    >
                         <div className="space-y-1">
                             <Label htmlFor="edit-name">Name</Label>
                             <Input
                                 id="edit-name"
                                 value={editForm.data.name}
-                                onChange={(e) => editForm.setData('name', e.target.value)}
+                                onChange={(e) =>
+                                    editForm.setData('name', e.target.value)
+                                }
                                 placeholder="e.g. POS, Hospital Wallet"
                                 required
                             />
@@ -283,10 +342,18 @@ return;
                                 type="checkbox"
                                 id="edit-is_active"
                                 checked={editForm.data.is_active}
-                                onChange={(e) => editForm.setData('is_active', e.target.checked)}
-                                className="rounded border-input text-primary focus:ring-ring h-4 w-4"
+                                onChange={(e) =>
+                                    editForm.setData(
+                                        'is_active',
+                                        e.target.checked,
+                                    )
+                                }
+                                className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                             />
-                            <Label htmlFor="edit-is_active" className="font-normal cursor-pointer select-none">
+                            <Label
+                                htmlFor="edit-is_active"
+                                className="cursor-pointer font-normal select-none"
+                            >
                                 Active (Available for selection in payment form)
                             </Label>
                             <InputError message={editForm.errors.is_active} />
@@ -302,7 +369,10 @@ return;
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={editForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={editForm.processing}
+                            >
                                 Save Changes
                             </Button>
                         </DialogFooter>

@@ -19,7 +19,7 @@ interface DatePickerProps {
   placeholder?: string
   fromYear?: number
   toYear?: number
-  captionLayout?: "dropdown" | "dropdown-buttons" | "buttons"
+  captionLayout?: "dropdown" | "dropdown-months" | "dropdown-years" | "label"
 }
 
 export function DatePicker({
@@ -30,8 +30,12 @@ export function DatePicker({
   placeholder = "Pick a date",
   fromYear = 1900,
   toYear = new Date().getFullYear() + 10,
-  captionLayout = "dropdown-buttons",
+  captionLayout = "dropdown",
 }: DatePickerProps) {
+  const handleSelect = (date: Date | undefined) => {
+    onChange?.(date)
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -52,12 +56,12 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={value}
-          onSelect={onChange}
-          initialFocus
+          onSelect={handleSelect}
+          autoFocus
           disabled={disabled}
           captionLayout={captionLayout}
-          fromYear={fromYear}
-          toYear={toYear}
+          startMonth={new Date(fromYear, 0)}
+          endMonth={new Date(toYear, 0)}
         />
       </PopoverContent>
     </Popover>

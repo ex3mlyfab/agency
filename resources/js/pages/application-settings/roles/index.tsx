@@ -32,7 +32,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import type {BreadcrumbItem} from '@/types';
+import type { BreadcrumbItem } from '@/types';
 
 interface Role {
     id: number;
@@ -75,7 +75,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Roles', href: '/settings/application-settings/roles' },
 ];
 
-export default function RolesIndex({ roles, filters, summary, guards, can }: Props) {
+export default function RolesIndex({
+    roles,
+    filters,
+    summary,
+    guards,
+    can,
+}: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
@@ -118,12 +124,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
     }
 
     function hasActiveFilters() {
-        return !!(
-            search ||
-            dateFrom ||
-            dateTo ||
-            guardName !== 'all'
-        );
+        return !!(search || dateFrom || dateTo || guardName !== 'all');
     }
 
     function handleDelete() {
@@ -132,12 +133,15 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
         }
 
         setIsDeleting(true);
-        router.delete(`/settings/application-settings/roles/${deleteTarget.id}`, {
-            onFinish: () => {
-                setIsDeleting(false);
-                setDeleteTarget(null);
+        router.delete(
+            `/settings/application-settings/roles/${deleteTarget.id}`,
+            {
+                onFinish: () => {
+                    setIsDeleting(false);
+                    setDeleteTarget(null);
+                },
             },
-        });
+        );
     }
 
     return (
@@ -169,16 +173,16 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-info" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                                <ShieldIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/15">
+                                <ShieldIcon className="h-4 w-4 text-info" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.total_roles}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Roles
                                 </p>
                             </div>
@@ -186,16 +190,16 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-success" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                                <FileTextIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/15">
+                                <FileTextIcon className="h-4 w-4 text-success" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.total_permissions}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Total Permissions
                                 </p>
                             </div>
@@ -203,16 +207,16 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-violet-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
-                                <UsersIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
+                                <UsersIcon className="h-4 w-4 text-highlight" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.total_users}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Users with Roles
                                 </p>
                             </div>
@@ -220,16 +224,16 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                     </Card>
 
                     <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                                <ClockIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15">
+                                <ClockIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-2xl font-bold leading-none truncate">
+                                <p className="truncate text-2xl leading-none font-bold">
                                     {summary.recent_roles}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                     Created This Month
                                 </p>
                             </div>
@@ -241,15 +245,17 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                 <Card>
                     <CardContent className="p-0">
                         <div className="flex items-center gap-2 border-b border-border p-3">
-                            <div className="relative flex-1 min-w-0">
-                                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="relative min-w-0 flex-1">
+                                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="text"
                                     placeholder="Search roles by name…"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                                    className="pl-9 pr-9"
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && applyFilters()
+                                    }
+                                    className="pr-9 pl-9"
                                     aria-label="Search roles"
                                 />
                                 {search && (
@@ -259,7 +265,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                             setSearch('');
                                             applyFilters();
                                         }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         aria-label="Clear search"
                                     >
                                         <XIcon className="h-4 w-4" />
@@ -349,7 +355,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                     >
                                         <SelectTrigger
                                             id="guard-filter"
-                                            className="w-[140px] h-9"
+                                            className="h-9 w-[140px]"
                                         >
                                             <SelectValue placeholder="All guards" />
                                         </SelectTrigger>
@@ -389,7 +395,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                         {search && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 Search: "{search}"
                                 <button
@@ -407,14 +413,17 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                         {dateFrom && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 From{' '}
-                                {new Date(dateFrom).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                })}
+                                {new Date(dateFrom).toLocaleDateString(
+                                    'en-GB',
+                                    {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    },
+                                )}
                                 <button
                                     onClick={() => {
                                         setDateFrom('');
@@ -430,7 +439,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                         {dateTo && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 To{' '}
                                 {new Date(dateTo).toLocaleDateString('en-GB', {
@@ -453,7 +462,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                         {guardName !== 'all' && (
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2 py-0.5"
+                                className="px-2 py-0.5 text-xs"
                             >
                                 Guard: {guardName}
                                 <button
@@ -499,7 +508,9 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                             <TableHead>Role Name</TableHead>
                                             <TableHead>Guard</TableHead>
                                             <TableHead>Permissions</TableHead>
-                                            <TableHead>Users Assigned</TableHead>
+                                            <TableHead>
+                                                Users Assigned
+                                            </TableHead>
                                             <TableHead>Created</TableHead>
                                             {can.manage && (
                                                 <TableHead className="w-24 text-right">
@@ -513,8 +524,9 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                             <TableRow key={role.id}>
                                                 <TableCell className="font-medium capitalize">
                                                     {role.name}
-                                                    {role.name === 'super admin' && (
-                                                        <span className="ml-2 inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-destructive border border-destructive/20 uppercase">
+                                                    {role.name ===
+                                                        'super admin' && (
+                                                        <span className="ml-2 inline-flex items-center rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-destructive uppercase">
                                                             System
                                                         </span>
                                                     )}
@@ -525,45 +537,115 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                                 <TableCell>
                                                     <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
                                                         <ShieldIcon className="h-3 w-3" />
-                                                        {role.permissions_count} rules
+                                                        {role.permissions_count}{' '}
+                                                        rules
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground">
                                                     {role.users_count}{' '}
-                                                    {role.users_count === 1 ? 'user' : 'users'}
+                                                    {role.users_count === 1
+                                                        ? 'user'
+                                                        : 'users'}
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground whitespace-nowrap">
-                                                    {new Date(role.created_at).toLocaleDateString('en-GB', {
-                                                        day: '2-digit',
-                                                        month: 'short',
-                                                        year: 'numeric',
-                                                    })}
+                                                <TableCell className="whitespace-nowrap text-muted-foreground">
+                                                    {new Date(
+                                                        role.created_at,
+                                                    ).toLocaleDateString(
+                                                        'en-GB',
+                                                        {
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                        },
+                                                    )}
                                                 </TableCell>
                                                 {can.manage && (
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1">
-                                                            <Button asChild variant="ghost" size="sm">
-                                                                <Link href={`/settings/application-settings/roles/${role.id}/edit`}>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                                                                    <span className="sr-only">Edit</span>
+                                                            <Button
+                                                                asChild
+                                                                variant="ghost"
+                                                                size="sm"
+                                                            >
+                                                                <Link
+                                                                    href={`/settings/application-settings/roles/${role.id}/edit`}
+                                                                >
+                                                                    <svg
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        width="16"
+                                                                        height="16"
+                                                                        viewBox="0 0 24 24"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        strokeWidth="2"
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        className="h-4 w-4"
+                                                                    >
+                                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                                                        <path d="m15 5 4 4" />
+                                                                    </svg>
+                                                                    <span className="sr-only">
+                                                                        Edit
+                                                                    </span>
                                                                 </Link>
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 className="text-destructive hover:text-destructive disabled:opacity-50"
-                                                                onClick={() => setDeleteTarget(role)}
-                                                                disabled={role.name === 'super admin' || role.users_count > 0}
+                                                                onClick={() =>
+                                                                    setDeleteTarget(
+                                                                        role,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    role.name ===
+                                                                        'super admin' ||
+                                                                    role.users_count >
+                                                                        0
+                                                                }
                                                                 title={
-                                                                    role.name === 'super admin'
+                                                                    role.name ===
+                                                                    'super admin'
                                                                         ? 'Cannot delete system role'
-                                                                        : role.users_count > 0
-                                                                        ? 'Cannot delete role with assigned users'
-                                                                        : 'Delete role'
+                                                                        : role.users_count >
+                                                                            0
+                                                                          ? 'Cannot delete role with assigned users'
+                                                                          : 'Delete role'
                                                                 }
                                                             >
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                                                <span className="sr-only">Delete</span>
+                                                                <svg
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                    width="16"
+                                                                    height="16"
+                                                                    viewBox="0 0 24 24"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth="2"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    className="h-4 w-4"
+                                                                >
+                                                                    <path d="M3 6h18" />
+                                                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                    <line
+                                                                        x1="10"
+                                                                        x2="10"
+                                                                        y1="11"
+                                                                        y2="17"
+                                                                    />
+                                                                    <line
+                                                                        x1="14"
+                                                                        x2="14"
+                                                                        y1="11"
+                                                                        y2="17"
+                                                                    />
+                                                                </svg>
+                                                                <span className="sr-only">
+                                                                    Delete
+                                                                </span>
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -574,18 +656,19 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                 </Table>
 
                                 {/* Mobile card list */}
-                                <div className="sm:hidden divide-y divide-border">
+                                <div className="divide-y divide-border sm:hidden">
                                     {roles.data.map((role) => (
                                         <div
                                             key={role.id}
-                                            className="p-4 space-y-3"
+                                            className="space-y-3 p-4"
                                         >
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0">
-                                                    <p className="font-semibold text-foreground capitalize truncate flex items-center gap-2">
+                                                    <p className="flex items-center gap-2 truncate font-semibold text-foreground capitalize">
                                                         {role.name}
-                                                        {role.name === 'super admin' && (
-                                                            <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-destructive border border-destructive/20 uppercase">
+                                                        {role.name ===
+                                                            'super admin' && (
+                                                            <span className="inline-flex items-center rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-destructive uppercase">
                                                                 System
                                                             </span>
                                                         )}
@@ -594,7 +677,7 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                                         {role.guard_name}
                                                     </p>
                                                 </div>
-                                                <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground shrink-0">
+                                                <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
                                                     <ShieldIcon className="h-3 w-3" />
                                                     {role.permissions_count}
                                                 </span>
@@ -606,7 +689,9 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                                     </span>
                                                     <p className="font-medium text-foreground">
                                                         {role.users_count}{' '}
-                                                        {role.users_count === 1 ? 'user' : 'users'}
+                                                        {role.users_count === 1
+                                                            ? 'user'
+                                                            : 'users'}
                                                     </p>
                                                 </div>
                                                 <div>
@@ -614,23 +699,44 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                                         Created
                                                     </span>
                                                     <p className="font-medium text-muted-foreground">
-                                                        {new Date(role.created_at).toLocaleDateString('en-GB', {
-                                                            day: '2-digit',
-                                                            month: 'short',
-                                                            year: 'numeric',
-                                                        })}
+                                                        {new Date(
+                                                            role.created_at,
+                                                        ).toLocaleDateString(
+                                                            'en-GB',
+                                                            {
+                                                                day: '2-digit',
+                                                                month: 'short',
+                                                                year: 'numeric',
+                                                            },
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>
                                             {can.manage && (
-                                                <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
+                                                <div className="flex items-center justify-end gap-1 border-t border-border/50 pt-1">
                                                     <Button
                                                         asChild
                                                         variant="ghost"
                                                         size="sm"
                                                     >
-                                                        <Link href={`/settings/application-settings/roles/${role.id}/edit`}>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                        <Link
+                                                            href={`/settings/application-settings/roles/${role.id}/edit`}
+                                                        >
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                width="16"
+                                                                height="16"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth="2"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                className="mr-1.5 h-4 w-4"
+                                                            >
+                                                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                                                <path d="m15 5 4 4" />
+                                                            </svg>
                                                             Edit
                                                         </Link>
                                                     </Button>
@@ -638,10 +744,45 @@ export default function RolesIndex({ roles, filters, summary, guards, can }: Pro
                                                         variant="ghost"
                                                         size="sm"
                                                         className="text-destructive hover:text-destructive disabled:opacity-50"
-                                                        onClick={() => setDeleteTarget(role)}
-                                                        disabled={role.name === 'super admin' || role.users_count > 0}
+                                                        onClick={() =>
+                                                            setDeleteTarget(
+                                                                role,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            role.name ===
+                                                                'super admin' ||
+                                                            role.users_count > 0
+                                                        }
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            width="16"
+                                                            height="16"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            className="mr-1.5 h-4 w-4"
+                                                        >
+                                                            <path d="M3 6h18" />
+                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                            <line
+                                                                x1="10"
+                                                                x2="10"
+                                                                y1="11"
+                                                                y2="17"
+                                                            />
+                                                            <line
+                                                                x1="14"
+                                                                x2="14"
+                                                                y1="11"
+                                                                y2="17"
+                                                            />
+                                                        </svg>
                                                         Delete
                                                     </Button>
                                                 </div>

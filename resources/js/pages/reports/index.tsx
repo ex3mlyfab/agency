@@ -55,8 +55,14 @@ export default function ReportsIndex({ can }: Props) {
 
         const formData = new FormData();
         formData.append('report_type', data.report_type);
-        if (data.date_from) formData.append('date_from', data.date_from);
-        if (data.date_to) formData.append('date_to', data.date_to);
+
+        if (data.date_from) {
+formData.append('date_from', data.date_from);
+}
+
+        if (data.date_to) {
+formData.append('date_to', data.date_to);
+}
 
         fetch('/reports/generate', {
             method: 'POST',
@@ -72,18 +78,23 @@ export default function ReportsIndex({ can }: Props) {
             .then(async (res) => {
                 if (!res.ok) {
                     const json = await res.json().catch(() => null);
+
                     if (json?.errors) {
                         const messages = Object.values(json.errors)
                             .flat()
                             .join('\n');
                         setErrorMessage(messages);
+
                         return;
                     }
+
                     setErrorMessage('An unexpected error occurred.');
+
                     return;
                 }
 
                 const contentType = res.headers.get('content-type') ?? '';
+
                 if (contentType.includes('text/csv')) {
                     const blob = await res.blob();
                     const url = URL.createObjectURL(blob);

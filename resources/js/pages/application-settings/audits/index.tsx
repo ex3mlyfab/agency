@@ -70,19 +70,57 @@ const logNameIcons: Record<string, React.ReactNode> = {
 };
 
 function getLogNameIcon(logName: string) {
-    if (logName.includes('Deceased')) return <FileTextIcon className="h-3 w-3" />;
-    if (logName.includes('Chamber') || logName.includes('Transfer')) return <ActivityIcon className="h-3 w-3" />;
-    if (logName.includes('User')) return <UserIcon className="h-3 w-3" />;
+    if (logName.includes('Deceased')) {
+        return <FileTextIcon className="h-3 w-3" />;
+    }
+
+    if (logName.includes('Chamber') || logName.includes('Transfer')) {
+        return <ActivityIcon className="h-3 w-3" />;
+    }
+
+    if (logName.includes('User')) {
+        return <UserIcon className="h-3 w-3" />;
+    }
+
     return <DatabaseIcon className="h-3 w-3" />;
 }
 
 function getDescriptionIcon(description: string): string {
-    if (description.includes('entered') || description.includes('Admitted')) return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
-    if (description.includes('transferred') || description.includes('Transfer')) return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
-    if (description.includes('released') || description.includes('Released') || description.includes('Discharged')) return 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800';
-    if (description.includes('created') || description.includes('Created')) return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
-    if (description.includes('updated') || description.includes('Updated') || description.includes('changed')) return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800';
-    if (description.includes('deleted') || description.includes('Deleted')) return 'bg-destructive/10 text-destructive border-destructive/20 dark:border-destructive/40';
+    if (description.includes('entered') || description.includes('Admitted')) {
+        return 'bg-success/15 text-success border border-success/30';
+    }
+
+    if (
+        description.includes('transferred') ||
+        description.includes('Transfer')
+    ) {
+        return 'bg-info/15 text-info border border-info/30';
+    }
+
+    if (
+        description.includes('released') ||
+        description.includes('Released') ||
+        description.includes('Discharged')
+    ) {
+        return 'bg-muted text-foreground border border-border';
+    }
+
+    if (description.includes('created') || description.includes('Created')) {
+        return 'bg-success/15 text-success border border-success/30';
+    }
+
+    if (
+        description.includes('updated') ||
+        description.includes('Updated') ||
+        description.includes('changed')
+    ) {
+        return 'bg-warning/15 text-warning border border-warning/30';
+    }
+
+    if (description.includes('deleted') || description.includes('Deleted')) {
+        return 'bg-destructive/15 text-destructive border border-destructive/30';
+    }
+
     return 'bg-secondary text-secondary-foreground border-border';
 }
 
@@ -94,10 +132,22 @@ function formatRelativeTime(dateString: string): string {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) {
+        return 'Just now';
+    }
+
+    if (diffMins < 60) {
+        return `${diffMins}m ago`;
+    }
+
+    if (diffHours < 24) {
+        return `${diffHours}h ago`;
+    }
+
+    if (diffDays < 7) {
+        return `${diffDays}d ago`;
+    }
+
     return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
@@ -134,22 +184,27 @@ export default function AuditsIndex({ audits, filters }: Props) {
     function toggleExpand(id: number) {
         setExpandedRows((prev) => {
             const next = new Set(prev);
+
             if (next.has(id)) {
                 next.delete(id);
             } else {
                 next.add(id);
             }
+
             return next;
         });
     }
 
     const logNameCounts: Record<string, number> = {};
     audits.data.forEach((audit) => {
-        logNameCounts[audit.log_name] = (logNameCounts[audit.log_name] ?? 0) + 1;
+        logNameCounts[audit.log_name] =
+            (logNameCounts[audit.log_name] ?? 0) + 1;
     });
 
     const totalEvents = audits.data.length;
-    const uniqueUsers = new Set(audits.data.map((a) => a.causer?.name).filter(Boolean)).size;
+    const uniqueUsers = new Set(
+        audits.data.map((a) => a.causer?.name).filter(Boolean),
+    ).size;
     const systemEvents = audits.data.filter((a) => !a.causer?.name).length;
 
     return (
@@ -163,25 +218,31 @@ export default function AuditsIndex({ audits, filters }: Props) {
                             Audit Log
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Track every action across the system — who did what, and when.
+                            Track every action across the system — who did what,
+                            and when.
                         </p>
                     </div>
-                    <form onSubmit={handleSearch} className="flex w-full items-center gap-2 sm:w-auto">
+                    <form
+                        onSubmit={handleSearch}
+                        className="flex w-full items-center gap-2 sm:w-auto"
+                    >
                         <div className="relative flex-1 sm:w-72">
-                            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="text"
                                 placeholder="Search logs…"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-                                className="pl-9 pr-9"
+                                onKeyDown={(e) =>
+                                    e.key === 'Enter' && handleSearch(e)
+                                }
+                                className="pr-9 pl-9"
                             />
                             {search && (
                                 <button
                                     type="button"
                                     onClick={clearSearch}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     <XIcon className="h-4 w-4" />
                                 </button>
@@ -201,7 +262,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
                                 <ActivityIcon className="h-4 w-4 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold leading-none">
+                                <p className="text-2xl leading-none font-bold">
                                     {audits.data.length}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -212,11 +273,11 @@ export default function AuditsIndex({ audits, filters }: Props) {
                     </Card>
                     <Card>
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
-                                <UserIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10">
+                                <UserIcon className="h-4 w-4 text-success" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold leading-none">
+                                <p className="text-2xl leading-none font-bold">
                                     {uniqueUsers}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -227,11 +288,11 @@ export default function AuditsIndex({ audits, filters }: Props) {
                     </Card>
                     <Card>
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-500/10">
-                                <DatabaseIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                                <DatabaseIcon className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold leading-none">
+                                <p className="text-2xl leading-none font-bold">
                                     {Object.keys(logNameCounts).length}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -242,11 +303,11 @@ export default function AuditsIndex({ audits, filters }: Props) {
                     </Card>
                     <Card>
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-                                <ClockIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10">
+                                <ClockIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold leading-none">
+                                <p className="text-2xl leading-none font-bold">
                                     {systemEvents}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -261,17 +322,23 @@ export default function AuditsIndex({ audits, filters }: Props) {
                 {Object.keys(logNameCounts).length > 0 && (
                     <div className="flex flex-wrap items-center gap-2">
                         <FilterIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                        {Object.entries(logNameCounts).map(([logName, count]) => (
-                            <Badge
-                                key={logName}
-                                variant="outline"
-                                className="gap-1.5 px-2 py-0.5 text-xs"
-                            >
-                                <span className="opacity-60">{getLogNameIcon(logName)}</span>
-                                {logName.split('\\').pop() ?? logName}
-                                <span className="ml-1 opacity-50">×{count}</span>
-                            </Badge>
-                        ))}
+                        {Object.entries(logNameCounts).map(
+                            ([logName, count]) => (
+                                <Badge
+                                    key={logName}
+                                    variant="outline"
+                                    className="gap-1.5 px-2 py-0.5 text-xs"
+                                >
+                                    <span className="opacity-60">
+                                        {getLogNameIcon(logName)}
+                                    </span>
+                                    {logName.split('\\').pop() ?? logName}
+                                    <span className="ml-1 opacity-50">
+                                        ×{count}
+                                    </span>
+                                </Badge>
+                            ),
+                        )}
                     </div>
                 )}
 
@@ -286,7 +353,9 @@ export default function AuditsIndex({ audits, filters }: Props) {
                                     <TableHead>Description</TableHead>
                                     <TableHead>Actor</TableHead>
                                     <TableHead>Subject</TableHead>
-                                    <TableHead className="w-36">Timestamp</TableHead>
+                                    <TableHead className="w-36">
+                                        Timestamp
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -296,31 +365,48 @@ export default function AuditsIndex({ audits, filters }: Props) {
                                             colSpan={6}
                                             className="h-24 text-center"
                                         >
-                                            <Alert variant="default" className="rounded-lg border-dashed">
+                                            <Alert
+                                                variant="default"
+                                                className="rounded-lg border-dashed"
+                                            >
                                                 <AlertDescription className="text-muted-foreground">
                                                     No audit events found.
-                                                    {search && ' No events match your search.'}
+                                                    {search &&
+                                                        ' No events match your search.'}
                                                 </AlertDescription>
                                             </Alert>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     audits.data.map((audit) => {
-                                        const isExpanded = expandedRows.has(audit.id);
-                                        const statusClass = getDescriptionIcon(audit.description);
+                                        const isExpanded = expandedRows.has(
+                                            audit.id,
+                                        );
+                                        const statusClass = getDescriptionIcon(
+                                            audit.description,
+                                        );
                                         const subjectLabel = audit.subject_type
-                                            ? audit.subject_type.split('\\').pop()
+                                            ? audit.subject_type
+                                                  .split('\\')
+                                                  .pop()
                                             : null;
 
                                         return (
                                             <>
-                                                <TableRow key={audit.id} className="group">
+                                                <TableRow
+                                                    key={audit.id}
+                                                    className="group"
+                                                >
                                                     <TableCell className="py-3">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
                                                             className={`h-6 w-6 p-0 transition-transform ${isExpanded ? '' : 'rotate-0'}`}
-                                                            onClick={() => toggleExpand(audit.id)}
+                                                            onClick={() =>
+                                                                toggleExpand(
+                                                                    audit.id,
+                                                                )
+                                                            }
                                                         >
                                                             {isExpanded ? (
                                                                 <ChevronUpIcon className="h-3.5 w-3.5" />
@@ -330,32 +416,68 @@ export default function AuditsIndex({ audits, filters }: Props) {
                                                         </Button>
                                                     </TableCell>
                                                     <TableCell className="py-3">
-                                                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${statusClass}`}>
-                                                            {getLogNameIcon(audit.log_name)}
-                                                            {audit.log_name.split('\\').pop() ?? audit.log_name}
+                                                        <span
+                                                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${statusClass}`}
+                                                        >
+                                                            {getLogNameIcon(
+                                                                audit.log_name,
+                                                            )}
+                                                            {audit.log_name
+                                                                .split('\\')
+                                                                .pop() ??
+                                                                audit.log_name}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell className="py-3 max-w-md">
+                                                    <TableCell className="max-w-md py-3">
                                                         <div className="space-y-1">
                                                             <p className="line-clamp-1 text-sm font-medium text-foreground">
-                                                                {audit.description}
+                                                                {
+                                                                    audit.description
+                                                                }
                                                             </p>
                                                             {isExpanded && (
                                                                 <div className="space-y-1 pt-1">
-                                                                    {audit.properties && Object.keys(audit.properties).length > 0 && (
-                                                                        <div className="space-y-0.5">
-                                                                            {Object.entries(audit.properties).map(([key, value]) => (
-                                                                                <div key={key} className="flex gap-2 text-xs">
-                                                                                    <span className="font-medium text-muted-foreground shrink-0">{key}:</span>
-                                                                                    <span className="text-foreground break-all">
-                                                                                        {typeof value === 'object'
-                                                                                            ? JSON.stringify(value)
-                                                                                            : String(value)}
-                                                                                    </span>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
+                                                                    {audit.properties &&
+                                                                        Object.keys(
+                                                                            audit.properties,
+                                                                        )
+                                                                            .length >
+                                                                            0 && (
+                                                                            <div className="space-y-0.5">
+                                                                                {Object.entries(
+                                                                                    audit.properties,
+                                                                                ).map(
+                                                                                    ([
+                                                                                        key,
+                                                                                        value,
+                                                                                    ]) => (
+                                                                                        <div
+                                                                                            key={
+                                                                                                key
+                                                                                            }
+                                                                                            className="flex gap-2 text-xs"
+                                                                                        >
+                                                                                            <span className="shrink-0 font-medium text-muted-foreground">
+                                                                                                {
+                                                                                                    key
+                                                                                                }
+                                                                                                :
+                                                                                            </span>
+                                                                                            <span className="break-all text-foreground">
+                                                                                                {typeof value ===
+                                                                                                'object'
+                                                                                                    ? JSON.stringify(
+                                                                                                          value,
+                                                                                                      )
+                                                                                                    : String(
+                                                                                                          value,
+                                                                                                      )}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    ),
+                                                                                )}
+                                                                            </div>
+                                                                        )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -363,29 +485,47 @@ export default function AuditsIndex({ audits, filters }: Props) {
                                                     <TableCell className="py-3">
                                                         <div className="flex items-center gap-2">
                                                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                                                                {(audit.causer?.name ?? 'S').charAt(0).toUpperCase()}
+                                                                {(
+                                                                    audit.causer
+                                                                        ?.name ??
+                                                                    'S'
+                                                                )
+                                                                    .charAt(0)
+                                                                    .toUpperCase()}
                                                             </div>
                                                             <span className="text-sm text-foreground">
-                                                                {audit.causer?.name ?? 'System'}
+                                                                {audit.causer
+                                                                    ?.name ??
+                                                                    'System'}
                                                             </span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="py-3">
-                                                        {subjectLabel && audit.subject_id ? (
+                                                        {subjectLabel &&
+                                                        audit.subject_id ? (
                                                             <span className="text-xs text-muted-foreground">
-                                                                {subjectLabel} #{audit.subject_id}
+                                                                {subjectLabel} #
+                                                                {
+                                                                    audit.subject_id
+                                                                }
                                                             </span>
                                                         ) : (
-                                                            <span className="text-xs text-muted-foreground">—</span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                —
+                                                            </span>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="py-3">
                                                         <div className="flex flex-col">
                                                             <span className="text-xs text-muted-foreground">
-                                                                {formatRelativeTime(audit.created_at)}
+                                                                {formatRelativeTime(
+                                                                    audit.created_at,
+                                                                )}
                                                             </span>
                                                             <span className="text-[10px] text-muted-foreground/60">
-                                                                {formatFullDate(audit.created_at)}
+                                                                {formatFullDate(
+                                                                    audit.created_at,
+                                                                )}
                                                             </span>
                                                         </div>
                                                     </TableCell>
@@ -400,9 +540,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
                 </Card>
 
                 {/* Pagination */}
-                {audits.links.length > 3 && (
-                    <Pagination links={audits.links} />
-                )}
+                {audits.links.length > 3 && <Pagination links={audits.links} />}
             </div>
         </>
     );
