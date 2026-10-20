@@ -29,4 +29,11 @@ yarn-error.log
 /.zed
 TODO.md
 
+# Agent and skill files
+/.agents/
+**/AGENTS.md
+**/SKILL.md
+**/*.agent.md
+**/*.instructions.md
+**/*.prompt.md
 
