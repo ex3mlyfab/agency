@@ -2,9 +2,9 @@
 
 use App\Models\Deceased;
 use App\Models\StorageFeeLog;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -19,8 +19,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('storage_fee_logs', function (Blueprint $table) {
-            $table->timestamp('admission_started_at')->nullable()->after('created_by');
-            $table->index(['deceased_id', 'admission_started_at']);
+            if (! Schema::hasColumn('storage_fee_logs', 'admission_started_at')) {
+                $table->timestamp('admission_started_at')->nullable()->after('created_by');
+            }
+
+            if (! Schema::hasIndex('storage_fee_logs', ['deceased_id', 'admission_started_at'])) {
+                $table->index(['deceased_id', 'admission_started_at']);
+            }
         });
 
         // Backfill: attribute each existing log to the admission it was billed
@@ -60,10 +65,14 @@ return new class extends Migration
      * Resolve the admission a given log was billed under, using the log's
      * creation timestamp as the anchor.
      *
+     * The return type is CarbonInterface (not Carbon) because the application
+     * configures immutable dates globally, so datetime casts yield
+     * CarbonImmutable.
+     *
      * @param  Deceased  $deceased
-     * @param  Carbon|null  $logCreatedAt
+     * @param  CarbonInterface|null  $logCreatedAt
      */
-    private function resolveAdmissionStartForLog($deceased, $logCreatedAt): ?Carbon
+    private function resolveAdmissionStartForLog($deceased, $logCreatedAt): ?CarbonInterface
     {
         $transfers = $deceased->transfers()->get();
 

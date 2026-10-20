@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DeceasedStatus;
 use App\Http\Requests\StoreChamberRequest;
 use App\Http\Requests\UpdateChamberRequest;
 use App\Models\Chamber;
@@ -9,6 +10,7 @@ use App\Models\Deceased;
 use App\Models\Service;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,7 +24,7 @@ class ChamberController extends Controller
     {
         Gate::authorize('chambers.view');
 
-        $query = Chamber::with(['service'])->withCount(['occupants']);
+        $query = Chamber::with(['service', 'latestEntryTransfer'])->withCount(['occupants']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -34,9 +36,14 @@ class ChamberController extends Controller
 
         if ($request->filled('status')) {
             if ($request->input('status') === 'occupied') {
-                $query->havingRaw('occupants_count > 0');
+                $query->whereHas('occupants');
             } elseif ($request->input('status') === 'empty') {
-                $query->havingRaw('occupants_count = 0');
+                $query->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('deceased')
+                        ->whereRaw('deceased.chamber_id = chamber.id')
+                        ->where('deceased.status', DeceasedStatus::InChamber);
+                });
             }
         }
 
@@ -62,7 +69,7 @@ class ChamberController extends Controller
 
         $services = Service::orderBy('name')->get(['id', 'name']);
 
-        $queryForStats = Chamber::with(['service'])->withCount(['occupants']);
+        $queryForStats = Chamber::withCount(['occupants']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -74,9 +81,14 @@ class ChamberController extends Controller
 
         if ($request->filled('status')) {
             if ($request->input('status') === 'occupied') {
-                $queryForStats->havingRaw('occupants_count > 0');
+                $queryForStats->whereHas('occupants');
             } elseif ($request->input('status') === 'empty') {
-                $queryForStats->havingRaw('occupants_count = 0');
+                $queryForStats->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('deceased')
+                        ->whereRaw('deceased.chamber_id = chamber.id')
+                        ->where('deceased.status', DeceasedStatus::InChamber);
+                });
             }
         }
 

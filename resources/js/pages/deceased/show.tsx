@@ -1,4 +1,5 @@
 ﻿import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { format, parseISO } from 'date-fns';
 import {
     PencilIcon,
     MoveRightIcon,
@@ -495,22 +496,40 @@ export default function DeceasedShow({
                             </h1>
                             <StatusChip status={deceased.status} />
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            Date of death:{' '}
-                            {deceased.date_of_death
-                                ? new Date(
-                                      deceased.date_of_death,
-                                  ).toLocaleString(undefined, {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                  })
-                                : 'N/A'}
-                            {deceased.chamber &&
-                                ` - Chamber: ${deceased.chamber.name}`}
-                        </p>
+                        <div className="text-sm text-muted-foreground">
+                            <div>
+                                Date of death:{' '}
+                                {deceased.date_of_death
+                                    ? new Date(
+                                          deceased.date_of_death,
+                                      ).toLocaleString(undefined, {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: '2-digit',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                      })
+                                    : 'N/A'}
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <span className="font-medium">
+                                    Deceased Number:
+                                </span>
+                                <span className="font-mono text-sm text-foreground">
+                                    {deceased.id}
+                                </span>
+                            </div>
+                            {deceased.chamber && (
+                                <div className="mt-1 flex items-baseline gap-2">
+                                    <span className="font-medium">
+                                        Current Chamber:
+                                    </span>
+                                    <span className="font-mono text-sm text-foreground">
+                                        {deceased.chamber.name}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
                         <div className="grid gap-2 lg:grid-cols-3">
@@ -530,7 +549,7 @@ export default function DeceasedShow({
                             {can.transfer && deceased.status !== 'Released' && (
                                 <Button asChild variant="secondary">
                                     <Link
-                                        href={`/transfers/create?deceased_id=${deceased.id}`}
+                                        href={`/transfers/create?deceased_id=${deceased.id}&chamber_id=${deceased.chamber?.id ?? ''}`}
                                     >
                                         <MoveRightIcon className="mr-2 h-4 w-4" />
                                         Transfer
@@ -2289,38 +2308,59 @@ export default function DeceasedShow({
                                 No transfer events recorded yet.
                             </p>
                         ) : (
-                            <ol className="relative space-y-6 border-l border-border pl-6">
-                                {deceased.transfers.map((t) => (
-                                    <li key={t.id} className="relative">
-                                        <span className="absolute top-0.5 -left-[1.5rem] flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card" />
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <StatusChip status={t.event_type} />
-                                            <span className="text-xs text-muted-foreground">
-                                                {t.transferred_at}
-                                            </span>
-                                            {t.transferred_by_user && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    - by{' '}
-                                                    {t.transferred_by_user.name}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {(t.from_chamber || t.to_chamber) && (
-                                            <p className="mt-1 text-sm text-foreground">
-                                                {t.from_chamber?.name ?? 'N/A'}
-                                                {' -> '}
-                                                {t.to_chamber?.name ??
-                                                    'Released'}
-                                            </p>
-                                        )}
-                                        {t.notes && (
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                {t.notes}
-                                            </p>
-                                        )}
-                                    </li>
-                                ))}
-                            </ol>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-border bg-muted/40">
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                Date
+                                            </th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                Event
+                                            </th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                From
+                                            </th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                To
+                                            </th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                By
+                                            </th>
+                                            <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                                Notes
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {deceased.transfers.map((t) => (
+                                            <tr
+                                                key={t.id}
+                                                className="border-b border-border last:border-0 hover:bg-muted/30"
+                                            >
+                                                <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">
+                                                    {format(parseISO(t.transferred_at), 'dd-MMM-yyyy')}
+                                                </td>
+                                                <td className="px-4 py-2.5">
+                                                    <StatusChip status={t.event_type} />
+                                                </td>
+                                                <td className="px-4 py-2.5 text-muted-foreground">
+                                                    {t.from_chamber?.name ?? '—'}
+                                                </td>
+                                                <td className="px-4 py-2.5 text-muted-foreground">
+                                                    {t.to_chamber?.name ?? 'Released'}
+                                                </td>
+                                                <td className="px-4 py-2.5 text-muted-foreground">
+                                                    {t.transferred_by_user?.name ?? '—'}
+                                                </td>
+                                                <td className="px-4 py-2.5 text-muted-foreground">
+                                                    {t.notes ?? '—'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </CardContent>
                 </Card>

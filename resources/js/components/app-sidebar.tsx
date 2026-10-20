@@ -38,33 +38,30 @@ export function AppSidebar() {
             title: 'Dashboard',
             href: dashboard.url(),
             icon: LayoutGrid,
+            tone: 'text-primary',
         },
         ...(can['deceased.view'] !== false
             ? [
                   {
-                      title: 'Record',
+                      title: 'Records',
                       href: '/deceased',
                       icon: Users,
-                      children: [
-                          {
-                              title: 'Add New Record',
-                              href: '/deceased/create',
-                              icon: Plus,
-                          },
-                          {
-                              title: 'View Records',
-                              href: '/deceased',
-                          },
-                      ],
+                      tone: 'text-destructive',
+                      action: {
+                          title: 'Add New Record',
+                          href: '/deceased/create',
+                          icon: Plus,
+                      },
                   },
               ]
             : []),
         ...(can['chambers.view'] !== false
             ? [
                   {
-                      title: 'Cold Rooms & Depositions',
+                      title: 'Cold Rooms',
                       href: '/chambers',
                       icon: Building2,
+                      tone: 'text-success',
                       children: [
                           {
                               title: 'Cold Rooms',
@@ -86,6 +83,7 @@ export function AppSidebar() {
                       title: 'Transfers',
                       href: '/transfers',
                       icon: MoveRight,
+                      tone: 'text-highlight',
                   },
               ]
             : []),
@@ -95,6 +93,7 @@ export function AppSidebar() {
                       title: 'History',
                       href: auditsIndex.url(),
                       icon: ClipboardList,
+                      tone: 'text-warning',
                   },
               ]
             : []),
@@ -104,6 +103,7 @@ export function AppSidebar() {
                       title: 'Reports',
                       href: '/reports',
                       icon: ScrollText,
+                      tone: 'text-info',
                   },
               ]
             : []),
@@ -123,8 +123,8 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
-                <NavMain items={mainNavItems} />
+            <SidebarContent className="gap-4">
+                <NavMain items={mainNavItems} label="Platform" />
                 <NavAccounts can={can} />
                 <NavSettings can={can} />
             </SidebarContent>

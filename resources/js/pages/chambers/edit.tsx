@@ -22,7 +22,7 @@ export default function ChamberEdit({ chamber, services }: Props) {
             <div className="space-y-6 p-6">
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                        Edit Chamber
+                        Edit Rack
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {chamber.name}
@@ -48,7 +48,7 @@ export default function ChamberEdit({ chamber, services }: Props) {
 
 ChamberEdit.layout = {
     breadcrumbs: [
-        { title: 'Chambers', href: '/chambers' },
+        { title: 'Coldrooms', href: '/chambers' },
         { title: 'Edit', href: '#' },
     ],
 };

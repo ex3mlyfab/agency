@@ -1,4 +1,4 @@
-﻿import { Head, useForm } from '@inertiajs/react';
+﻿import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { InputError } from '@/components/input-error';
@@ -47,10 +47,14 @@ export default function TransferCreate({
     chamberOptions,
 }: Props) {
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const searchParams = new URL(
+        usePage().url,
+        'http://localhost',
+    ).searchParams;
 
     const { data, setData, post, processing, errors } = useForm<FormData>({
-        deceased_id: '',
-        to_chamber_id: '',
+        deceased_id: searchParams.get('deceased_id') || '',
+        to_chamber_id: searchParams.get('chamber_id') || '',
         event_type: 'Entered',
         notes: '',
     });
@@ -71,6 +75,9 @@ export default function TransferCreate({
     );
     const selectedChamber = chamberOptions.find(
         (c) => String(c.id) === data.to_chamber_id,
+    );
+    const currentChamber = chamberOptions.find(
+        (chamber) => chamber.id === selectedDeceased?.chamber_id,
     );
 
     const confirmDescription =
@@ -122,7 +129,7 @@ export default function TransferCreate({
                                                 'border-destructive',
                                         )}
                                     >
-                                        <SelectValue placeholder="Select deceasedâ€¦" />
+                                        <SelectValue placeholder="Select deceased..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {deceasedOptions.map((d) => (
@@ -130,13 +137,22 @@ export default function TransferCreate({
                                                 key={d.id}
                                                 value={String(d.id)}
                                             >
-                                                {d.first_name} {d.last_name} â€”{' '}
+                                                {d.first_name} {d.last_name} -{' '}
                                                 {d.status}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.deceased_id} />
+                                {selectedDeceased && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Current chamber:{' '}
+                                        <span className="font-medium text-foreground">
+                                            {currentChamber?.name ??
+                                                'Not assigned'}
+                                        </span>
+                                    </p>
+                                )}
                             </div>
 
                             {/* Event type */}
@@ -196,7 +212,7 @@ export default function TransferCreate({
                                                     'border-destructive',
                                             )}
                                         >
-                                            <SelectValue placeholder="Select chamberâ€¦" />
+                                            <SelectValue placeholder="Select chamber..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {chamberOptions.map((c) => (
@@ -206,7 +222,7 @@ export default function TransferCreate({
                                                 >
                                                     {c.name}
                                                     {c.location
-                                                        ? ` â€” ${c.location}`
+                                                        ? ` - ${c.location}`
                                                         : ''}
                                                 </SelectItem>
                                             ))}
@@ -234,7 +250,7 @@ export default function TransferCreate({
                                     }
                                     rows={3}
                                     disabled={processing}
-                                    placeholder="Reason for transfer, special instructionsâ€¦"
+                                    placeholder="Reason for transfer, special instructions..."
                                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                             </div>

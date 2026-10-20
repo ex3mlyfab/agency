@@ -256,7 +256,7 @@ export default function Dashboard({
                 {/* Main Content Grid: Chart & Quick Actions */}
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Trend Chart (2 cols) */}
-                    <Card className="md:col-span-2 border-t-4 border-t-info bg-info/[0.035]">
+                    <Card className="md:col-span-2">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -536,7 +536,7 @@ export default function Dashboard({
                     </Card>
 
                     {/* Quick Actions (1 col) */}
-                    <Card className="flex flex-col justify-between border-t-4 border-t-highlight bg-highlight/[0.035]">
+                    <Card className="flex flex-col justify-between">
                         <CardHeader>
                             <CardTitle className="text-base font-semibold">
                                 Quick Actions
@@ -554,7 +554,7 @@ export default function Dashboard({
                                 >
                                     <Link href="/deceased/create">
                                         <PlusCircle className="mr-2 h-4 w-4" />
-                                        Register Deceased
+                                        Register New
                                     </Link>
                                 </Button>
                             ) : null}
@@ -567,7 +567,7 @@ export default function Dashboard({
                                 >
                                     <Link href="/transfers">
                                         <ArrowRightLeft className="mr-2 h-4 w-4 text-primary" />
-                                        Transfer Chamber
+                                        Transfer Cold Room (Select Record)
                                     </Link>
                                 </Button>
                             ) : null}

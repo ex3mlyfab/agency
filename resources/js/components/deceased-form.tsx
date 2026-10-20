@@ -22,10 +22,17 @@ import { cn } from '@/lib/utils';
 interface DeceasedFormData {
     first_name: string;
     last_name: string;
+    othernames: string;
     date_of_birth: string;
+    estimated_age: string;
     date_of_death: string;
     body_tag_number: string;
     body_condition: string;
+    type_of_cloth: string;
+    color_of_cloth: string;
+    underwear: string;
+    type_of_wrapping: string;
+    type_of_wrapping_other: string;
     place_of_death: string;
     hospital_number: string;
     gender: string;
@@ -35,6 +42,7 @@ interface DeceasedFormData {
     relative_phone: string;
     relative_relationship: string;
     relative_address: string;
+    residential_address: string;
     chamber_id: string;
     stored_at: string;
     service_category_id: string;
@@ -49,7 +57,13 @@ interface DeceasedFormProps {
     method?: 'post' | 'put' | 'patch';
     submitLabel?: string;
     cancelHref?: string;
-    chambers?: { id: string; name: string; available_spaces: number; is_current?: boolean }[];
+    dateInputMode?: 'picker' | 'native';
+    chambers?: {
+        id: string;
+        name: string;
+        available_spaces: number;
+        is_current?: boolean;
+    }[];
     serviceCategories?: { id: string; name: string }[];
 }
 
@@ -59,6 +73,7 @@ export function DeceasedForm({
     method = 'post',
     submitLabel = 'Save Record',
     cancelHref = '/deceased',
+    dateInputMode = 'picker',
     chambers = [],
     serviceCategories = [],
 }: DeceasedFormProps) {
@@ -66,10 +81,17 @@ export function DeceasedForm({
         useForm<DeceasedFormData>({
             first_name: initialValues.first_name ?? '',
             last_name: initialValues.last_name ?? '',
+            othernames: initialValues.othernames ?? '',
             date_of_birth: initialValues.date_of_birth ?? '',
+            estimated_age: initialValues.estimated_age ?? '',
             date_of_death: initialValues.date_of_death ?? '',
             body_tag_number: initialValues.body_tag_number ?? '',
             body_condition: initialValues.body_condition ?? '',
+            type_of_cloth: initialValues.type_of_cloth ?? '',
+            color_of_cloth: initialValues.color_of_cloth ?? '',
+            underwear: initialValues.underwear ?? '',
+            type_of_wrapping: initialValues.type_of_wrapping ?? '',
+            type_of_wrapping_other: initialValues.type_of_wrapping_other ?? '',
             place_of_death: initialValues.place_of_death ?? '',
             place_of_death_other: initialValues.place_of_death_other ?? '',
             hospital_number: initialValues.hospital_number ?? '',
@@ -80,6 +102,7 @@ export function DeceasedForm({
             relative_phone: initialValues.relative_phone ?? '',
             relative_relationship: initialValues.relative_relationship ?? '',
             relative_address: initialValues.relative_address ?? '',
+            residential_address: initialValues.residential_address ?? '',
             chamber_id: initialValues.chamber_id ?? '',
             stored_at: initialValues.stored_at ?? '',
             service_category_id: initialValues.service_category_id ?? '',
@@ -112,6 +135,38 @@ export function DeceasedForm({
         }
     }
 
+    function renderDateField(
+        field: 'date_of_birth' | 'date_of_death' | 'stored_at',
+        disabled: boolean,
+    ) {
+        const value = data[field];
+
+        if (dateInputMode === 'native') {
+            return (
+                <Input
+                    id={field}
+                    type="date"
+                    value={value ? value.slice(0, 10) : ''}
+                    onChange={(e) => setData(field, e.target.value)}
+                    disabled={disabled}
+                    className={cn(errors[field] && 'border-destructive')}
+                />
+            );
+        }
+
+        return (
+            <DatePicker
+                id={field}
+                value={value ? parseISO(value) : undefined}
+                onChange={(date) =>
+                    setData(field, date ? format(date, 'yyyy-MM-dd') : '')
+                }
+                disabled={disabled}
+                className={cn(errors[field] && 'border-destructive')}
+            />
+        );
+    }
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Section 1: Deceased identity */}
@@ -124,7 +179,10 @@ export function DeceasedForm({
                 <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                     {/* First Name */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="first_name" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="first_name"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             First Name{' '}
                             <span className="text-destructive">*</span>
                         </Label>
@@ -145,7 +203,10 @@ export function DeceasedForm({
 
                     {/* Last Name */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="last_name" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="last_name"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Last Name{' '}
                             <span className="text-destructive">*</span>
                         </Label>
@@ -164,6 +225,29 @@ export function DeceasedForm({
                         <InputError message={errors.last_name} />
                     </div>
 
+                    {/* Other Names */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="othernames"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Other Names
+                        </Label>
+                        <Input
+                            id="othernames"
+                            value={data.othernames}
+                            onChange={(e) =>
+                                setData('othernames', e.target.value)
+                            }
+                            placeholder="Other names or aliases"
+                            disabled={processing}
+                            className={cn(
+                                errors.othernames && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.othernames} />
+                    </div>
+
                     {/* Date of Birth */}
                     <div className="space-y-1.5">
                         <Label
@@ -172,24 +256,37 @@ export function DeceasedForm({
                         >
                             Date of Birth
                         </Label>
-                        <DatePicker
-                            value={
-                                data.date_of_birth
-                                    ? parseISO(data.date_of_birth)
-                                    : undefined
+                        {renderDateField('date_of_birth', processing)}
+                        <InputError message={errors.date_of_birth} />
+                    </div>
+
+                    {/* Estimated Age */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="estimated_age"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Estimated Age
+                        </Label>
+                        <Input
+                            id="estimated_age"
+                            type="number"
+                            min="0"
+                            max="150"
+                            value={data.estimated_age}
+                            onChange={(e) =>
+                                setData('estimated_age', e.target.value)
                             }
-                            onChange={(date) =>
-                                setData(
-                                    'date_of_birth',
-                                    date ? format(date, 'yyyy-MM-dd') : '',
-                                )
-                            }
+                            placeholder="If date of birth is unknown"
                             disabled={processing}
                             className={cn(
-                                errors.date_of_birth && 'border-destructive',
+                                errors.estimated_age && 'border-destructive',
                             )}
                         />
-                        <InputError message={errors.date_of_birth} />
+                        <p className="text-xs text-muted-foreground">
+                            Use when date of birth is not available.
+                        </p>
+                        <InputError message={errors.estimated_age} />
                     </div>
 
                     {/* Date of Death */}
@@ -201,18 +298,7 @@ export function DeceasedForm({
                             Date of Death{' '}
                             <span className="text-destructive">*</span>
                         </Label>
-                        <Input
-                            id="date_of_death"
-                            type="datetime-local"
-                            value={data.date_of_death ? data.date_of_death.slice(0, 16) : ''}
-                            onChange={(e) =>
-                                setData('date_of_death', e.target.value)
-                            }
-                            disabled={processing}
-                            className={cn(
-                                errors.date_of_death && 'border-destructive',
-                            )}
-                        />
+                        {renderDateField('date_of_death', processing)}
                         <InputError message={errors.date_of_death} />
                     </div>
 
@@ -234,16 +320,21 @@ export function DeceasedForm({
                             <SelectTrigger
                                 id="place_of_death"
                                 className={cn(
-                                    errors.place_of_death && 'border-destructive',
+                                    errors.place_of_death &&
+                                        'border-destructive',
                                 )}
                             >
                                 <SelectValue placeholder="Select place of death" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Home">Home</SelectItem>
-                                <SelectItem value="Roadside">Roadside</SelectItem>
+                                <SelectItem value="Roadside">
+                                    Roadside
+                                </SelectItem>
                                 <SelectItem value="Hotel">Hotel</SelectItem>
-                                <SelectItem value="Hospital">Hospital</SelectItem>
+                                <SelectItem value="Hospital">
+                                    Hospital
+                                </SelectItem>
                                 <SelectItem value="Others">Others</SelectItem>
                             </SelectContent>
                         </Select>
@@ -334,17 +425,26 @@ export function DeceasedForm({
                             <SelectTrigger
                                 id="body_condition"
                                 className={cn(
-                                    errors.body_condition && 'border-destructive',
+                                    errors.body_condition &&
+                                        'border-destructive',
                                 )}
                             >
                                 <SelectValue placeholder="Select body condition" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Fresh">Fresh</SelectItem>
-                                <SelectItem value="Embalmed">Embalmed</SelectItem>
-                                <SelectItem value="Decomposed">Decomposed</SelectItem>
-                                <SelectItem value="Autolyzed">Autolyzed</SelectItem>
-                                <SelectItem value="Skelentonized">Skelentonized</SelectItem>
+                                <SelectItem value="Embalmed">
+                                    Embalmed
+                                </SelectItem>
+                                <SelectItem value="Decomposed">
+                                    Decomposed
+                                </SelectItem>
+                                <SelectItem value="Autolyzed">
+                                    Autolyzed
+                                </SelectItem>
+                                <SelectItem value="Skelentonized">
+                                    Skelentonized
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <InputError message={errors.body_condition} />
@@ -352,7 +452,10 @@ export function DeceasedForm({
 
                     {/* Gender */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="gender" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="gender"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Gender <span className="text-destructive">*</span>
                         </Label>
                         <Select
@@ -399,18 +502,25 @@ export function DeceasedForm({
 
                     {/* Service Category */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="service_category_id" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                            Service Category <span className="text-destructive">*</span>
+                        <Label
+                            htmlFor="service_category_id"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Service Category{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <Select
                             value={data.service_category_id}
-                            onValueChange={(val) => setData('service_category_id', val)}
+                            onValueChange={(val) =>
+                                setData('service_category_id', val)
+                            }
                             disabled={processing}
                         >
                             <SelectTrigger
                                 id="service_category_id"
                                 className={cn(
-                                    errors.service_category_id && 'border-destructive',
+                                    errors.service_category_id &&
+                                        'border-destructive',
                                 )}
                             >
                                 <SelectValue placeholder="-- Choose Category --" />
@@ -428,8 +538,12 @@ export function DeceasedForm({
 
                     {/* Source */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="source" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                            Source of Deceased <span className="text-destructive">*</span>
+                        <Label
+                            htmlFor="source"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Source of Deceased{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <Select
                             value={data.source}
@@ -445,8 +559,12 @@ export function DeceasedForm({
                                 <SelectValue placeholder="-- Choose Source --" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="In Hospital">In Hospital</SelectItem>
-                                <SelectItem value="Outside Hospital">Outside Hospital</SelectItem>
+                                <SelectItem value="In Hospital">
+                                    In Hospital
+                                </SelectItem>
+                                <SelectItem value="Outside Hospital">
+                                    Outside Hospital
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <InputError message={errors.source} />
@@ -454,7 +572,10 @@ export function DeceasedForm({
 
                     {/* Picture Upload */}
                     <div className="space-y-1.5 sm:col-span-2">
-                        <Label htmlFor="picture" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="picture"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Picture
                         </Label>
                         <div className="mt-2 flex items-center gap-4">
@@ -527,7 +648,10 @@ export function DeceasedForm({
                                 </AlertDescription>
                             </Alert>
                         )}
-                        <Label htmlFor="chamber_id" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="chamber_id"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Chamber Assignment
                         </Label>
                         <Select
@@ -555,7 +679,8 @@ export function DeceasedForm({
                                         {chamber.name}
                                         {!chamber.is_current && (
                                             <span className="ml-2 text-xs text-muted-foreground">
-                                                ({chamber.available_spaces} left)
+                                                ({chamber.available_spaces}{' '}
+                                                left)
                                             </span>
                                         )}
                                     </SelectItem>
@@ -567,26 +692,16 @@ export function DeceasedForm({
 
                     {/* Stored At Date */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="stored_at" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="stored_at"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Storage Date
                         </Label>
-                        <DatePicker
-                            value={
-                                data.stored_at
-                                    ? parseISO(data.stored_at)
-                                    : undefined
-                            }
-                            onChange={(date) =>
-                                setData(
-                                    'stored_at',
-                                    date ? format(date, 'yyyy-MM-dd') : '',
-                                )
-                            }
-                            disabled={processing || !data.chamber_id}
-                            className={cn(
-                                errors.stored_at && 'border-destructive',
-                            )}
-                        />
+                        {renderDateField(
+                            'stored_at',
+                            processing || !data.chamber_id,
+                        )}
                         <p className="mt-1 text-xs text-muted-foreground">
                             When was the deceased moved to this chamber?
                         </p>
@@ -595,7 +710,10 @@ export function DeceasedForm({
 
                     {/* Notes */}
                     <div className="space-y-1.5 sm:col-span-2">
-                        <Label htmlFor="notes" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <Label
+                            htmlFor="notes"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             Notes
                         </Label>
                         <textarea
@@ -611,10 +729,172 @@ export function DeceasedForm({
                         />
                         <InputError message={errors.notes} />
                     </div>
+
+                    {/* Residential Address */}
+                    <div className="space-y-1.5 sm:col-span-2">
+                        <Label
+                            htmlFor="residential_address"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Residential Address
+                        </Label>
+                        <textarea
+                            id="residential_address"
+                            value={data.residential_address}
+                            onChange={(e) =>
+                                setData('residential_address', e.target.value)
+                            }
+                            rows={2}
+                            placeholder="Last known residential address"
+                            disabled={processing}
+                            className={cn(
+                                'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+                                errors.residential_address &&
+                                    'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.residential_address} />
+                    </div>
                 </CardContent>
             </Card>
 
-            {/* Section 2: Relative / bringer information */}
+            {/* Section 2: Clothing / wrapping */}
+            <Card>
+                <CardHeader className="border-b border-border px-6 py-3">
+                    <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                        Clothing / Wrapping
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
+                    {/* Type of Cloth */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="type_of_cloth"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Type of Cloth
+                        </Label>
+                        <Input
+                            id="type_of_cloth"
+                            value={data.type_of_cloth}
+                            onChange={(e) =>
+                                setData('type_of_cloth', e.target.value)
+                            }
+                            placeholder="e.g. White sheet"
+                            disabled={processing}
+                            className={cn(
+                                errors.type_of_cloth && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.type_of_cloth} />
+                    </div>
+
+                    {/* Color of Cloth */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="color_of_cloth"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Color of Cloth
+                        </Label>
+                        <Input
+                            id="color_of_cloth"
+                            value={data.color_of_cloth}
+                            onChange={(e) =>
+                                setData('color_of_cloth', e.target.value)
+                            }
+                            placeholder="e.g. White, Black"
+                            disabled={processing}
+                            className={cn(
+                                errors.color_of_cloth && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.color_of_cloth} />
+                    </div>
+
+                    {/* Underwear */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="underwear"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Underwear
+                        </Label>
+                        <Input
+                            id="underwear"
+                            value={data.underwear}
+                            onChange={(e) =>
+                                setData('underwear', e.target.value)
+                            }
+                            placeholder="Underwear details"
+                            disabled={processing}
+                            className={cn(
+                                errors.underwear && 'border-destructive',
+                            )}
+                        />
+                        <InputError message={errors.underwear} />
+                    </div>
+
+                    {/* Type of Wrapping */}
+                    <div className="space-y-1.5">
+                        <Label
+                            htmlFor="type_of_wrapping"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Type of Wrapping
+                        </Label>
+                        <Select
+                            value={data.type_of_wrapping}
+                            onValueChange={(val) =>
+                                setData('type_of_wrapping', val)
+                            }
+                            disabled={processing}
+                        >
+                            <SelectTrigger
+                                id="type_of_wrapping"
+                                className={cn(
+                                    errors.type_of_wrapping &&
+                                        'border-destructive',
+                                )}
+                            >
+                                <SelectValue placeholder="Select wrapping type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="White Linen">
+                                    White Linen
+                                </SelectItem>
+                                <SelectItem value="Bed Spread">
+                                    Bed Spread
+                                </SelectItem>
+                                <SelectItem value="Others">Others</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {data.type_of_wrapping === 'Others' && (
+                            <Input
+                                id="type_of_wrapping_other"
+                                value={data.type_of_wrapping_other}
+                                onChange={(e) =>
+                                    setData(
+                                        'type_of_wrapping_other',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="Specify wrapping type"
+                                disabled={processing}
+                                className={cn(
+                                    'mt-2',
+                                    errors.type_of_wrapping_other &&
+                                        'border-destructive',
+                                )}
+                            />
+                        )}
+                        <InputError message={errors.type_of_wrapping} />
+                        <InputError message={errors.type_of_wrapping_other} />
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Section 3: Relative / bringer information */}
             <Card>
                 <CardHeader className="border-b border-border px-6 py-3">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
@@ -695,20 +975,26 @@ export function DeceasedForm({
                     </div>
 
                     {/* Address */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 sm:col-span-2">
                         <Label
                             htmlFor="relative_address"
                             className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
                             Address
                         </Label>
-                        <Input
+                        <textarea
                             id="relative_address"
                             value={data.relative_address}
                             onChange={(e) =>
                                 setData('relative_address', e.target.value)
                             }
+                            rows={2}
+                            placeholder="Relative's address"
                             disabled={processing}
+                            className={cn(
+                                'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+                                errors.relative_address && 'border-destructive',
+                            )}
                         />
                         <InputError message={errors.relative_address} />
                     </div>

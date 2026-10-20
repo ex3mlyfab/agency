@@ -235,7 +235,7 @@ export default function ServicePriceEdit({
                                     htmlFor="price"
                                     className="font-semibold"
                                 >
-                                    Base Price (â‚¦){' '}
+                                    Base Price {' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <Input

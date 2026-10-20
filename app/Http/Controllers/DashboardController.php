@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DeceasedStatus;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Transfer;
@@ -20,8 +21,8 @@ class DashboardController extends Controller
         $totalChambers = Chamber::count();
         $totalCapacity = Chamber::sum('capacity');
 
-        $occupiedChambers = Deceased::where('status', 'InChamber')->count();
-        $chambers = Chamber::withCount(['occupants'])->get();
+        $occupiedChambers = Deceased::where('status', DeceasedStatus::InChamber)->count();
+        $chambers = Chamber::withCount(['occupants'])->take(100)->get();
         $emptyChambers = $chambers
             ->filter(fn (Chamber $c) => $c->occupants_count === 0)
             ->count();
@@ -30,8 +31,8 @@ class DashboardController extends Controller
             ? round(($occupiedChambers / $totalCapacity) * 100, 1)
             : 0;
 
-        $pendingAdmissions = Deceased::where('status', 'Pending')->count();
-        $totalReleases = Deceased::where('status', 'Released')->count();
+        $pendingAdmissions = Deceased::where('status', DeceasedStatus::Pending)->count();
+        $totalReleases = Deceased::where('status', DeceasedStatus::Released)->count();
 
         // 2. Chamber occupancy snapshot
         $occupancy = $chambers

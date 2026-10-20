@@ -36,6 +36,7 @@ export default function DeceasedCreate({ chambers, serviceCategories }: Props) {
                     action="/deceased"
                     method="post"
                     submitLabel="Create Record"
+                    dateInputMode="native"
                     chambers={chambers}
                     serviceCategories={serviceCategories}
                 />

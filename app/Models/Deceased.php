@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DeceasedStatus;
 use Carbon\Carbon;
 use Database\Factories\DeceasedFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -42,11 +43,18 @@ class Deceased extends Model
     protected $fillable = [
         'first_name',
         'last_name',
+        'othernames',
         'picture',
         'date_of_birth',
+        'estimated_age',
         'date_of_death',
         'body_tag_number',
         'body_condition',
+        'type_of_cloth',
+        'color_of_cloth',
+        'underwear',
+        'type_of_wrapping',
+        'type_of_wrapping_other',
         'place_of_death',
         'place_of_death_other',
         'hospital_number',
@@ -59,6 +67,7 @@ class Deceased extends Model
         'relative_phone',
         'relative_relationship',
         'relative_address',
+        'residential_address',
         'release_code',
         'released_to_name',
         'released_to_phone',
@@ -76,6 +85,7 @@ class Deceased extends Model
      */
     protected $casts = [
         'date_of_birth' => 'date',
+        'estimated_age' => 'integer',
         'date_of_death' => 'datetime',
         'released_at' => 'datetime',
     ];
@@ -146,9 +156,15 @@ class Deceased extends Model
      * Exposed as a computed accessor (not a HasOne) because the schema has no
      * `deceased.invoice_id` column. This lets `deceased.invoice` return the
      * newest service invoice without eager-loading a non-existent relation.
+     *
+     * Safely lazy-loads `invoices` if not already loaded.
      */
     public function getInvoiceAttribute(): ?Invoice
     {
+        if (! $this->relationLoaded('invoices')) {
+            $this->load('invoices');
+        }
+
         return $this->invoices->first();
     }
 
@@ -405,7 +421,7 @@ class Deceased extends Model
             return 0;
         }
 
-        if ($this->status === 'Released' && $this->released_at) {
+        if ($this->status === DeceasedStatus::Released && $this->released_at) {
             return max(0, (int) $entryAt->diffInDays(Carbon::parse($this->released_at)));
         }
 
@@ -426,7 +442,7 @@ class Deceased extends Model
         $transfers = $this->transfers()->get();
 
         $lastRelease = $transfers
-            ->where('event_type', 'Released')
+            ->where('event_type', DeceasedStatus::Released)
             ->max('transferred_at');
 
         if ($lastRelease) {

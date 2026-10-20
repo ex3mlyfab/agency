@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Database\Factories\ServicePriceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -53,6 +53,28 @@ class ServicePrice extends Model
     public function servicePriceTiers(): HasMany
     {
         return $this->hasMany(ServicePriceTier::class)->orderBy('start_day');
+    }
+
+    /**
+     * Find a ServicePrice by service, category, and source (cached).
+     *
+     * @return self|null
+     */
+    public static function findByServiceCategorySource(string $serviceId, string $categoryOrSource, string $source): ?self
+    {
+        $cacheKey = "service_price:{$serviceId}:{$categoryOrSource}:{$source}";
+
+        return Cache::remember($cacheKey, 3600, function () use ($serviceId, $categoryOrSource, $source) {
+            return static::query()
+                ->where('service_id', $serviceId)
+                ->where('service_category_id', $categoryOrSource)
+                ->where(function ($query) use ($source) {
+                    $query->whereNull('source')
+                        ->orWhere('source', $source);
+                })
+                ->with('servicePriceTiers')
+                ->first();
+        });
     }
 
     /**
@@ -124,8 +146,11 @@ class ServicePrice extends Model
         // Trailing gap after the last tier: only when the last tier is bounded
         // and the requested range extends past it. Bill at the last tier's rate.
         $lastTier = $tiers->last();
-        if ($lastTier->end_day !== null && $toDay > (int) $lastTier->end_day) {
-            $totalCharge += ($toDay - (int) $lastTier->end_day) * (float) $lastTier->price;
+        $trailingStart = $lastTier->end_day !== null
+            ? max($fromDay, (int) $lastTier->end_day + 1)
+            : null;
+        if ($trailingStart !== null && $trailingStart <= $toDay) {
+            $totalCharge += ($toDay - $trailingStart + 1) * (float) $lastTier->price;
         }
 
         // Leading gap before the first tier bills at the flat service price.

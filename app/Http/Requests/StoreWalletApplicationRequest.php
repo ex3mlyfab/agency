@@ -42,7 +42,7 @@ class StoreWalletApplicationRequest extends FormRequest
 
             $invoice = Invoice::find($this->input('invoice_id'));
 
-            if ($invoice && $invoice->deceased_id != $this->input('deceased_id')) {
+            if ($invoice && $invoice->deceased_id !== $this->input('deceased_id')) {
                 $validator->errors()->add('invoice_id', 'The selected invoice does not belong to the deceased record.');
             }
         }];

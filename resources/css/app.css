@@ -296,45 +296,6 @@
     }
 }
 
-@keyframes gradient-flow {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-@keyframes float-particle {
-    0% {
-        transform: translateY(105%) translateX(0) scale(0.6);
-        opacity: 0;
-    }
-    10% {
-        opacity: 0.6;
-    }
-    90% {
-        opacity: 0.6;
-    }
-    100% {
-        transform: translateY(-10%) translateX(var(--drift-x, 40px)) scale(1.2);
-        opacity: 0;
-    }
-}
-
-@keyframes twinkle-particle {
-    0%,
-    100% {
-        opacity: 0.2;
-    }
-    50% {
-        opacity: 1;
-    }
-}
-
 @keyframes fade-in-up {
     from {
         opacity: 0;
@@ -348,9 +309,4 @@
 
 .animate-fade-in-up {
     animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-gradient-slow {
-    background-size: 200% 200%;
-    animation: gradient-flow 20s ease infinite;
 }

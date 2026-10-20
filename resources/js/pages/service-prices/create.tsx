@@ -217,7 +217,7 @@ export default function ServicePriceCreate({
                                     htmlFor="price"
                                     className="font-semibold"
                                 >
-                                    Base Price (â‚¦){' '}
+                                    Base Price {' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <Input

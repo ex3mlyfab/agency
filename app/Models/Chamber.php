@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DeceasedStatus;
 use Database\Factories\ChamberFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,7 +38,7 @@ class Chamber extends Model
      */
     public function occupants(): HasMany
     {
-        return $this->hasMany(Deceased::class)->where('status', 'InChamber');
+        return $this->hasMany(Deceased::class)->where('status', DeceasedStatus::InChamber);
     }
 
     /**
@@ -57,29 +58,44 @@ class Chamber extends Model
     }
 
     /**
+     * The most recent "Entered" transfer into this chamber.
+     *
+     * Eager-load via `with('latestEntryTransfer')` to avoid per-row queries.
+     */
+    public function latestEntryTransfer(): HasOne
+    {
+        return $this->hasOne(Transfer::class, 'to_chamber_id')
+            ->where('event_type', 'Entered')
+            ->latestOfMany('transferred_at');
+    }
+
+    /**
      * Get occupancy status label.
+     *
+     * Uses the pre-loaded `occupants_count` (from withCount) when available
+     * to avoid a per-row query; falls back to `exists()` otherwise.
      */
     public function getOccupancyStatusAttribute(): string
     {
-        return $this->occupants()->exists() ? 'In use' : 'Empty';
+        $count = $this->occupants_count ?? $this->occupants()->count();
+
+        return $count > 0 ? 'In use' : 'Empty';
     }
 
     /**
      * Get days the current occupant has been in this chamber.
      *
-     * Returns null when empty.
+     * Uses the eager-loaded `latestEntryTransfer` relation when available
+     * to avoid a per-row query; returns null when empty.
      */
     public function getDaysInChamberAttribute(): ?int
     {
-        $latestEntry = Transfer::where('to_chamber_id', $this->id)
-            ->where('event_type', 'Entered')
-            ->latest('transferred_at')
-            ->first();
+        $entry = $this->relationLoaded('latestEntryTransfer') ? $this->latestEntryTransfer : null;
 
-        if (! $latestEntry) {
+        if (! $entry) {
             return null;
         }
 
-        return (int) now()->diffInDays($latestEntry->transferred_at);
+        return (int) now()->diffInDays($entry->transferred_at);
     }
 }

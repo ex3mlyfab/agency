@@ -922,6 +922,26 @@ it('bills gap days at the preceding tier rate', function () {
     expect($price->calculateStorageChargeForRange(8, 8))->toEqual(20000.00);
 });
 
+it('bills only requested days after the last bounded tier', function () {
+    $service = Service::create(['name' => 'Storage']);
+    $price = ServicePrice::create([
+        'service_id' => $service->id,
+        'service_category_id' => $this->category->id,
+        'price' => 10000.00,
+    ]);
+
+    ServicePriceTier::create([
+        'service_price_id' => $price->id,
+        'start_day' => 1,
+        'end_day' => 10,
+        'price' => 20000.00,
+    ]);
+
+    $price->load('servicePriceTiers');
+
+    expect($price->calculateStorageChargeForRange(13, 15))->toEqual(60000.00);
+});
+
 it('restarts the storage-day counter on re-entry after a release', function () {
     $chamberService = Service::create(['name' => 'Chamber Storage']);
     $chamber = Chamber::create([

@@ -5,8 +5,16 @@ interface Deceased {
     id: number;
     first_name: string;
     last_name: string;
+    othernames: string | null;
     date_of_birth: string | null;
+    estimated_age: number | null;
     date_of_death: string;
+    body_condition: string | null;
+    type_of_cloth: string | null;
+    color_of_cloth: string | null;
+    underwear: string | null;
+    type_of_wrapping: string | null;
+    type_of_wrapping_other: string | null;
     gender: string;
     cause_of_death: string | null;
     notes: string | null;
@@ -15,6 +23,7 @@ interface Deceased {
     relative_phone: string;
     relative_relationship: string;
     relative_address: string | null;
+    residential_address: string | null;
     chamber_id: string | null;
     service_category_id: string | null;
     source: string | null;
@@ -38,7 +47,11 @@ interface Props {
     serviceCategories: ServiceCategory[];
 }
 
-export default function DeceasedEdit({ deceased, chambers, serviceCategories }: Props) {
+export default function DeceasedEdit({
+    deceased,
+    chambers,
+    serviceCategories,
+}: Props) {
     return (
         <>
             <Head
@@ -62,8 +75,20 @@ export default function DeceasedEdit({ deceased, chambers, serviceCategories }: 
                     initialValues={{
                         first_name: deceased.first_name,
                         last_name: deceased.last_name,
+                        othernames: deceased.othernames ?? '',
                         date_of_birth: deceased.date_of_birth ?? '',
+                        estimated_age:
+                            deceased.estimated_age != null
+                                ? String(deceased.estimated_age)
+                                : '',
                         date_of_death: deceased.date_of_death,
+                        body_condition: deceased.body_condition ?? '',
+                        type_of_cloth: deceased.type_of_cloth ?? '',
+                        color_of_cloth: deceased.color_of_cloth ?? '',
+                        underwear: deceased.underwear ?? '',
+                        type_of_wrapping: deceased.type_of_wrapping ?? '',
+                        type_of_wrapping_other:
+                            deceased.type_of_wrapping_other ?? '',
                         gender: deceased.gender,
                         cause_of_death: deceased.cause_of_death ?? '',
                         notes: deceased.notes ?? '',
@@ -71,6 +96,7 @@ export default function DeceasedEdit({ deceased, chambers, serviceCategories }: 
                         relative_phone: deceased.relative_phone,
                         relative_relationship: deceased.relative_relationship,
                         relative_address: deceased.relative_address ?? '',
+                        residential_address: deceased.residential_address ?? '',
                         chamber_id: deceased.chamber_id ?? '',
                         service_category_id: deceased.service_category_id ?? '',
                         source: deceased.source ?? '',

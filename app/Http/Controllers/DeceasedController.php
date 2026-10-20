@@ -69,9 +69,9 @@ class DeceasedController extends Controller
 
         $stats = [
             'total' => (clone $query)->count(),
-            'pending' => (clone $query)->where('status', 'Pending')->count(),
-            'in_chamber' => (clone $query)->where('status', 'InChamber')->count(),
-            'released' => (clone $query)->where('status', 'Released')->count(),
+            'pending' => (clone $query)->where('status', DeceasedStatus::Pending)->count(),
+            'in_chamber' => (clone $query)->where('status', DeceasedStatus::InChamber)->count(),
+            'released' => (clone $query)->where('status', DeceasedStatus::Released)->count(),
             'avg_days_in_storage' => 0,
         ];
 
@@ -142,7 +142,7 @@ class DeceasedController extends Controller
         }
 
         if (! empty($data['chamber_id'])) {
-            $data['status'] = 'InChamber';
+            $data['status'] = DeceasedStatus::InChamber;
         }
 
         $deceased = Deceased::create($data);
@@ -151,7 +151,7 @@ class DeceasedController extends Controller
             Transfer::create([
                 'deceased_id' => $deceased->id,
                 'to_chamber_id' => $data['chamber_id'],
-                'transferred_by' => auth()->id(),
+                'transferred_by' => auth()->id() ?? '000000000000000000000000',
                 'event_type' => 'Entered',
                 'transferred_at' => $storedAt ?? now(),
             ]);
@@ -304,12 +304,12 @@ class DeceasedController extends Controller
             $newChamberId = $data['chamber_id'];
 
             if ($newChamberId) {
-                $data['status'] = 'InChamber';
+                $data['status'] = DeceasedStatus::InChamber;
                 Transfer::create([
                     'deceased_id' => $deceased->id,
                     'from_chamber_id' => $oldChamberId,
                     'to_chamber_id' => $newChamberId,
-                    'transferred_by' => auth()->id(),
+                    'transferred_by' => auth()->id() ?? '000000000000000000000000',
                     'event_type' => $oldChamberId ? 'Transferred' : 'Entered',
                     'transferred_at' => $storedAt ?? now(),
                 ]);
@@ -328,15 +328,15 @@ class DeceasedController extends Controller
                         ->withErrors(['chamber_id' => 'Storage must be fully paid before release.']);
                 }
 
-                $data['status'] = 'Released';
+                $data['status'] = DeceasedStatus::Released;
                 $data['released_at'] = now();
-                $data['released_by'] = auth()->id();
+                $data['released_by'] = auth()->id() ?? '000000000000000000000000';
                 Transfer::create([
                     'deceased_id' => $deceased->id,
                     'from_chamber_id' => $oldChamberId,
                     'to_chamber_id' => null,
-                    'transferred_by' => auth()->id(),
-                    'event_type' => 'Released',
+                    'transferred_by' => auth()->id() ?? '000000000000000000000000',
+                    'event_type' => DeceasedStatus::Released,
                     'transferred_at' => $storedAt ?? now(),
                 ]);
 
@@ -383,7 +383,7 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
-        if ($deceased->status === 'Released') {
+        if ($deceased->status === DeceasedStatus::Released) {
             return redirect()->route('deceased.show', $deceased)
                 ->with('flash', ['type' => 'error', 'message' => 'Deceased has already been released.']);
         }
@@ -413,7 +413,7 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
-        if ($deceased->status === 'Released') {
+        if ($deceased->status === DeceasedStatus::Released) {
             return redirect()->route('deceased.show', $deceased)
                 ->with('flash', ['type' => 'error', 'message' => 'Deceased has already been released.']);
         }
@@ -473,7 +473,7 @@ class DeceasedController extends Controller
                 'deceased_id' => $deceased->id,
                 'from_chamber_id' => $oldChamberId,
                 'to_chamber_id' => null,
-                'transferred_by' => auth()->id(),
+                'transferred_by' => auth()->id() ?? '000000000000000000000000',
                 'event_type' => 'Released',
                 'notes' => $validated['release_notes'] ?? ('Released to '.$validated['released_to_name'].' ('.$validated['released_to_relationship'].')'),
                 'transferred_at' => now(),
@@ -550,7 +550,7 @@ class DeceasedController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($validated, $deceased) {
+        DB::transaction(function () use ($validated, $deceased, $storageServiceId) {
             $invoice = $deceased->invoices->where('status', 'Unpaid')->first();
             if (! $invoice) {
                 $invoice = Invoice::create([
@@ -563,42 +563,18 @@ class DeceasedController extends Controller
                     'paid_amount' => 0.00,
                     'status' => 'Unpaid',
                     'billing_type' => 'service',
-                    'created_by' => auth()->id(),
+                    'created_by' => auth()->id() ?? '000000000000000000000000',
                 ]);
             }
 
             $invoice->invoiceItems()->delete();
-            $subtotal = 0.0;
 
-            foreach ($validated['items'] as $item) {
-                $servicePrice = ServicePrice::where('service_id', $item['service_id'])
-                    ->where('service_category_id', $deceased->service_category_id)
-                    ->where(function ($query) use ($deceased) {
-                        $query->whereNull('source')
-                            ->orWhere('source', $deceased->source);
-                    })
-                    ->first();
-
-                $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
-                $totalPrice = $unitPrice * $item['quantity'];
-
-                $serviceName = Service::find($item['service_id'])?->name ?? 'Unknown Service';
-                $subtotal += $totalPrice;
-
-                $invoice->invoiceItems()->create([
-                    'service_id' => $item['service_id'],
-                    'name' => $serviceName,
-                    'unit_price' => $unitPrice,
-                    'quantity' => $item['quantity'],
-                    'total_price' => $totalPrice,
-                ]);
-            }
-
-            $invoice->update([
-                'subtotal' => $subtotal,
-                'total_amount' => $subtotal,
-                'notes' => $validated['notes'] ?? null,
-            ]);
+            $subtotal = (new BuildServiceInvoiceItems())->handle(
+                $invoice,
+                $deceased,
+                $validated['items'],
+                $validated['notes'] ?? null
+            );
         });
 
         return redirect()->route('deceased.show', $deceased)
@@ -640,7 +616,7 @@ class DeceasedController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($validated, $deceased) {
+        DB::transaction(function () use ($validated, $deceased, $storageServiceId) {
             $invoice = Invoice::create([
                 'deceased_id' => $deceased->id,
                 'invoice_number' => 'INV-'.strtoupper(Str::random(8)),
@@ -651,40 +627,15 @@ class DeceasedController extends Controller
                 'paid_amount' => 0.00,
                 'status' => 'Unpaid',
                 'billing_type' => 'service',
-                'created_by' => auth()->id(),
+                'created_by' => auth()->id() ?? '000000000000000000000000',
             ]);
 
-            $subtotal = 0.0;
-
-            foreach ($validated['items'] as $item) {
-                $servicePrice = ServicePrice::where('service_id', $item['service_id'])
-                    ->where('service_category_id', $deceased->service_category_id)
-                    ->where(function ($query) use ($deceased) {
-                        $query->whereNull('source')
-                            ->orWhere('source', $deceased->source);
-                    })
-                    ->first();
-
-                $unitPrice = $servicePrice ? (float) $servicePrice->price : 0.0;
-                $totalPrice = $unitPrice * $item['quantity'];
-
-                $serviceName = Service::find($item['service_id'])?->name ?? 'Unknown Service';
-                $subtotal += $totalPrice;
-
-                $invoice->invoiceItems()->create([
-                    'service_id' => $item['service_id'],
-                    'name' => $serviceName,
-                    'unit_price' => $unitPrice,
-                    'quantity' => $item['quantity'],
-                    'total_price' => $totalPrice,
-                ]);
-            }
-
-            $invoice->update([
-                'subtotal' => $subtotal,
-                'total_amount' => $subtotal,
-                'notes' => $validated['notes'] ?? null,
-            ]);
+            $subtotal = (new BuildServiceInvoiceItems())->handle(
+                $invoice,
+                $deceased,
+                $validated['items'],
+                $validated['notes'] ?? null
+            );
         });
 
         return redirect()->route('deceased.show', $deceased)

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DeceasedStatus;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\ServiceCategory;
@@ -22,8 +23,15 @@ class DeceasedFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
+            'othernames' => fake()->optional()->lastName(),
             'date_of_birth' => fake()->dateTimeBetween('-80 years', '-20 years')->format('Y-m-d'),
+            'estimated_age' => null,
             'date_of_death' => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
+            'type_of_cloth' => fake()->optional()->word(),
+            'color_of_cloth' => fake()->optional()->word(),
+            'underwear' => fake()->optional()->word(),
+            'type_of_wrapping' => fake()->optional()->randomElement(['White Linen', 'Bed Spread', 'Others']),
+            'type_of_wrapping_other' => null,
             'gender' => fake()->randomElement(['Male', 'Female']),
             'cause_of_death' => fake()->randomElement([
                 'Natural causes',
@@ -33,7 +41,7 @@ class DeceasedFactory extends Factory
                 null,
             ]),
             'notes' => fake()->optional()->sentence(),
-            'status' => fake()->randomElement(['Pending', 'InChamber', 'Released']),
+            'status' => fake()->randomElement(DeceasedStatus::values()),
             'chamber_id' => null,
             'relative_name' => fake()->name(),
             'relative_phone' => fake()->phoneNumber(),
@@ -45,6 +53,7 @@ class DeceasedFactory extends Factory
                 'Friend',
             ]),
             'relative_address' => fake()->optional()->address(),
+            'residential_address' => fake()->optional()->address(),
             'service_category_id' => ServiceCategory::factory(),
             'source' => fake()->randomElement(['In Hospital', 'Outside Hospital']),
         ];
@@ -55,7 +64,7 @@ class DeceasedFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(['status' => 'Pending', 'chamber_id' => null]);
+        return $this->state(['status' => DeceasedStatus::Pending, 'chamber_id' => null]);
     }
 
     /**
@@ -67,7 +76,7 @@ class DeceasedFactory extends Factory
             $chamber = Chamber::inRandomOrder()->first() ?? Chamber::factory()->create();
 
             return [
-                'status' => 'InChamber',
+                'status' => DeceasedStatus::InChamber,
                 'chamber_id' => $chamber->id,
             ];
         });
@@ -78,6 +87,6 @@ class DeceasedFactory extends Factory
      */
     public function released(): static
     {
-        return $this->state(['status' => 'Released', 'chamber_id' => null]);
+        return $this->state(['status' => DeceasedStatus::Released, 'chamber_id' => null]);
     }
 }

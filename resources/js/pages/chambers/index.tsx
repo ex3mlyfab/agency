@@ -101,7 +101,9 @@ export default function ChambersIndex({
                 (localStorage.getItem('chambers-view') as 'grid' | 'list') ||
                 'grid'
             );
-        } catch {
+        } catch (error) {
+            console.error('Failed to read chambers-view from localStorage:', error);
+
             return 'grid';
         }
     });
@@ -157,25 +159,25 @@ export default function ChambersIndex({
 
     return (
         <>
-            <Head title="Chambers" />
+            <Head title="Coldrooms" />
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                            Chamber Indicator
+                            Coldrooms
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {total > 0
-                                ? `Showing ${from}–${to} of ${total} chambers`
-                                : 'No chambers configured'}
+                                ? `Showing ${from}–${to} of ${total} racks`
+                                : 'No racks configured'}
                         </p>
                     </div>
                     {can.manage && (
                         <Button asChild>
                             <Link href="/chambers/create">
                                 <PlusIcon className="mr-2 h-4 w-4" />
-                                Add Chamber
+                                Add Rack
                             </Link>
                         </Button>
                     )}
@@ -193,7 +195,7 @@ export default function ChambersIndex({
                                     {stats.total}
                                 </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    Total Chambers
+                                    Total Racks
                                 </p>
                             </div>
                         </CardContent>
@@ -385,18 +387,18 @@ export default function ChambersIndex({
 
                 {items.length === 0 ? (
                     <Alert>
-                        <AlertTitle>No chambers found</AlertTitle>
+                        <AlertTitle>No racks found</AlertTitle>
                         <AlertDescription>
                             {hasActiveFilters()
-                                ? 'No chambers match your current filters.'
-                                : 'No chambers have been added yet.'}
+                                ? 'No racks match your current filters.'
+                                : 'No racks have been added yet.'}
                             {can.manage && !hasActiveFilters() && (
                                 <span className="ml-1">
                                     <Link
                                         href="/chambers/create"
                                         className="font-semibold underline underline-offset-4"
                                     >
-                                        Add the first chamber.
+                                        Add the first rack.
                                     </Link>
                                 </span>
                             )}
@@ -723,9 +725,9 @@ export default function ChambersIndex({
             <ConfirmDialog
                 open={deleteTarget !== null}
                 onOpenChange={(open) => !open && setDeleteTarget(null)}
-                title="Delete chamber"
-                description="This will permanently remove the chamber. This action cannot be undone. Chambers with current occupants cannot be deleted."
-                confirmLabel="Delete Chamber"
+                title="Delete rack"
+                description="This will permanently remove the rack. This action cannot be undone. Racks with current occupants cannot be deleted."
+                confirmLabel="Delete Rack"
                 isDestructive
                 isLoading={isDeleting}
                 onConfirm={handleDelete}
@@ -735,5 +737,5 @@ export default function ChambersIndex({
 }
 
 ChambersIndex.layout = {
-    breadcrumbs: [{ title: 'Chambers', href: '/chambers' }],
+    breadcrumbs: [{ title: 'Coldrooms', href: '/chambers' }],
 };

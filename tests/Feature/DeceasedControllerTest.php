@@ -70,6 +70,101 @@ it('can create a new deceased record', function () {
     ]);
 });
 
+it('stores the new deceased profile and clothing fields', function () {
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.store'), [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'othernames' => 'Johnny',
+            'estimated_age' => 67,
+            'date_of_death' => now()->format('Y-m-d'),
+            'body_condition' => 'Fresh',
+            'type_of_cloth' => 'Sheet',
+            'color_of_cloth' => 'White',
+            'underwear' => 'Linen',
+            'type_of_wrapping' => 'Bed Spread',
+            'gender' => 'Male',
+            'relative_name' => 'Jane Doe',
+            'relative_phone' => '555-1234',
+            'relative_relationship' => 'Spouse',
+            'relative_address' => '123 High St',
+            'residential_address' => "456 Old Town\nDistrict B",
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
+        ])
+        ->assertRedirect(route('deceased.index'));
+
+    $this->assertDatabaseHas('deceased', [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'othernames' => 'Johnny',
+        'estimated_age' => 67,
+        'type_of_cloth' => 'Sheet',
+        'color_of_cloth' => 'White',
+        'underwear' => 'Linen',
+        'type_of_wrapping' => 'Bed Spread',
+        'type_of_wrapping_other' => null,
+        'relative_address' => '123 High St',
+        'residential_address' => "456 Old Town\nDistrict B",
+    ]);
+});
+
+it('requires the wrapping specification when wrapping type is others', function () {
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.store'), [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'date_of_death' => now()->format('Y-m-d'),
+            'gender' => 'Male',
+            'type_of_wrapping' => 'Others',
+            'relative_name' => 'Jane Doe',
+            'relative_phone' => '555-1234',
+            'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
+        ])
+        ->assertSessionHasErrors('type_of_wrapping_other');
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.store'), [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'date_of_death' => now()->format('Y-m-d'),
+            'gender' => 'Male',
+            'type_of_wrapping' => 'Others',
+            'type_of_wrapping_other' => 'Custom shroud',
+            'relative_name' => 'Jane Doe',
+            'relative_phone' => '555-1234',
+            'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
+        ])
+        ->assertRedirect(route('deceased.index'));
+
+    $this->assertDatabaseHas('deceased', [
+        'first_name' => 'John',
+        'type_of_wrapping' => 'Others',
+        'type_of_wrapping_other' => 'Custom shroud',
+    ]);
+});
+
+it('rejects an out of range estimated age', function () {
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.store'), [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'estimated_age' => 200,
+            'date_of_death' => now()->format('Y-m-d'),
+            'gender' => 'Male',
+            'relative_name' => 'Jane Doe',
+            'relative_phone' => '555-1234',
+            'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
+        ])
+        ->assertSessionHasErrors('estimated_age');
+});
+
 it('can update a deceased record', function () {
     $deceased = Deceased::factory()->create();
 

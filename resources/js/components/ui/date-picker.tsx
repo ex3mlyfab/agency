@@ -1,6 +1,4 @@
 import * as React from "react"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -12,6 +10,7 @@ import {
 } from "@/components/ui/popover"
 
 interface DatePickerProps {
+  id?: string
   value?: Date
   onChange?: (date?: Date) => void
   disabled?: boolean
@@ -23,45 +22,46 @@ interface DatePickerProps {
 }
 
 export function DatePicker({
+  id,
   value,
   onChange,
   disabled,
   className,
-  placeholder = "Pick a date",
+  placeholder = "Select date",
   fromYear = 1900,
   toYear = new Date().getFullYear() + 10,
   captionLayout = "dropdown",
 }: DatePickerProps) {
-  const handleSelect = (date: Date | undefined) => {
-    onChange?.(date)
-  }
+  const [open, setOpen] = React.useState(false)
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant={"outline"}
+          id={id}
+          variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full justify-start font-normal",
             !value && "text-muted-foreground",
             className
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP") : <span>{placeholder}</span>}
+          {value ? value.toLocaleDateString() : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
         <Calendar
           mode="single"
           selected={value}
-          onSelect={handleSelect}
-          autoFocus
-          disabled={disabled}
+          defaultMonth={value}
           captionLayout={captionLayout}
           startMonth={new Date(fromYear, 0)}
           endMonth={new Date(toYear, 0)}
+          onSelect={(date) => {
+            onChange?.(date)
+            setOpen(false)
+          }}
         />
       </PopoverContent>
     </Popover>

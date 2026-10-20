@@ -43,11 +43,38 @@ class StoreTransferRequest extends FormRequest
             }
 
             match ($this->input('event_type')) {
-                'Entered' => (! $deceased->chamber_id && $this->filled('to_chamber_id')) || $validator->errors()->add('event_type', 'Entry requires a pending record and a destination chamber.'),
-                'Transferred' => ($deceased->chamber_id && $this->filled('to_chamber_id') && $deceased->chamber_id !== $this->input('to_chamber_id')) || $validator->errors()->add('event_type', 'Transfer requires a different destination chamber.'),
-                'Released' => ($deceased->chamber_id && ! $this->filled('to_chamber_id')) || $validator->errors()->add('event_type', 'Release requires a current chamber and no destination.'),
+                'Entered' => $this->validateEntered($deceased, $validator),
+                'Transferred' => $this->validateTransferred($deceased, $validator),
+                'Released' => $this->validateReleased($deceased, $validator),
                 default => null,
             };
         }];
+    }
+
+    private function validateEntered(Deceased $deceased, Validator $validator): void
+    {
+        if (! $deceased->chamber_id && $this->filled('to_chamber_id')) {
+            return;
+        }
+
+        $validator->errors()->add('event_type', 'Entry requires a pending record and a destination chamber.');
+    }
+
+    private function validateTransferred(Deceased $deceased, Validator $validator): void
+    {
+        if ($deceased->chamber_id && $this->filled('to_chamber_id') && $deceased->chamber_id !== $this->input('to_chamber_id')) {
+            return;
+        }
+
+        $validator->errors()->add('event_type', 'Transfer requires a different destination chamber.');
+    }
+
+    private function validateReleased(Deceased $deceased, Validator $validator): void
+    {
+        if ($deceased->chamber_id && ! $this->filled('to_chamber_id')) {
+            return;
+        }
+
+        $validator->errors()->add('event_type', 'Release requires a current chamber and no destination.');
     }
 }

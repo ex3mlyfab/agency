@@ -16,7 +16,11 @@ class RecordPayment
     public function handle(array $validated, string $receivedBy): Payment
     {
         return DB::transaction(function () use ($validated, $receivedBy): Payment {
-            $paymentMode = PaymentMode::query()->whereKey($validated['payment_mode_id'])->where('is_active', true)->lockForUpdate()->firstOrFail();
+            $paymentMode = PaymentMode::query()
+                ->whereKey($validated['payment_mode_id'])
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->firstOrFail();
             $invoice = ! empty($validated['invoice_id']) ? Invoice::query()->lockForUpdate()->findOrFail($validated['invoice_id']) : null;
 
             if ($invoice && $invoice->deceased_id !== $validated['deceased_id']) {
@@ -74,7 +78,7 @@ class RecordPayment
             return;
         }
 
-        $lastCoveredDay = (int) ($deceased->storageFeeLogs->max('days_covered_to') ?? 0);
+        $lastCoveredDay = (int) ($deceased->storageFeeLogsForCurrentAdmission()->max('days_covered_to') ?? 0);
         $daysInStorage = $deceased->days_in_storage;
         $newDays = max(0, $daysInStorage - $lastCoveredDay);
 

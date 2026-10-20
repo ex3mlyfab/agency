@@ -25,4 +25,12 @@ class ServicePriceFactory extends Factory
             'price' => fake()->randomFloat(2, 10, 500),
         ];
     }
+
+    public function forService(Service $service, ?ServiceCategory $category = null): static
+    {
+        return $this->state([
+            'service_id' => $service->id,
+            'service_category_id' => $category?->id ?? $service->service_category_id,
+        ]);
+    }
 }

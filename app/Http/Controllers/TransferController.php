@@ -87,7 +87,7 @@ class TransferController extends Controller
     {
         Gate::authorize('transfers.create');
 
-        $deceasedOptions = Deceased::whereIn('status', ['Pending', 'InChamber'])
+        $deceasedOptions = Deceased::whereIn('status', DeceasedStatus::values())
             ->orderBy('last_name')
             ->get(['id', 'first_name', 'last_name', 'status', 'chamber_id']);
 

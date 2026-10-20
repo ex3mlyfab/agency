@@ -49,21 +49,21 @@ export function ChamberForm({
             <Card>
                 <CardHeader className="border-b border-border px-6 py-3">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-                        Chamber/Rack Details
+                        Rack Details
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6 px-6 py-6 sm:grid-cols-2">
                     {/* Name */}
                     <div className="space-y-1.5">
                         <Label htmlFor="name" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                            Chamber/Rack Name{' '}
+                            Rack Name{' '}
                             <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id="name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            placeholder="e.g. Chamber A-01"
+                            placeholder="e.g. Rack A-01"
                             disabled={processing}
                             className={cn(errors.name && 'border-destructive')}
                         />
