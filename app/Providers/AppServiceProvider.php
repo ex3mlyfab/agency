@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configureSuperAdminBypass(): void
     {
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('super admin') ? true : null;
+            return $user->hasAnyRole(['super admin', 'super-admin']) ? true : null;
         });
     }
 

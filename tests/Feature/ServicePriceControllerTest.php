@@ -29,6 +29,21 @@ it('allows super admins to view service prices', function () {
         ->assertInertia(fn ($page) => $page->component('service-prices/index'));
 });
 
+it('allows super-admin role variants through the global gate bypass', function (string $roleName) {
+    $role = Role::firstOrCreate(['name' => $roleName]);
+    $role->syncPermissions([]);
+
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole($role);
+
+    $this->actingAs($superAdmin)
+        ->get(route('service-prices.index'))
+        ->assertOk();
+})->with([
+    'space-separated role' => 'super admin',
+    'hyphenated role' => 'super-admin',
+]);
+
 it('allows users with view permission to view service prices', function () {
     Permission::firstOrCreate(['name' => 'service_prices.view']);
     $this->user->givePermissionTo('service_prices.view');
