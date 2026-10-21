@@ -27,6 +27,18 @@ it('allows super admins to view service categories', function () {
         ->assertInertia(fn ($page) => $page->component('service-categories/index'));
 });
 
+it('allows the super admin role through the global gate bypass', function () {
+    $role = Role::firstOrCreate(['name' => 'super admin']);
+    $role->syncPermissions([]);
+
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole($role);
+
+    $this->actingAs($superAdmin)
+        ->get(route('service-categories.index'))
+        ->assertOk();
+});
+
 it('allows users with view permission to view service categories', function () {
     Permission::firstOrCreate(['name' => 'service_categories.view']);
     $this->user->givePermissionTo('service_categories.view');
