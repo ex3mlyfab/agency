@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
@@ -89,6 +90,8 @@ class PermissionSeeder extends Seeder
         $superAdminRole = Role::where('name', 'super admin')->first();
         if ($superAdminRole) {
             $superAdminRole->syncPermissions($this->permissions);
+
+            User::where('email', 'test@example.com')->first()?->assignRole($superAdminRole);
         }
     }
 }
