@@ -40,7 +40,7 @@ export function AppSidebar() {
             icon: LayoutGrid,
             tone: 'text-primary',
         },
-        ...(can['deceased.view'] !== false
+        ...(can['deceased.view'] !== true
             ? [
                   {
                       title: 'Records',
@@ -55,7 +55,7 @@ export function AppSidebar() {
                   },
               ]
             : []),
-        ...(can['chambers.view'] !== false
+        ...(can['chambers.view'] !== true
             ? [
                   {
                       title: 'Cold Rooms',
@@ -77,7 +77,7 @@ export function AppSidebar() {
                   },
               ]
             : []),
-        ...(can['transfers.view'] !== false
+        ...(can['transfers.view'] !== true
             ? [
                   {
                       title: 'Transfers',
@@ -87,7 +87,7 @@ export function AppSidebar() {
                   },
               ]
             : []),
-        ...(can['history.view'] !== false
+        ...(can['history.view'] !== true
             ? [
                   {
                       title: 'History',
@@ -97,7 +97,7 @@ export function AppSidebar() {
                   },
               ]
             : []),
-        ...(can['reports.view'] !== false
+        ...(can['reports.view'] !== true
             ? [
                   {
                       title: 'Reports',

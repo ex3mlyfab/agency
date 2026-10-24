@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ServicePriceTierFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class ServicePriceTier extends Model
 {
+    /** @use HasFactory<ServicePriceTierFactory> */
     use HasFactory, HasUlids, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -30,6 +32,8 @@ class ServicePriceTier extends Model
 
     /**
      * Get the service price associated with this tier.
+     *
+     * @return BelongsTo<ServicePrice, $this>
      */
     public function servicePrice(): BelongsTo
     {

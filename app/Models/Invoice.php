@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class Invoice extends Model
 {
+    /** @use HasFactory<InvoiceFactory> */
     use HasFactory, HasUlids, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -55,6 +57,8 @@ class Invoice extends Model
 
     /**
      * Get the deceased record associated with this invoice.
+     *
+     * @return BelongsTo<Deceased, $this>
      */
     public function deceased(): BelongsTo
     {
@@ -63,6 +67,8 @@ class Invoice extends Model
 
     /**
      * Get the user who created this invoice.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function createdByUser(): BelongsTo
     {
@@ -71,6 +77,8 @@ class Invoice extends Model
 
     /**
      * Get the line items for this invoice.
+     *
+     * @return HasMany<InvoiceItem, $this>
      */
     public function invoiceItems(): HasMany
     {
@@ -79,6 +87,8 @@ class Invoice extends Model
 
     /**
      * Get the payments made against this invoice.
+     *
+     * @return HasMany<Payment, $this>
      */
     public function payments(): HasMany
     {
@@ -87,6 +97,8 @@ class Invoice extends Model
 
     /**
      * Get the waivers applied to this invoice.
+     *
+     * @return HasMany<Waiver, $this>
      */
     public function waivers(): HasMany
     {
@@ -95,6 +107,8 @@ class Invoice extends Model
 
     /**
      * Get the storage fee logs associated with this invoice.
+     *
+     * @return HasMany<StorageFeeLog, $this>
      */
     public function storageFeeLog(): HasMany
     {

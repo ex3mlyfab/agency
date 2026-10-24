@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\BuildServiceInvoiceItems;
 use App\Actions\CreateStorageFeeInvoice;
 use App\Actions\IssueRefund;
+use App\Enums\DeceasedStatus;
 use App\Http\Requests\StoreDeceasedRequest;
 use App\Http\Requests\UpdateDeceasedRequest;
 use App\Models\ApplicationSetting;
@@ -24,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -141,21 +144,31 @@ class DeceasedController extends Controller
             $data['picture'] = $request->file('picture')->store('deceased_pictures', 'public');
         }
 
-        if (! empty($data['chamber_id'])) {
-            $data['status'] = DeceasedStatus::InChamber;
-        }
+        $deceased = DB::transaction(function () use ($data, $storedAt): Deceased {
+            if (! empty($data['chamber_id'])) {
+                $chamber = Chamber::query()->lockForUpdate()->findOrFail((string) $data['chamber_id']);
 
-        $deceased = Deceased::create($data);
+                if ($chamber->occupants()->count() >= $chamber->capacity) {
+                    throw ValidationException::withMessages(['chamber_id' => 'The selected chamber is at capacity.']);
+                }
 
-        if (! empty($data['chamber_id'])) {
-            Transfer::create([
-                'deceased_id' => $deceased->id,
-                'to_chamber_id' => $data['chamber_id'],
-                'transferred_by' => auth()->id() ?? '000000000000000000000000',
-                'event_type' => 'Entered',
-                'transferred_at' => $storedAt ?? now(),
-            ]);
-        }
+                $data['status'] = DeceasedStatus::InChamber;
+            }
+
+            $deceased = Deceased::create($data);
+
+            if (! empty($data['chamber_id'])) {
+                Transfer::create([
+                    'deceased_id' => $deceased->id,
+                    'to_chamber_id' => $data['chamber_id'],
+                    'transferred_by' => auth()->id() ?? '000000000000000000000000',
+                    'event_type' => 'Entered',
+                    'transferred_at' => $storedAt ?? now(),
+                ]);
+            }
+
+            return $deceased;
+        });
 
         return redirect()->route('deceased.index')
             ->with('flash', ['type' => 'success', 'message' => 'Deceased record created successfully.']);
@@ -185,7 +198,7 @@ class DeceasedController extends Controller
             'storageFeeLogs.invoice.invoiceItems',
         ]);
 
-        $lastStorageCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
+        $lastStorageCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to');
 
         $storageServiceId = $deceased->chamber?->service_id;
 
@@ -205,7 +218,7 @@ class DeceasedController extends Controller
 
                 return [
                     'service_id' => $sp->service_id,
-                    'name' => $sp->service?->name ?? 'Unknown Service',
+                    'name' => $sp->service->name ?? 'Unknown Service',
                     'price' => (float) $sp->price,
                     'tiered_price' => $tieredPrice !== null ? round($tieredPrice, 2) : null,
                     'has_tiers' => $hasTiers,
@@ -300,20 +313,18 @@ class DeceasedController extends Controller
 
         // Handle chamber change
         if (array_key_exists('chamber_id', $data) && $data['chamber_id'] !== $deceased->chamber_id) {
-            $oldChamberId = $deceased->chamber_id;
             $newChamberId = $data['chamber_id'];
 
             if ($newChamberId) {
-                $data['status'] = DeceasedStatus::InChamber;
-                Transfer::create([
-                    'deceased_id' => $deceased->id,
-                    'from_chamber_id' => $oldChamberId,
-                    'to_chamber_id' => $newChamberId,
-                    'transferred_by' => auth()->id() ?? '000000000000000000000000',
-                    'event_type' => $oldChamberId ? 'Transferred' : 'Entered',
-                    'transferred_at' => $storedAt ?? now(),
-                ]);
-            } elseif ($oldChamberId) {
+                // Entry/transfer: enforce capacity before any write.
+                $destination = Chamber::query()->lockForUpdate()->findOrFail((string) $newChamberId);
+
+                if ($destination->occupants()->count() >= $destination->capacity) {
+                    throw ValidationException::withMessages(['chamber_id' => 'The selected chamber is at capacity.']);
+                }
+            }
+
+            if (empty($newChamberId) && $deceased->chamber_id) {
                 // Releasing via edit - enforce storage payment check (lifetime)
                 if (! $deceased->canReleaseStorage()) {
                     $message = $deceased->isStorageFullyPaid()
@@ -327,33 +338,52 @@ class DeceasedController extends Controller
                         ])
                         ->withErrors(['chamber_id' => 'Storage must be fully paid before release.']);
                 }
-
-                $data['status'] = DeceasedStatus::Released;
-                $data['released_at'] = now();
-                $data['released_by'] = auth()->id() ?? '000000000000000000000000';
-                Transfer::create([
-                    'deceased_id' => $deceased->id,
-                    'from_chamber_id' => $oldChamberId,
-                    'to_chamber_id' => null,
-                    'transferred_by' => auth()->id() ?? '000000000000000000000000',
-                    'event_type' => DeceasedStatus::Released,
-                    'transferred_at' => $storedAt ?? now(),
-                ]);
-
-                // Book a refund for any storage surplus on the release.
-                $surplus = $deceased->lifetimeStorageSurplus();
-                if ($surplus > 0) {
-                    app(IssueRefund::class)->handle(
-                        $deceased->id,
-                        $surplus,
-                        (string) auth()->id(),
-                        'Storage refund issued on release (via edit).',
-                    );
-                }
             }
         }
 
-        $deceased->update($data);
+        DB::transaction(function () use ($data, $storedAt, $deceased): void {
+            if (array_key_exists('chamber_id', $data) && $data['chamber_id'] !== $deceased->chamber_id) {
+                $oldChamberId = $deceased->chamber_id;
+                $newChamberId = $data['chamber_id'];
+
+                if ($newChamberId) {
+                    $data['status'] = DeceasedStatus::InChamber;
+                    Transfer::create([
+                        'deceased_id' => $deceased->id,
+                        'from_chamber_id' => $oldChamberId,
+                        'to_chamber_id' => $newChamberId,
+                        'transferred_by' => (string) (auth()->id() ?? '000000000000000000000000'),
+                        'event_type' => $oldChamberId ? 'Transferred' : 'Entered',
+                        'transferred_at' => $storedAt ?? now(),
+                    ]);
+                } elseif ($oldChamberId) {
+                    $data['status'] = DeceasedStatus::Released;
+                    $data['released_at'] = now();
+                    $data['released_by'] = (string) (auth()->id() ?? '000000000000000000000000');
+                    Transfer::create([
+                        'deceased_id' => $deceased->id,
+                        'from_chamber_id' => $oldChamberId,
+                        'to_chamber_id' => null,
+                        'transferred_by' => (string) (auth()->id() ?? '000000000000000000000000'),
+                        'event_type' => DeceasedStatus::Released,
+                        'transferred_at' => $storedAt ?? now(),
+                    ]);
+
+                    // Book a refund for any storage surplus on the release.
+                    $surplus = $deceased->lifetimeStorageSurplus();
+                    if ($surplus > 0) {
+                        app(IssueRefund::class)->handle(
+                            $deceased->id,
+                            $surplus,
+                            (string) auth()->id(),
+                            'Storage refund issued on release (via edit).',
+                        );
+                    }
+                }
+            }
+
+            $deceased->update($data);
+        });
 
         return redirect()->route('deceased.show', $deceased)
             ->with('flash', ['type' => 'success', 'message' => 'Deceased record updated.']);
@@ -542,7 +572,7 @@ class DeceasedController extends Controller
 
         // Reject the chamber's storage service: storage fees are billed by the
         // dedicated storage invoice engine, never by a manual service invoice.
-        if ($storageServiceId !== null && collect($validated['items'])->contains('service_id', $storageServiceId)) {
+        if ($storageServiceId !== null && collect((array) $validated['items'])->contains('service_id', $storageServiceId)) {
             return redirect()->back()
                 ->with('flash', [
                     'type' => 'error',
@@ -550,7 +580,7 @@ class DeceasedController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($validated, $deceased, $storageServiceId) {
+        DB::transaction(function () use ($validated, $deceased) {
             $invoice = $deceased->invoices->where('status', 'Unpaid')->first();
             if (! $invoice) {
                 $invoice = Invoice::create([
@@ -569,7 +599,7 @@ class DeceasedController extends Controller
 
             $invoice->invoiceItems()->delete();
 
-            $subtotal = (new BuildServiceInvoiceItems())->handle(
+            $subtotal = (new BuildServiceInvoiceItems)->handle(
                 $invoice,
                 $deceased,
                 $validated['items'],
@@ -608,7 +638,7 @@ class DeceasedController extends Controller
 
         // Reject the chamber's storage service: storage fees are billed by the
         // dedicated storage invoice engine, never by a manual service invoice.
-        if ($storageServiceId !== null && collect($validated['items'])->contains('service_id', $storageServiceId)) {
+        if ($storageServiceId !== null && collect((array) $validated['items'])->contains('service_id', $storageServiceId)) {
             return redirect()->back()
                 ->with('flash', [
                     'type' => 'error',
@@ -616,7 +646,7 @@ class DeceasedController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($validated, $deceased, $storageServiceId) {
+        DB::transaction(function () use ($validated, $deceased) {
             $invoice = Invoice::create([
                 'deceased_id' => $deceased->id,
                 'invoice_number' => 'INV-'.strtoupper(Str::random(8)),
@@ -630,7 +660,7 @@ class DeceasedController extends Controller
                 'created_by' => auth()->id() ?? '000000000000000000000000',
             ]);
 
-            $subtotal = (new BuildServiceInvoiceItems())->handle(
+            $subtotal = (new BuildServiceInvoiceItems)->handle(
                 $invoice,
                 $deceased,
                 $validated['items'],
@@ -657,12 +687,12 @@ class DeceasedController extends Controller
                 ]);
         }
 
-        $lastCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to') ?? 0;
-        $invoice = $action->handle($deceased, auth()->id(), $lastCoveredDay);
+        $lastCoveredDay = (int) $deceased->storageFeeLogs->max('days_covered_to');
+        $invoice = $action->handle($deceased, (string) (auth()->id() ?? '000000000000000000000000'), $lastCoveredDay);
 
         if ($invoice) {
             return redirect()->route('deceased.show', $deceased)
-                ->with('flash', ['type' => 'success', 'message' => "Storage fee invoice {$invoice->invoice_number} created for ".($invoice->invoiceItems->first()?->quantity ?? 0).' day(s).']);
+                ->with('flash', ['type' => 'success', 'message' => "Storage fee invoice {$invoice->invoice_number} created for ".($invoice->invoiceItems->first()->quantity ?? 0).' day(s).']);
         }
 
         return redirect()->route('deceased.show', $deceased)

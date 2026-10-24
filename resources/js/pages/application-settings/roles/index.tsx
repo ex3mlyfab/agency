@@ -172,7 +172,7 @@ export default function RolesIndex({
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    <Card className="overflow-hidden">
+                    <Card className="border-l-4 border-l-primary bg-primary/[0.07] overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-info" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/15">
@@ -189,7 +189,7 @@ export default function RolesIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="border-l-4 border-l-success bg-success/[0.07] overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-success" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/15">
@@ -206,7 +206,7 @@ export default function RolesIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="border-l-4 border-l-warning bg-warning/[0.07] overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
@@ -223,7 +223,7 @@ export default function RolesIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="border-l-4 border-l-highlight bg-highlight/[0.07] overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15">
@@ -482,7 +482,7 @@ export default function RolesIndex({
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border px-6 py-3">
+                    <CardHeader className="border-b border-border bg-secondary/50 dark:bg-secondary/30 px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             All Roles
                         </CardTitle>

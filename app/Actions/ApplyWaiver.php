@@ -13,7 +13,7 @@ class ApplyWaiver
     public function handle(array $validated, string $authorizedBy): Waiver
     {
         return DB::transaction(function () use ($validated, $authorizedBy): Waiver {
-            $invoice = Invoice::query()->lockForUpdate()->findOrFail($validated['invoice_id']);
+            $invoice = Invoice::query()->lockForUpdate()->findOrFail((string) $validated['invoice_id']);
 
             if ($invoice->deceased_id != $validated['deceased_id']) {
                 throw ValidationException::withMessages([

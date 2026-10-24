@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Chamber;
 use App\Models\Deceased;
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
@@ -218,4 +220,96 @@ it('denies unauthenticated users from accessing the print page', function () {
 
     $this->get(route('deceased.print', $deceased))
         ->assertRedirect(route('login'));
+});
+
+it('rejects storing a deceased into a chamber that is at capacity', function () {
+    $chamber = Chamber::factory()->create(['capacity' => 1]);
+    Deceased::factory()->create(['status' => 'InChamber', 'chamber_id' => $chamber->id]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.store'), [
+            'first_name' => 'Full',
+            'last_name' => 'House',
+            'date_of_death' => now()->format('Y-m-d'),
+            'gender' => 'Male',
+            'relative_name' => 'Jane Doe',
+            'relative_phone' => '555-1234',
+            'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
+            'chamber_id' => $chamber->id,
+            'stored_at' => now()->toDateTimeString(),
+        ])
+        ->assertSessionHasErrors(['chamber_id']);
+
+    $this->assertDatabaseMissing('deceased', ['first_name' => 'Full', 'last_name' => 'House']);
+    $this->assertDatabaseMissing('transfers', ['to_chamber_id' => $chamber->id, 'event_type' => 'Entered']);
+});
+
+it('accepts storing a deceased into a chamber with free space', function () {
+    $chamber = Chamber::factory()->create(['capacity' => 1]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.store'), [
+            'first_name' => 'Space',
+            'last_name' => 'Available',
+            'date_of_death' => now()->format('Y-m-d'),
+            'gender' => 'Male',
+            'relative_name' => 'Jane Doe',
+            'relative_phone' => '555-1234',
+            'relative_relationship' => 'Spouse',
+            'service_category_id' => $this->category->id,
+            'source' => 'In Hospital',
+            'chamber_id' => $chamber->id,
+            'stored_at' => now()->toDateTimeString(),
+        ])
+        ->assertRedirect(route('deceased.index'));
+
+    $this->assertDatabaseHas('transfers', ['to_chamber_id' => $chamber->id, 'event_type' => 'Entered']);
+});
+
+it('rejects transferring a deceased into a full chamber via edit', function () {
+    $fullChamber = Chamber::factory()->create(['capacity' => 1]);
+    Deceased::factory()->create(['status' => 'InChamber', 'chamber_id' => $fullChamber->id]);
+
+    $moving = Deceased::factory()->create(['status' => 'InChamber']);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.update', $moving), [
+            '_method' => 'PUT',
+            'first_name' => $moving->first_name,
+            'last_name' => $moving->last_name,
+            'date_of_death' => $moving->date_of_death->format('Y-m-d'),
+            'gender' => $moving->gender,
+            'relative_name' => $moving->relative_name,
+            'relative_phone' => $moving->relative_phone,
+            'relative_relationship' => $moving->relative_relationship,
+            'service_category_id' => $moving->service_category_id,
+            'source' => $moving->source,
+            'chamber_id' => $fullChamber->id,
+            'stored_at' => now()->toDateTimeString(),
+        ])
+        ->assertSessionHasErrors(['chamber_id']);
+
+    $moving->refresh();
+
+    expect($moving->chamber_id)->toBeNull();
+
+    $this->assertDatabaseMissing('transfers', ['deceased_id' => $moving->id, 'event_type' => 'Transferred']);
+});
+
+it('rejects saving a service invoice when no price is configured for a selected service', function () {
+    $service = Service::create(['name' => 'Unpriced Service']);
+
+    $deceased = Deceased::factory()->pending()->create(['service_category_id' => $this->category->id]);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('deceased.invoice.save', $deceased), [
+            'items' => [
+                ['service_id' => $service->id, 'quantity' => 2],
+            ],
+        ])
+        ->assertSessionHasErrors(['items']);
+
+    $this->assertDatabaseMissing('invoice_items', ['service_id' => $service->id]);
 });

@@ -4,6 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Deceased;
 use App\Models\Invoice;
+use App\Models\StorageFeeLog;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -26,7 +28,7 @@ class StorageFeeLogFactory extends Factory
             'days_covered_to' => fake()->numberBetween(101, 200),
             'amount' => fake()->randomFloat(2, 10, 500),
             'paid_days_at_creation' => fake()->numberBetween(0, 100),
-            'created_by' => \App\Models\User::factory()->create()->id,
+            'created_by' => User::factory(),
             'admission_started_at' => null,
         ];
     }

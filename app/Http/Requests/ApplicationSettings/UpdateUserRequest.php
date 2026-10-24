@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\ApplicationSettings;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -17,7 +18,9 @@ class UpdateUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->route('user')?->id;
+        $user = $this->route('user');
+
+        $userId = $user instanceof User ? $user->id : null;
 
         return [
             'name' => ['required', 'string', 'max:255'],

@@ -62,7 +62,7 @@ class InvoiceController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $summary = Invoice::selectRaw('
+        $summaryRow = Invoice::selectRaw('
             COUNT(*) as total,
             SUM(CASE WHEN status = \'Paid\' THEN 1 ELSE 0 END) as paid_count,
             SUM(CASE WHEN status = \'Unpaid\' THEN 1 ELSE 0 END) as unpaid_count,
@@ -70,7 +70,7 @@ class InvoiceController extends Controller
             SUM(CASE WHEN status = \'Paid\' THEN total_amount ELSE 0 END) as paid_total,
             SUM(CASE WHEN status = \'Unpaid\' THEN (total_amount - paid_amount - waived_amount) ELSE 0 END) as unpaid_balance,
             SUM(CASE WHEN status = \'Partially Paid\' THEN (total_amount - paid_amount - waived_amount) ELSE 0 END) as partial_balance
-        ')->first();
+        ')->first()?->getAttributes() ?? [];
 
         $statuses = ['Draft', 'Unpaid', 'Partially Paid', 'Paid'];
 
@@ -83,18 +83,18 @@ class InvoiceController extends Controller
             'invoices' => $invoices,
             'filters' => $request->only(['search', 'status', 'date_from', 'date_to', 'created_by']),
             'summary' => [
-                'total_invoices' => (int) $summary->total,
+                'total_invoices' => (int) ($summaryRow['total'] ?? 0),
                 'paid' => [
-                    'count' => (int) $summary->paid_count,
-                    'total' => (float) $summary->paid_total,
+                    'count' => (int) ($summaryRow['paid_count'] ?? 0),
+                    'total' => (float) ($summaryRow['paid_total'] ?? 0),
                 ],
                 'unpaid' => [
-                    'count' => (int) $summary->unpaid_count,
-                    'balance' => (float) $summary->unpaid_balance,
+                    'count' => (int) ($summaryRow['unpaid_count'] ?? 0),
+                    'balance' => (float) ($summaryRow['unpaid_balance'] ?? 0),
                 ],
                 'partially_paid' => [
-                    'count' => (int) $summary->partially_paid_count,
-                    'balance' => (float) $summary->partial_balance,
+                    'count' => (int) ($summaryRow['partially_paid_count'] ?? 0),
+                    'balance' => (float) ($summaryRow['partial_balance'] ?? 0),
                 ],
             ],
             'statuses' => $statuses,

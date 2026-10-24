@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\Activitylog\Models\Activity;
 
 class AuditController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         Gate::authorize('audits.view');
         $search = $request->input('search');

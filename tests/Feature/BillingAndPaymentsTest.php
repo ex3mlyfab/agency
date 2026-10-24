@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\ApplyWaiver;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Invoice;
@@ -1324,4 +1325,89 @@ it('over-pays rejected when payment exceeds a single invoice balance', function 
 
     expect($invoice->fresh()->paid_amount)->toEqual(0.00);
     expect($invoice->fresh()->status)->toEqual('Unpaid');
+});
+
+it('marks an invoice paid when a payment covers the balance after a partial waiver', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WAIVER-01',
+        'total_amount' => 10000.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'billing_type' => 'service',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    // Waive 4000 of the 10000 total first, out of band (product flow: waiver
+    // applied before the final payment).
+    app(ApplyWaiver::class)->handle([
+        'invoice_id' => $invoice->id,
+        'deceased_id' => $deceased->id,
+        'amount' => 4000.00,
+        'reason' => 'Charity waiver',
+    ], (string) $this->superAdmin->id);
+
+    expect($invoice->fresh()->waived_amount)->toEqual(4000.00);
+    expect($invoice->fresh()->status)->toEqual('Partially Paid');
+
+    // The remaining cash balance is 6000 — paying exactly it must settle the
+    // invoice, even though cash alone is less than the total.
+    $mode = PaymentMode::first();
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.store'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+            'payment_mode_id' => $mode->id,
+            'amount' => 6000.00,
+            'payment_date' => now()->toDateString(),
+        ])
+        ->assertRedirect();
+
+    expect($invoice->fresh()->paid_amount)->toEqual(6000.00);
+    expect($invoice->fresh()->status)->toEqual('Paid');
+});
+
+it('marks an invoice paid when wallet is applied after a partial waiver', function () {
+    $deceased = Deceased::factory()->create(['service_category_id' => $this->category->id]);
+
+    $invoice = Invoice::create([
+        'deceased_id' => $deceased->id,
+        'invoice_number' => 'INV-WAIVER-02',
+        'total_amount' => 10000.00,
+        'paid_amount' => 0.00,
+        'status' => 'Unpaid',
+        'billing_type' => 'service',
+        'created_by' => $this->superAdmin->id,
+    ]);
+
+    // 6000 on the general account (wallet).
+    Payment::create([
+        'deceased_id' => $deceased->id,
+        'invoice_id' => null,
+        'receipt_number' => 'REC-WAIVER-01',
+        'amount' => 6000.00,
+        'payment_method' => 'Cash',
+        'payment_date' => now(),
+        'received_by' => $this->superAdmin->id,
+    ]);
+
+    // Waive 4000 first, then let the wallet cover the cash remainder.
+    app(ApplyWaiver::class)->handle([
+        'invoice_id' => $invoice->id,
+        'deceased_id' => $deceased->id,
+        'amount' => 4000.00,
+    ], (string) $this->superAdmin->id);
+
+    $this->actingAs($this->superAdmin)
+        ->post(route('payments.apply-wallet-to-invoice'), [
+            'deceased_id' => $deceased->id,
+            'invoice_id' => $invoice->id,
+        ])
+        ->assertRedirect();
+
+    expect($invoice->fresh()->paid_amount)->toEqual(6000.00);
+    expect($invoice->fresh()->status)->toEqual('Paid');
 });

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\ApplicationSettings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Spatie\Permission\Models\Role;
 
 class UpdateRoleRequest extends FormRequest
 {
@@ -16,7 +17,9 @@ class UpdateRoleRequest extends FormRequest
      */
     public function rules(): array
     {
-        $roleId = $this->route('role')?->id;
+        $role = $this->route('role');
+
+        $roleId = $role instanceof Role ? $role->id : null;
 
         return [
             'name' => ['required', 'string', 'max:125', "unique:roles,name,{$roleId}"],

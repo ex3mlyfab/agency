@@ -172,7 +172,7 @@ export default function DeceasedRelease({ deceased, billing }: Props) {
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Security Verification Code Card */}
-                            <Card className="border border-primary/20 shadow-sm">
+                            <Card className="bg-secondary/30 border border-primary/20 shadow-sm">
                                 <CardHeader className="bg-primary/5 pb-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold text-primary">
                                         Security Code Verification
@@ -326,7 +326,7 @@ export default function DeceasedRelease({ deceased, billing }: Props) {
                             </Card>
 
                             {/* Collector ID Verification Card */}
-                            <Card>
+                            <Card className="bg-secondary/30">
                                 <CardHeader className="border-b border-border bg-secondary/10 pb-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
                                         <FileTextIcon className="h-5 w-5 text-muted-foreground" />
@@ -500,7 +500,7 @@ export default function DeceasedRelease({ deceased, billing }: Props) {
                     {/* Quick Reference Side Column */}
                     <div className="space-y-6">
                         {/* Deceased Info Reference Card */}
-                        <Card>
+                        <Card className="bg-secondary/30">
                             <CardHeader className="bg-secondary/20 pb-3">
                                 <CardTitle className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
                                     Deceased Reference
@@ -588,7 +588,7 @@ export default function DeceasedRelease({ deceased, billing }: Props) {
                         </Card>
 
                         {/* Intake Bringer Reference Card */}
-                        <Card>
+                        <Card className="bg-secondary/30">
                             <CardHeader className="bg-secondary/20 pb-3">
                                 <CardTitle className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
                                     Registered Bringer (Brought In By)

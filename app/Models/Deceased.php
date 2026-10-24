@@ -112,6 +112,8 @@ class Deceased extends Model
 
     /**
      * The chamber currently assigned to this deceased.
+     *
+     * @return BelongsTo<Chamber, $this>
      */
     public function chamber(): BelongsTo
     {
@@ -120,6 +122,8 @@ class Deceased extends Model
 
     /**
      * The staff member who released this deceased.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function releasedByUser(): BelongsTo
     {
@@ -128,6 +132,8 @@ class Deceased extends Model
 
     /**
      * All transfer/history events for this deceased.
+     *
+     * @return HasMany<Transfer, $this>
      */
     public function transfers(): HasMany
     {
@@ -136,6 +142,8 @@ class Deceased extends Model
 
     /**
      * Get the service category for the deceased.
+     *
+     * @return BelongsTo<ServiceCategory, $this>
      */
     public function serviceCategory(): BelongsTo
     {
@@ -144,6 +152,8 @@ class Deceased extends Model
 
     /**
      * All service invoices for this deceased (non-storage).
+     *
+     * @return HasMany<Invoice, $this>
      */
     public function invoices(): HasMany
     {
@@ -170,6 +180,8 @@ class Deceased extends Model
 
     /**
      * All payments / deposits recorded for this deceased.
+     *
+     * @return HasMany<Payment, $this>
      */
     public function payments(): HasMany
     {
@@ -178,6 +190,8 @@ class Deceased extends Model
 
     /**
      * All storage fee logs for this deceased.
+     *
+     * @return HasMany<StorageFeeLog, $this>
      */
     public function storageFeeLogs(): HasMany
     {
@@ -270,7 +284,7 @@ class Deceased extends Model
                     return (float) $payment->amount;
                 }
 
-                $log = $invoice->storageFeeLog?->first();
+                $log = $invoice->storageFeeLog->first();
 
                 // Legacy storage log without an admission link: count it.
                 if (! $log || ! $log->admission_started_at) {
@@ -523,7 +537,7 @@ class Deceased extends Model
 
         $storageServiceId = $this->chamber?->service_id;
 
-        $storageItem = $this->invoices->first()?->invoiceItems
+        $storageItem = $this->invoices->first()->invoiceItems
             ->first(function ($item) use ($storageServiceId) {
                 if ($storageServiceId) {
                     return $item->service_id === $storageServiceId;

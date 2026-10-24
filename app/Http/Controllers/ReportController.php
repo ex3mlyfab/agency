@@ -62,6 +62,10 @@ class ReportController extends Controller
             }
 
             $handle = fopen('php://output', 'w');
+            if ($handle === false) {
+                return;
+            }
+
             fputcsv($handle, array_keys($data[0]));
             foreach ($data as $row) {
                 fputcsv($handle, $row);
@@ -84,10 +88,10 @@ class ReportController extends Controller
                 'ID' => $d->id,
                 'First Name' => $d->first_name,
                 'Last Name' => $d->last_name,
-                'Date of Death' => $d->date_of_death?->format('Y-m-d'),
+                'Date of Death' => $d->date_of_death->format('Y-m-d'),
                 'Gender' => $d->gender,
                 'Status' => $d->status,
-                'Chamber' => $d->chamber?->name ?? '—',
+                'Chamber' => $d->chamber->name ?? '—',
                 'Relative' => $d->relative_name,
                 'Relative Phone' => $d->relative_phone,
             ])
@@ -125,11 +129,11 @@ class ReportController extends Controller
             ->get()
             ->map(fn (Transfer $t) => [
                 'ID' => $t->id,
-                'Deceased' => $t->deceased?->full_name ?? '—',
+                'Deceased' => $t->deceased->full_name ?? '—',
                 'Event Type' => $t->event_type,
-                'From Chamber' => $t->fromChamber?->name ?? '—',
-                'To Chamber' => $t->toChamber?->name ?? '—',
-                'Transferred By' => $t->transferredByUser?->name ?? '—',
+                'From Chamber' => $t->fromChamber->name ?? '—',
+                'To Chamber' => $t->toChamber->name ?? '—',
+                'Transferred By' => $t->transferredByUser->name ?? '—',
                 'Date' => $t->transferred_at->format('Y-m-d H:i'),
                 'Notes' => $t->notes ?? '',
             ])

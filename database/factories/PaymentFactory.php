@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Deceased;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\PaymentMode;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,24 +29,20 @@ class PaymentFactory extends Factory
             'deceased_id' => $deceased->id,
             'invoice_id' => null, // General credit
             'payment_mode_id' => $paymentMode->id,
-            'receipt_number' => 'REC-'.strtoupper(fake()->unique()->randomNumber(6)),
+            'receipt_number' => 'REC-'.fake()->unique()->numberBetween(100000, 999999),
             'amount' => $amount,
             'payment_method' => $paymentMode->name,
             'transaction_reference' => fake()->optional()->bothify('??####'),
             'payment_date' => fake()->dateTimeBetween('-1 month', 'now'),
             'notes' => fake()->optional()->sentence(),
-            'received_by' => \App\Models\User::factory()->create()->id,
+            'received_by' => User::factory()->create()->id,
         ];
     }
 
     public function forInvoice(): static
     {
-        return $this->state(function (array $attributes) {
-            $invoice = Invoice::factory()->create([
-                'deceased_id' => $this->faker->randomElement(
-                    App\Models\Deceased::all()->pluck('id')->toArray()
-                ),
-            ]);
+        return $this->state(function (): array {
+            $invoice = Invoice::factory()->create();
 
             return [
                 'invoice_id' => $invoice->id,

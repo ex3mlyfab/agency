@@ -30,6 +30,8 @@ class ServiceCategory extends Model
 
     /**
      * All service prices configured for this category.
+     *
+     * @return HasMany<ServicePrice, $this>
      */
     public function servicePrices(): HasMany
     {

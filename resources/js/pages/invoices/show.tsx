@@ -25,13 +25,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
     Table,
     TableBody,
     TableCell,
@@ -123,7 +116,9 @@ export default function InvoiceShow({
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isWalletApplying, setIsWalletApplying] = useState(false);
     const [isWaiverOpen, setIsWaiverOpen] = useState(false);
-    const [isWaiverApplying, setIsWaiverApplying] = useState(false);
+    // `isWaiverApplying` is a manual busy flag shown alongside processing;
+    // the setter currently has no trigger site, so it is intentionally skipped.
+    const [isWaiverApplying] = useState(false);
 
     const paymentForm = useForm({
         deceased_id: invoice.deceased?.id || '',
@@ -214,7 +209,7 @@ export default function InvoiceShow({
                         </Link>
                     </Button>
                     <div className="flex items-center gap-3">
-                        {isUnsettled && can?.managePayments !== false && (
+                        {isUnsettled && can?.managePayments === true && (
                             <Button
                                 size="sm"
                                 onClick={() => setIsPaymentOpen(true)}
@@ -226,7 +221,7 @@ export default function InvoiceShow({
                         )}
                         {isUnsettled &&
                             balance > 0 &&
-                            can?.manageWaivers !== false && (
+                            can?.manageWaivers === true && (
                                 <Button
                                     size="sm"
                                     variant="destructive"
@@ -403,7 +398,7 @@ export default function InvoiceShow({
                     </Card>
 
                     <div className="space-y-6">
-                        <Card>
+                        <Card className="bg-secondary/30">
                             <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />
@@ -478,12 +473,12 @@ export default function InvoiceShow({
                     </div>
                 </div>
 
-                <Card>
+                <Card className="bg-secondary/30">
                     <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
                         <CardTitle className="text-sm font-semibold text-foreground">
                             Associated Payments & Transactions
                         </CardTitle>
-                        {isUnsettled && can?.managePayments !== false && (
+                        {isUnsettled && can?.managePayments === true && (
                             <Button
                                 size="sm"
                                 onClick={() => setIsPaymentOpen(true)}

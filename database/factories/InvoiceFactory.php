@@ -25,7 +25,7 @@ class InvoiceFactory extends Factory
 
         return [
             'deceased_id' => Deceased::factory(),
-            'invoice_number' => 'INV-'.strtoupper(fake()->unique()->randomNumber(8)),
+            'invoice_number' => 'INV-'.fake()->unique()->numberBetween(10_000_000, 99_999_999),
             'subtotal' => $subtotal,
             'discount' => $discount,
             'tax' => $tax,

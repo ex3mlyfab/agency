@@ -52,7 +52,7 @@ class IssueRefund
             'payment_mode_id' => $mode?->id,
             'receipt_number' => 'REF-'.strtoupper(Str::random(8)),
             'amount' => -$surplus,
-            'payment_method' => $mode?->name ?? 'Refund',
+            'payment_method' => $mode->name ?? 'Refund',
             'transaction_reference' => null,
             'payment_date' => now(),
             'notes' => $notes ?? 'Storage refund issued on release.',

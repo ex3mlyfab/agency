@@ -142,19 +142,20 @@ function StatCard({
     label: string;
     value: string;
     sub?: string;
-    accent?: 'success' | 'primary' | 'warning' | 'neutral';
+    accent?: 'success' | 'primary' | 'warning' | 'highlight' | 'info';
 }) {
     const accentMap = {
-        success: 'border-success/25 text-success',
-        primary: 'border-primary/25 text-primary',
-        warning: 'border-warning/25 text-warning',
-        neutral: 'border-border text-muted-foreground',
+        success: 'border-success/25 bg-success/[0.07] text-success',
+        primary: 'border-primary/25 bg-primary/[0.07] text-primary',
+        warning: 'border-warning/25 bg-warning/[0.07] text-warning',
+        highlight: 'border-highlight/25 bg-highlight/[0.07] text-highlight',
+        info: 'border-info/25 bg-info/[0.07] text-info',
     };
-    const cls = accentMap[accent ?? 'neutral'];
+    const cls = accentMap[accent ?? 'primary'];
 
     return (
         <Card
-            className={`border ${cls} transition-colors duration-200 hover:border-primary/40`}
+            className={`border border-l-4 ${cls} transition-colors duration-200 hover:border-primary/40`}
         >
             <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -385,28 +386,28 @@ export default function PaymentsIndex({
                 {/* â”€â”€ Snapshot Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard
-                        accent="success"
+                        accent="primary"
                         icon={<BanknoteIcon className="h-5 w-5" />}
                         label="Total Collected"
                         value={fmtCurrency(stats.total_amount, symbol)}
                         sub={`${stats.total_count} payment${stats.total_count !== 1 ? 's' : ''}`}
                     />
                     <StatCard
-                        accent="primary"
+                        accent="success"
                         icon={<ReceiptIcon className="h-5 w-5" />}
                         label="Invoice Payments"
                         value={String(stats.invoice_count)}
                         sub="applied to invoices"
                     />
                     <StatCard
-                        accent="neutral"
+                        accent="warning"
                         icon={<WalletIcon className="h-5 w-5" />}
                         label="Deposits"
                         value={String(stats.deposit_count)}
                         sub="direct account credits"
                     />
                     <StatCard
-                        accent="warning"
+                        accent="highlight"
                         icon={<CreditCardIcon className="h-5 w-5" />}
                         label="Top Method"
                         value={topMethodName ?? 'â€”'}
@@ -616,7 +617,7 @@ export default function PaymentsIndex({
 
                 {/* â”€â”€ DataTable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                 <Card>
-                    <CardHeader className="border-b border-border px-6 py-3">
+                    <CardHeader className="border-b border-border/60 bg-secondary/50 px-6 py-3 dark:bg-secondary/30">
                         <div className="flex items-center justify-between">
                             <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 Receipt Ledger

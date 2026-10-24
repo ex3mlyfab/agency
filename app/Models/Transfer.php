@@ -42,6 +42,8 @@ class Transfer extends Model
 
     /**
      * The deceased this transfer belongs to.
+     *
+     * @return BelongsTo<Deceased, $this>
      */
     public function deceased(): BelongsTo
     {
@@ -50,6 +52,8 @@ class Transfer extends Model
 
     /**
      * The source chamber (where they came from).
+     *
+     * @return BelongsTo<Chamber, $this>
      */
     public function fromChamber(): BelongsTo
     {
@@ -58,6 +62,8 @@ class Transfer extends Model
 
     /**
      * The destination chamber (where they went).
+     *
+     * @return BelongsTo<Chamber, $this>
      */
     public function toChamber(): BelongsTo
     {
@@ -66,6 +72,8 @@ class Transfer extends Model
 
     /**
      * The user who performed the transfer.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function transferredByUser(): BelongsTo
     {

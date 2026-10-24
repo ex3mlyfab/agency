@@ -262,7 +262,7 @@ export default function ServicesIndex({ services, filters, can }: Props) {
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border px-4 py-3 sm:px-6">
+                    <CardHeader className="border-b border-border/60 bg-secondary/50 px-4 py-3 sm:px-6 dark:bg-secondary/30">
                         <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Services
                         </CardTitle>

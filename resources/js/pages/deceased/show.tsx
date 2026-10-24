@@ -704,7 +704,7 @@ export default function DeceasedShow({
 
                     {/* Relative info & Release card */}
                     <div className="space-y-6">
-                        <Card>
+                        <Card className="bg-secondary/30">
                             <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                     Relative / Bringer
@@ -787,7 +787,7 @@ export default function DeceasedShow({
                 </div>
 
                 {/* Storage Duration & Payment Tracker */}
-                <Card className="overflow-hidden border border-border">
+                <Card className="bg-secondary/30 overflow-hidden border border-border">
                     <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             <ClockIcon className="h-4 w-4 text-primary" />
@@ -995,7 +995,7 @@ export default function DeceasedShow({
                                                 inv.invoice_items.length >
                                                     0 && (
                                                     <div className="overflow-x-auto">
-                                                        <table className="w-full text-left text-xs">
+                                                        <table className="mma-zebra w-full text-left text-xs">
                                                             <thead>
                                                                 <tr className="tracking-wider text-muted-foreground uppercase">
                                                                     <th className="py-1 font-semibold">
@@ -1177,7 +1177,7 @@ export default function DeceasedShow({
                     </Card>
 
                     {/* Payment History Card */}
-                    <Card>
+                    <Card className="bg-secondary/30">
                         <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
                             <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 <CreditCardIcon className="h-4 w-4" />
@@ -1221,7 +1221,7 @@ export default function DeceasedShow({
                             ) : (
                                 <div className="space-y-4">
                                     <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-sm">
+                                        <table className="mma-zebra w-full text-left text-sm">
                                             <thead>
                                                 <tr className="border-b border-border text-xs tracking-wider text-muted-foreground uppercase">
                                                     <th className="py-2 font-semibold">
@@ -2296,7 +2296,7 @@ export default function DeceasedShow({
                 </Dialog>
 
                 {/* Transfer / audit history */}
-                <Card>
+                <Card className="bg-secondary/30">
                     <CardHeader className="border-b border-border px-6 py-3">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Chamber History
@@ -2309,7 +2309,7 @@ export default function DeceasedShow({
                             </p>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="mma-zebra w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-border bg-muted/40">
                                             <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">

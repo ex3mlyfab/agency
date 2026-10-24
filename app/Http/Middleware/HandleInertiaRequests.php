@@ -39,25 +39,39 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        // Every ability the frontend Gates (navigation + per-page action
+        // buttons) tests against. Keep in sync with app-sidebar / nav-* components.
+        $abilities = [
+            'deceased.view',
+            'chambers.view',
+            'transfers.view',
+            'history.view',
+            'reports.view',
+            'service_categories.view',
+            'services.view',
+            'service_prices.view',
+            'invoices.view',
+            'payments.view',
+            'waivers.view',
+            'waivers.manage',
+            'storage.invoices.view',
+            'storage.invoices.manage',
+            'users.view',
+            'roles.view',
+            'permissions.view',
+            'audits.view',
+            'branding.manage',
+        ];
+
         return [
             ...parent::share($request),
             'name' => ApplicationSetting::get('app_name', config('app.name')),
             'auth' => [
                 'user' => $user,
             ],
-            'can' => [
-                'history.view' => $user ? $user->can('history.view') : false,
-                'reports.view' => $user ? $user->can('reports.view') : false,
-                'service_categories.view' => $user ? $user->can('service_categories.view') : false,
-                'services.view' => $user ? $user->can('services.view') : false,
-                'service_prices.view' => $user ? $user->can('service_prices.view') : false,
-                'invoices.view' => $user ? $user->can('invoices.view') : false,
-                'payments.view' => $user ? $user->can('payments.view') : false,
-                'waivers.view' => $user ? $user->can('waivers.view') : false,
-                'waivers.manage' => $user ? $user->can('waivers.manage') : false,
-                'storage.invoices.view' => $user ? $user->can('storage.invoices.view') : false,
-                'storage.invoices.manage' => $user ? $user->can('storage.invoices.manage') : false,
-            ],
+            'can' => collect($abilities)
+                ->mapWithKeys(fn (string $ability): array => [$ability => $user?->can($ability) ?? false])
+                ->all(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => [
                 'name' => ApplicationSetting::get('app_name', config('app.name')),

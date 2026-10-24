@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\WaiverFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class Waiver extends Model
 {
+    /** @use HasFactory<WaiverFactory> */
     use HasFactory, HasUlids, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -31,16 +33,19 @@ class Waiver extends Model
         'authorized_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Deceased, $this> */
     public function deceased(): BelongsTo
     {
         return $this->belongsTo(Deceased::class);
     }
 
+    /** @return BelongsTo<Invoice, $this> */
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function authorizedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'authorized_by');

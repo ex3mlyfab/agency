@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class Payment extends Model
 {
+    /** @use HasFactory<PaymentFactory> */
     use HasFactory, HasUlids, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -43,6 +45,8 @@ class Payment extends Model
 
     /**
      * Get the deceased associated with the payment.
+     *
+     * @return BelongsTo<Deceased, $this>
      */
     public function deceased(): BelongsTo
     {
@@ -51,6 +55,8 @@ class Payment extends Model
 
     /**
      * Get the payment mode used.
+     *
+     * @return BelongsTo<PaymentMode, $this>
      */
     public function paymentMode(): BelongsTo
     {
@@ -59,6 +65,8 @@ class Payment extends Model
 
     /**
      * Get the invoice this payment is credited towards.
+     *
+     * @return BelongsTo<Invoice, $this>
      */
     public function invoice(): BelongsTo
     {
@@ -67,6 +75,8 @@ class Payment extends Model
 
     /**
      * Get the user who received this payment.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function receivedByUser(): BelongsTo
     {

@@ -24,7 +24,7 @@ class GenerateStorageFeeInvoices extends Command
         $action = app(CreateStorageFeeInvoice::class);
 
         foreach ($deceased as $record) {
-            $invoice = $action->handle($record, auth()->id() ?? '000000000000000000000000');
+            $invoice = $action->handle($record, (string) (auth()->id() ?? '000000000000000000000000'));
 
             if ($invoice) {
                 $createdCount++;

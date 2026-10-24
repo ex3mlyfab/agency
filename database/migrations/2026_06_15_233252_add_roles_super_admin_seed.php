@@ -51,15 +51,21 @@ return new class extends Migration
         // Grant all known permissions to super admin
         $superAdminRole->syncPermissions(Permission::whereIn('name', $permissions)->pluck('name')->toArray());
 
-        // Super admin user
-        $email = env('ADMIN_EMAIL') ?: 'superadmin@example.com';
-        $name = env('ADMIN_NAME') ?: 'Super Admin';
+        // Super admin user. Environment values are read via getenv() so the
+        // migration keeps working even when the config has been cached.
+        $rawEmail = getenv('ADMIN_EMAIL');
+        $rawName = getenv('ADMIN_NAME');
+        $rawPassword = getenv('ADMIN_PASSWORD');
+
+        $email = is_string($rawEmail) && $rawEmail !== '' ? $rawEmail : 'superadmin@example.com';
+        $name = is_string($rawName) && $rawName !== '' ? $rawName : 'Super Admin';
+        $password = is_string($rawPassword) && $rawPassword !== '' ? $rawPassword : 'password';
 
         $user = User::firstOrCreate(
             ['email' => $email],
             [
                 'name' => $name,
-                'password' => Hash::make(env('ADMIN_PASSWORD') ?: 'password'),
+                'password' => Hash::make($password),
             ]
         );
 

@@ -62,7 +62,7 @@ export default function ChamberHistory({ chamber, history }: Props) {
                     <Card>
                         <CardContent className="p-0">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="mma-zebra w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-border bg-muted/40">
                                             <th className="px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">

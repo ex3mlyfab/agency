@@ -20,7 +20,7 @@ export default function AuthSplitLayout({
                 <div className="mt-auto max-w-sm space-y-3">
                     <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.2em] text-primary-foreground/70 uppercase">
                         <span className="size-2 rounded-full bg-success" />
-                        Facility operations
+                        Mortuary Information Management System (MIMS)
                     </div>
                     <p className="text-3xl leading-tight font-semibold tracking-tight text-primary-foreground">
                         Clear records. Calm decisions.

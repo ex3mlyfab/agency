@@ -6,7 +6,7 @@ use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\Service;
 use App\Models\ServicePrice;
-use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class BuildServiceInvoiceItems
 {
@@ -67,6 +67,13 @@ class BuildServiceInvoiceItems
             })
             ->first();
 
-        return $servicePrice ? (float) $servicePrice->price : 0.0;
+        if (! $servicePrice) {
+            // A line item must never be silently billed at a zero price.
+            throw ValidationException::withMessages([
+                'items' => 'No price is configured for one of the selected services under this category. Set up a service price first.',
+            ]);
+        }
+
+        return (float) $servicePrice->price;
     }
 }

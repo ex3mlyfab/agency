@@ -322,7 +322,7 @@ return;
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border px-6 py-3">
+                    <CardHeader className="border-b border-border/60 bg-secondary/50 px-6 py-3 dark:bg-secondary/30">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Price List
                         </CardTitle>

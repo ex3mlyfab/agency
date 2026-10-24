@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordTransfer;
+use App\Enums\DeceasedStatus;
 use App\Http\Requests\StoreTransferRequest;
 use App\Models\Chamber;
 use App\Models\Deceased;

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -35,6 +36,8 @@ class Chamber extends Model
 
     /**
      * All deceased currently assigned to this chamber.
+     *
+     * @return HasMany<Deceased, $this>
      */
     public function occupants(): HasMany
     {
@@ -43,6 +46,8 @@ class Chamber extends Model
 
     /**
      * The storage service attached to this chamber.
+     *
+     * @return BelongsTo<Service, $this>
      */
     public function service(): BelongsTo
     {
@@ -51,6 +56,8 @@ class Chamber extends Model
 
     /**
      * All transfer events involving this chamber.
+     *
+     * @return HasMany<Transfer, $this>
      */
     public function transfers(): HasMany
     {
@@ -61,6 +68,8 @@ class Chamber extends Model
      * The most recent "Entered" transfer into this chamber.
      *
      * Eager-load via `with('latestEntryTransfer')` to avoid per-row queries.
+     *
+     * @return HasOne<Transfer, $this>
      */
     public function latestEntryTransfer(): HasOne
     {

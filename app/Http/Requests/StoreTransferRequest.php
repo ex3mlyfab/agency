@@ -36,7 +36,11 @@ class StoreTransferRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            $deceased = $this->route('deceased') ?? Deceased::find($this->input('deceased_id'));
+            $routeModel = $this->route('deceased');
+
+            $deceased = $routeModel instanceof Deceased
+                ? $routeModel
+                : Deceased::find((string) $this->input('deceased_id'));
 
             if (! $deceased) {
                 return;

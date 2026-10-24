@@ -171,7 +171,7 @@ export function DeceasedForm({
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Section 1: Deceased identity */}
             <Card>
-                <CardHeader className="border-b border-border px-6 py-3">
+                <CardHeader className="border-b border-border/60 bg-secondary/50 px-6 py-3 dark:bg-secondary/30">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Deceased Information
                     </CardTitle>
@@ -759,8 +759,8 @@ export function DeceasedForm({
             </Card>
 
             {/* Section 2: Clothing / wrapping */}
-            <Card>
-                <CardHeader className="border-b border-border px-6 py-3">
+            <Card className="bg-secondary/30">
+                <CardHeader className="border-b border-border/60 bg-secondary/50 px-6 py-3 dark:bg-secondary/30">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Clothing / Wrapping
                     </CardTitle>
@@ -896,7 +896,7 @@ export function DeceasedForm({
 
             {/* Section 3: Relative / bringer information */}
             <Card>
-                <CardHeader className="border-b border-border px-6 py-3">
+                <CardHeader className="border-b border-border/60 bg-secondary/50 px-6 py-3 dark:bg-secondary/30">
                     <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                         Relative / Bringer Information
                     </CardTitle>

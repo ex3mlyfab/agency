@@ -14,8 +14,8 @@ class RecordTransfer
     public function handle(array $validated, string $transferredBy): Deceased
     {
         return DB::transaction(function () use ($validated, $transferredBy): Deceased {
-            $deceased = Deceased::query()->lockForUpdate()->findOrFail($validated['deceased_id']);
-            $destination = ! empty($validated['to_chamber_id']) ? Chamber::query()->lockForUpdate()->findOrFail($validated['to_chamber_id']) : null;
+            $deceased = Deceased::query()->lockForUpdate()->findOrFail((string) $validated['deceased_id']);
+            $destination = ! empty($validated['to_chamber_id']) ? Chamber::query()->lockForUpdate()->findOrFail((string) $validated['to_chamber_id']) : null;
 
             if ($destination && $destination->occupants()->count() >= $destination->capacity) {
                 throw ValidationException::withMessages(['to_chamber_id' => 'The selected chamber is at capacity.']);

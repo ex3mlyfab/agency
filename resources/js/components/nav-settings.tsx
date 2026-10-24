@@ -30,11 +30,11 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
     const { isCurrentUrl } = useCurrentUrl();
 
     const showSettings =
-        can['users.view'] !== false ||
-        can['roles.view'] !== false ||
-        can['permissions.view'] !== false ||
-        can['audits.view'] !== false ||
-        can['branding.manage'] !== false;
+        can['users.view'] !== true ||
+        can['roles.view'] !== true ||
+        can['permissions.view'] !== true ||
+        can['audits.view'] !== true ||
+        can['branding.manage'] !== true;
 
     if (!showSettings) {
         return null;
@@ -74,7 +74,7 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <SidebarMenuSub>
-                                {can['users.view'] !== false && (
+                                {can['users.view'] !== true && (
                                     <SidebarMenuSubItem>
                                         <SidebarMenuSubButton
                                             asChild
@@ -89,7 +89,7 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                 )}
-                                {can['roles.view'] !== false && (
+                                {can['roles.view'] !== true && (
                                     <SidebarMenuSubItem>
                                         <SidebarMenuSubButton
                                             asChild
@@ -104,7 +104,7 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                 )}
-                                {can['permissions.view'] !== false && (
+                                {can['permissions.view'] !== true && (
                                     <SidebarMenuSubItem>
                                         <SidebarMenuSubButton
                                             asChild
@@ -119,7 +119,7 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                 )}
-                                {can['audits.view'] !== false && (
+                                {can['audits.view'] !== true && (
                                     <SidebarMenuSubItem>
                                         <SidebarMenuSubButton
                                             asChild
@@ -134,7 +134,7 @@ export function NavSettings({ can }: { can: Record<string, boolean> }) {
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                 )}
-                                {can['branding.manage'] !== false && (
+                                {can['branding.manage'] !== true && (
                                     <SidebarMenuSubItem>
                                         <SidebarMenuSubButton
                                             asChild

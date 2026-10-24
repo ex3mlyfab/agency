@@ -30,7 +30,7 @@ class ServicePriceFactory extends Factory
     {
         return $this->state([
             'service_id' => $service->id,
-            'service_category_id' => $category?->id ?? $service->service_category_id,
+            'service_category_id' => $category?->id,
         ]);
     }
 }

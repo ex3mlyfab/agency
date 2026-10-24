@@ -171,11 +171,11 @@ export default function WaiversIndex({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
+                    <Card className="overflow-hidden border-l-4 border-l-primary bg-primary/[0.07]">
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-primary" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
-                                <ShieldCheckIcon className="h-4 w-4 text-highlight" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15">
+                                <ShieldCheckIcon className="h-4 w-4 text-primary" />
                             </div>
                             <div className="min-w-0">
                                 <p className="truncate text-2xl leading-none font-bold">
@@ -188,7 +188,7 @@ export default function WaiversIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden border-l-4 border-l-destructive bg-destructive/[0.07]">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-destructive" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/15">
@@ -205,11 +205,11 @@ export default function WaiversIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-info" />
+                    <Card className="overflow-hidden border-l-4 border-l-warning bg-warning/[0.07]">
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-info/15">
-                                <FileTextIcon className="h-4 w-4 text-info" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15">
+                                <FileTextIcon className="h-4 w-4 text-warning" />
                             </div>
                             <div className="min-w-0">
                                 <p className="truncate text-2xl leading-none font-bold">
@@ -222,11 +222,11 @@ export default function WaiversIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
+                    <Card className="overflow-hidden border-l-4 border-l-highlight bg-highlight/[0.07]">
+                        <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/15">
-                                <UserIcon className="h-4 w-4 text-warning" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
+                                <UserIcon className="h-4 w-4 text-highlight" />
                             </div>
                             <div className="min-w-0">
                                 <p className="truncate text-2xl leading-none font-bold">
@@ -488,7 +488,7 @@ export default function WaiversIndex({
                 )}
 
                 <Card>
-                    <CardHeader className="border-b border-border px-6 py-3">
+                    <CardHeader className="border-b border-border/60 bg-secondary/50 px-6 py-3 dark:bg-secondary/30">
                         <CardTitle className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                             Waiver Ledger
                         </CardTitle>

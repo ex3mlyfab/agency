@@ -21,7 +21,7 @@ class RecordPayment
                 ->where('is_active', true)
                 ->lockForUpdate()
                 ->firstOrFail();
-            $invoice = ! empty($validated['invoice_id']) ? Invoice::query()->lockForUpdate()->findOrFail($validated['invoice_id']) : null;
+            $invoice = ! empty($validated['invoice_id']) ? Invoice::query()->lockForUpdate()->findOrFail((string) $validated['invoice_id']) : null;
 
             if ($invoice && $invoice->deceased_id !== $validated['deceased_id']) {
                 abort(422, 'The selected invoice does not belong to the deceased record.');
@@ -51,11 +51,15 @@ class RecordPayment
             ]);
 
             if ($invoice) {
+                // A waiver covers part of the total, so "settled" is the sum of
+                // cash payments AND waived amounts — same formula ApplyWaiver
+                // uses. The status must not depend on the order the waiver or
+                // this payment was applied in.
                 $invoice->paid_amount = min((float) $invoice->payments()->sum('amount'), (float) $invoice->total_amount);
                 $wasUnpaid = $invoice->status === 'Unpaid';
-                $invoice->status = $invoice->paid_amount >= $invoice->total_amount
+                $invoice->status = ((float) $invoice->paid_amount + (float) $invoice->waived_amount >= (float) $invoice->total_amount)
                     ? 'Paid'
-                    : ($invoice->paid_amount > 0 ? 'Partially Paid' : 'Unpaid');
+                    : ((float) $invoice->paid_amount > 0 || (float) $invoice->waived_amount > 0 ? 'Partially Paid' : 'Unpaid');
                 $invoice->save();
 
                 if ($invoice->billing_type === 'storage' && $invoice->status === 'Paid' && $wasUnpaid) {
@@ -87,6 +91,6 @@ class RecordPayment
         }
 
         $action = app(CreateStorageFeeInvoice::class);
-        $action->handle($deceased, auth()->id() ?? '000000000000000000000000', $lastCoveredDay);
+        $action->handle($deceased, (string) (auth()->id() ?? '000000000000000000000000'), $lastCoveredDay);
     }
 }

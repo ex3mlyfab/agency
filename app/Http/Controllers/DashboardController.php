@@ -7,6 +7,7 @@ use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Transfer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,14 +55,13 @@ class DashboardController extends Controller
             ->take(5)
             ->get()
             ->map(function (Transfer $transfer) {
-                $actor = $transfer->transferredByUser?->name ?? 'System';
-                $deceasedName = $transfer->deceased?->full_name ?? 'Unknown Deceased';
+                $actor = $transfer->transferredByUser->name ?? 'System';
+                $deceasedName = $transfer->deceased->full_name ?? 'Unknown Deceased';
 
                 $label = match ($transfer->event_type) {
-                    'Entered' => "{$deceasedName} was placed in ".($transfer->toChamber?->name ?? 'a chamber'),
-                    'Transferred' => "{$deceasedName} was moved from ".($transfer->fromChamber?->name ?? 'unknown').' → '.($transfer->toChamber?->name ?? 'unknown'),
-                    'Released' => "{$deceasedName} was released from ".($transfer->fromChamber?->name ?? 'a chamber'),
-                    default => "{$deceasedName}: {$transfer->event_type}",
+                    'Entered' => "{$deceasedName} was placed in ".($transfer->toChamber->name ?? 'a chamber'),
+                    'Transferred' => "{$deceasedName} was moved from ".($transfer->fromChamber->name ?? 'unknown').' → '.($transfer->toChamber->name ?? 'unknown'),
+                    'Released' => "{$deceasedName} was released from ".($transfer->fromChamber->name ?? 'a chamber'),
                 };
 
                 return [
@@ -75,7 +75,7 @@ class DashboardController extends Controller
             ->toArray();
 
         // 4. Daily admissions & releases over the last 7 days
-        $trendCounts = Transfer::query()
+        $trendCounts = DB::table('transfers')
             ->selectRaw('DATE(transferred_at) as date')
             ->selectRaw("SUM(CASE WHEN event_type = 'Entered' THEN 1 ELSE 0 END) as admissions")
             ->selectRaw("SUM(CASE WHEN event_type = 'Released' THEN 1 ELSE 0 END) as releases")
@@ -95,8 +95,8 @@ class DashboardController extends Controller
             $trendData[] = [
                 'date' => $dateString,
                 'label' => $displayLabel,
-                'admissions' => (int) ($counts?->admissions ?? 0),
-                'releases' => (int) ($counts?->releases ?? 0),
+                'admissions' => (int) ($counts->admissions ?? 0),
+                'releases' => (int) ($counts->releases ?? 0),
             ];
         }
 

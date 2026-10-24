@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use Database\Factories\PaymentModeFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 class PaymentMode extends Model
 {
+    /** @use HasFactory<PaymentModeFactory> */
     use HasFactory, HasUlids, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -36,6 +39,8 @@ class PaymentMode extends Model
 
     /**
      * Get the payments made with this payment mode.
+     *
+     * @return HasMany<Payment, $this>
      */
     public function payments(): HasMany
     {
@@ -45,9 +50,9 @@ class PaymentMode extends Model
     /**
      * Get all active payment modes (cached).
      *
-     * @return \Illuminate\Support\Collection<int, self>
+     * @return Collection<int, self>
      */
-    public static function active(): \Illuminate\Support\Collection
+    public static function active(): Collection
     {
         return Cache::remember('payment_modes:active', 3600, function () {
             return static::where('is_active', true)->orderBy('name')->get();

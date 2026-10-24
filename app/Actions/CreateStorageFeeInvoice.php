@@ -66,13 +66,11 @@ class CreateStorageFeeInvoice
                 'created_by' => $createdBy,
             ]);
 
-            $serviceName = $servicePrice->service?->name ?? 'Storage Fee';
+            $serviceName = $servicePrice->service->name ?? 'Storage Fee';
 
             // Blended per-day rate so the line item stays internally consistent
             // (unit_price × quantity = total_price) even across tier boundaries.
-            $unitPrice = $newDaysToBill > 0
-                ? round($charge / $newDaysToBill, 2)
-                : 0.0;
+            $unitPrice = round($charge / $newDaysToBill, 2);
 
             $invoice->invoiceItems()->create([
                 'service_id' => $storageServiceId,

@@ -33,11 +33,11 @@ final class InvoiceStatus
     public static function values(): array
     {
         return [
-            self::Draft->value,
-            self::Unpaid->value,
-            self::PartiallyPaid->value,
-            self::Paid->value,
-            self::Refunded->value,
+            self::Draft,
+            self::Unpaid,
+            self::PartiallyPaid,
+            self::Paid,
+            self::Refunded,
         ];
     }
 }

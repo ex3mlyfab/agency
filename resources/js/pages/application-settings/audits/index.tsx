@@ -256,7 +256,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
 
                 {/* Stats */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card>
+                    <Card className="border-l-4 border-l-primary bg-primary/[0.07]">
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                                 <ActivityIcon className="h-4 w-4 text-primary" />
@@ -271,7 +271,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="border-l-4 border-l-success bg-success/[0.07]">
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10">
                                 <UserIcon className="h-4 w-4 text-success" />
@@ -286,7 +286,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="border-l-4 border-l-warning bg-warning/[0.07]">
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
                                 <DatabaseIcon className="h-4 w-4 text-muted-foreground" />
@@ -301,7 +301,7 @@ export default function AuditsIndex({ audits, filters }: Props) {
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="border-l-4 border-l-highlight bg-highlight/[0.07]">
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10">
                                 <ClockIcon className="h-4 w-4 text-warning" />

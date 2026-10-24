@@ -34,6 +34,7 @@ class ApplicationSetting extends Model
      * Get multiple settings as a key-value array.
      *
      * @param  string[]  $keys
+     * @return array<string, string|null>
      */
     public static function getMany(array $keys): array
     {

@@ -14,7 +14,7 @@ class ApplyWalletToInvoice
     public function handle(array $validated, string $appliedBy): ?Payment
     {
         return DB::transaction(function () use ($validated, $appliedBy): ?Payment {
-            $invoice = Invoice::query()->lockForUpdate()->findOrFail($validated['invoice_id']);
+            $invoice = Invoice::query()->lockForUpdate()->findOrFail((string) $validated['invoice_id']);
 
             if ($invoice->deceased_id != $validated['deceased_id']) {
                 abort(422, 'The selected invoice does not belong to the deceased record.');
@@ -85,11 +85,13 @@ class ApplyWalletToInvoice
                 }
             }
 
+            // Consistent with ApplyWaiver: waived amounts count towards
+            // settlement so the status does not depend on application order.
             $invoice->paid_amount = min((float) $invoice->payments()->sum('amount'), (float) $invoice->total_amount);
             $wasUnpaid = $invoice->status === 'Unpaid';
-            $invoice->status = $invoice->paid_amount >= $invoice->total_amount
+            $invoice->status = ((float) $invoice->paid_amount + (float) $invoice->waived_amount >= (float) $invoice->total_amount)
                 ? 'Paid'
-                : ($invoice->paid_amount > 0 ? 'Partially Paid' : 'Unpaid');
+                : ((float) $invoice->paid_amount > 0 || (float) $invoice->waived_amount > 0 ? 'Partially Paid' : 'Unpaid');
             $invoice->save();
 
             if ($invoice->billing_type === 'storage' && $invoice->status === 'Paid' && $wasUnpaid) {

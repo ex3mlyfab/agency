@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ServicePriceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +34,8 @@ class ServicePrice extends Model
 
     /**
      * Get the service associated with the price.
+     *
+     * @return BelongsTo<Service, $this>
      */
     public function service(): BelongsTo
     {
@@ -41,6 +44,8 @@ class ServicePrice extends Model
 
     /**
      * Get the service category associated with the price.
+     *
+     * @return BelongsTo<ServiceCategory, $this>
      */
     public function serviceCategory(): BelongsTo
     {
@@ -49,6 +54,8 @@ class ServicePrice extends Model
 
     /**
      * Get the price tiers for this service price.
+     *
+     * @return HasMany<ServicePriceTier, $this>
      */
     public function servicePriceTiers(): HasMany
     {
@@ -57,8 +64,6 @@ class ServicePrice extends Model
 
     /**
      * Find a ServicePrice by service, category, and source (cached).
-     *
-     * @return self|null
      */
     public static function findByServiceCategorySource(string $serviceId, string $categoryOrSource, string $source): ?self
     {

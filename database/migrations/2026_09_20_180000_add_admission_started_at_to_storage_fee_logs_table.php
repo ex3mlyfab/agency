@@ -2,6 +2,7 @@
 
 use App\Models\Deceased;
 use App\Models\StorageFeeLog;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -45,7 +46,9 @@ return new class extends Migration
                 $admissionStart = $this->resolveAdmissionStartForLog($deceased, $log->created_at);
                 // Update the column directly so we don't re-trigger the model's
                 // audit-logging side effects during a bulk backfill.
-                $log->admission_started_at = $admissionStart;
+                $log->admission_started_at = $admissionStart !== null
+                    ? CarbonImmutable::instance($admissionStart)
+                    : null;
                 $log->save();
             });
     }

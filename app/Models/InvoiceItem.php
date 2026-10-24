@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\InvoiceItemFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class InvoiceItem extends Model
 {
+    /** @use HasFactory<InvoiceItemFactory> */
     use HasFactory, HasUlids, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -32,6 +34,8 @@ class InvoiceItem extends Model
 
     /**
      * Get the invoice this item belongs to.
+     *
+     * @return BelongsTo<Invoice, $this>
      */
     public function invoice(): BelongsTo
     {
@@ -40,6 +44,8 @@ class InvoiceItem extends Model
 
     /**
      * Get the service referenced by this item.
+     *
+     * @return BelongsTo<Service, $this>
      */
     public function service(): BelongsTo
     {

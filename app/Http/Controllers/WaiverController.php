@@ -56,12 +56,12 @@ class WaiverController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $summary = Waiver::selectRaw('
+        $summaryRow = Waiver::selectRaw('
             COUNT(*) as total,
             SUM(amount) as total_waived,
             COUNT(DISTINCT invoice_id) as invoices_affected,
             COUNT(DISTINCT deceased_id) as deceased_affected
-        ')->first();
+        ')->first()?->getAttributes() ?? [];
 
         $authorizers = User::select('id', 'name')
             ->whereIn('id', Waiver::distinct()->pluck('authorized_by'))
@@ -72,10 +72,10 @@ class WaiverController extends Controller
             'waivers' => $waivers,
             'filters' => $request->only(['search', 'date_from', 'date_to', 'authorized_by']),
             'summary' => [
-                'total_waivers' => (int) $summary->total,
-                'total_waived' => (float) $summary->total_waived,
-                'invoices_affected' => (int) $summary->invoices_affected,
-                'deceased_affected' => (int) $summary->deceased_affected,
+                'total_waivers' => (int) ($summaryRow['total'] ?? 0),
+                'total_waived' => (float) ($summaryRow['total_waived'] ?? 0),
+                'invoices_affected' => (int) ($summaryRow['invoices_affected'] ?? 0),
+                'deceased_affected' => (int) ($summaryRow['deceased_affected'] ?? 0),
             ],
             'authorizers' => $authorizers,
             'can' => [

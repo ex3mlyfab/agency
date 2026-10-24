@@ -31,14 +31,14 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
     const { isCurrentUrl } = useCurrentUrl();
 
     const showAccounts =
-        can['service_categories.view'] !== false ||
-        can['services.view'] !== false ||
-        can['service_prices.view'] !== false;
+        can['service_categories.view'] !== true ||
+        can['services.view'] !== true ||
+        can['service_prices.view'] !== true;
 
     const showBilling =
-        can['invoices.view'] !== false ||
-        can['payments.view'] !== false ||
-        can['waivers.view'] !== false;
+        can['invoices.view'] !== true ||
+        can['payments.view'] !== true ||
+        can['waivers.view'] !== true;
 
     if (!showAccounts && !showBilling) {
         return null;
@@ -52,16 +52,16 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
     const billingUrls = ['/invoices', '/payments', '/waivers'];
 
     const accountsActive = accountsUrls.some((url) =>
-        can['service_categories.view'] !== false ||
-        can['services.view'] !== false ||
-        can['service_prices.view'] !== false
+        can['service_categories.view'] !== true ||
+        can['services.view'] !== true ||
+        can['service_prices.view'] !== true
             ? isCurrentUrl(url, undefined, url === '/services')
             : false,
     );
     const billingActive = billingUrls.some((url) =>
-        can['invoices.view'] !== false ||
-        can['payments.view'] !== false ||
-        can['waivers.view'] !== false
+        can['invoices.view'] !== true ||
+        can['payments.view'] !== true ||
+        can['waivers.view'] !== true
             ? isCurrentUrl(url, undefined, url === '/invoices')
             : false,
     );
@@ -107,7 +107,7 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                     )}
-                                    {can['services.view'] !== false && (
+                                    {can['services.view'] !== true && (
                                         <SidebarMenuSubItem>
                                             <SidebarMenuSubButton
                                                 asChild
@@ -122,7 +122,7 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                     )}
-                                    {can['service_prices.view'] !== false && (
+                                    {can['service_prices.view'] !== true && (
                                         <SidebarMenuSubItem>
                                             <SidebarMenuSubButton
                                                 asChild
@@ -162,7 +162,7 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <SidebarMenuSub>
-                                    {can['invoices.view'] !== false && (
+                                    {can['invoices.view'] !== true && (
                                         <SidebarMenuSubItem>
                                             <SidebarMenuSubButton
                                                 asChild
@@ -177,7 +177,7 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                     )}
-                                    {can['payments.view'] !== false && (
+                                    {can['payments.view'] !== true && (
                                         <SidebarMenuSubItem>
                                             <SidebarMenuSubButton
                                                 asChild
@@ -192,7 +192,7 @@ export function NavAccounts({ can }: { can: Record<string, boolean> }) {
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                     )}
-                                    {can['waivers.view'] !== false && (
+                                    {can['waivers.view'] !== true && (
                                         <SidebarMenuSubItem>
                                             <SidebarMenuSubButton
                                                 asChild

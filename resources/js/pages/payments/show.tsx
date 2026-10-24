@@ -150,7 +150,7 @@ export default function PaymentShow({ payment }: Props) {
                     {/* Metadata & Associated Entities */}
                     <div className="space-y-6">
                         {/* Deceased info card */}
-                        <Card>
+                        <Card className="bg-secondary/30">
                             <CardHeader className="border-b border-border px-6 py-3">
                                 <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />

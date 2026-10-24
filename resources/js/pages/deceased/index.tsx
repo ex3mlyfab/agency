@@ -251,7 +251,7 @@ export default function DeceasedIndex({
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-5">
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden border-l-4 border-l-primary bg-primary/[0.07]">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-primary" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -268,7 +268,7 @@ export default function DeceasedIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden border-l-4 border-l-warning bg-warning/[0.07]">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-warning" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/10">
@@ -285,7 +285,7 @@ export default function DeceasedIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden border-l-4 border-l-success bg-success/[0.07]">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-success" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10">
@@ -302,7 +302,7 @@ export default function DeceasedIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden border-l-4 border-l-highlight bg-highlight/[0.07]">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-muted-foreground" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -319,7 +319,7 @@ export default function DeceasedIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="col-span-2 overflow-hidden lg:col-span-1">
+                    <Card className="col-span-2 overflow-hidden border-l-4 border-l-info bg-info/[0.07] lg:col-span-1">
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-highlight" />
                         <CardContent className="flex items-center gap-3 p-4">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/15">
@@ -679,7 +679,7 @@ export default function DeceasedIndex({
 
                 {/* Table */}
                 <Card>
-                    <CardHeader className="border-b border-border px-4 py-3 sm:px-6">
+                    <CardHeader className="border-b border-border/60 bg-secondary/50 dark:bg-secondary/30 px-4 py-3 sm:px-6">
                         <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             Records
                         </CardTitle>
