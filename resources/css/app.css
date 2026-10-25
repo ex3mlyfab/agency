@@ -134,7 +134,7 @@
 
     /* ~10px radius feel */
     --radius: 0.625rem;
-    --sidebar: #f7fbfd;
+    --sidebar: var(--background);
     --sidebar-foreground: #0f172a;
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
@@ -191,7 +191,7 @@
     --chart-3: oklch(0.72 0.2 300);
     --chart-4: oklch(0.82 0.18 90);
     --chart-5: oklch(0.75 0.2 15);
-    --sidebar: #101d2d;
+    --sidebar: var(--background);
     --sidebar-foreground: #f1f5f9;
     --sidebar-primary: #818cf8;
     --sidebar-primary-foreground: #0b1120;

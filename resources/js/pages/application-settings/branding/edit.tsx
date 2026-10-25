@@ -116,7 +116,7 @@ fileInputRef.current.value = '';
                 <Separator />
 
                 {status === 'branding-updated' && (
-                    <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                    <div className="rounded-md border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
                         Branding settings saved successfully.
                     </div>
                 )}

@@ -1,7 +1,7 @@
 # MMA — Interface Design System
 
 **Project:** Mortuary Management Application  
-**Direction:** Vibrant Oversight — operational, high-contrast, and premium with a bold-but-harmonious saturated palette
+**Direction:** Vibrant Oversight — operational, high-contrast, and premium with a bold-but-harmonious saturated palette. Every non-auth screen sits on the same solid semantic canvas; component color is reserved for meaning and navigational cues.
 
 ---
 
@@ -15,7 +15,7 @@
 
 ## Depth Strategy
 
-**Border-driven elevation.** No default shadows on cards. Cards use `rounded-lg` + `border-border`. Hover elevation uses border intensify (`hover:border-primary/40`) not shadow. Only dropdowns/popovers/drawers get real shadows.
+**Border-driven elevation.** No default shadows on cards or the app content shell. Cards use `bg-card rounded-lg border-border` on the solid `bg-background` canvas. Hover elevation uses border intensify (`hover:border-primary/40`) not shadow. Only dropdowns/popovers/drawers get real shadows.
 
 - Level 0: `bg-background` (canvas)
 - Level 1: `border-border` (cards, panels)
@@ -74,10 +74,17 @@ Workbench-tight. 36px row height in tables (`py-2.5`). Card headers are compact 
 - Defined in `app.css` under `@layer utilities`
 
 ### Sidebar
-- Canvas-adjacent pale sky surface: `--sidebar` rather than a separate dark navigation world
+- Same solid surface as the canvas via `--sidebar: var(--background)` in both themes
 - Active item: `bg-sidebar-accent` with `font-semibold` and `text-sidebar-accent-foreground`
 - Navigation icons use restrained semantic cues: mint for chambers, plum for transfers, apricot for history, blue for reports
 - Group labels remain muted; color is reserved for active navigation and semantic states
+
+### Page canvas and complementary component colors
+- Non-auth pages use `bg-background` as a solid canvas in both sidebar and header layouts; avoid gradients and unrelated page-level fills.
+- Cards and intentional inset panels use `bg-card`; controls use their existing control tokens.
+- Use semantic accent tokens (`primary`, `success`, `warning`, `info`, `highlight`, `accent`) for component cues, not as competing page backgrounds.
+- Keep each accent consistent with its meaning across pages; use low-opacity token tints for supporting surfaces and solid tokens for icons, labels, and important statuses.
+- Auth pages intentionally retain their independent layouts and are excluded from the solid-canvas normalization.
 
 ### Button
 - Primary: `variant="default"` → `bg-primary text-primary-foreground`
@@ -95,18 +102,18 @@ Workbench-tight. 36px row height in tables (`py-2.5`). Card headers are compact 
 
 | Token | Light | Dark | Use |
 |-------|-------|------|-----|
-| `--background` | `#eef2f7` | `#0b1120` | Canvas |
-| `--primary` | `#4338ca` | `#818cf8` | Primary action, hero text |
-| `--secondary` | `#e2e8f0` | `#1e293b` | Quiet controls and secondary actions |
-| `--success` | `#15803d` | `#22c55e` | Occupied, released, positive |
-| `--warning` | `#b45309` | `#f59e0b` | Pending, attention-required |
-| `--info` | `#1d4ed8` | `#3b82f6` | Reports, trend data, informational actions |
-| `--highlight` | `#7c3aed` | `#a78bfa` | Transfers, secondary focal panels |
-| `--accent` | `#0e7490` | `#22d3ee` | Complementary accent surfaces |
-| `--muted` | `#eef2f7` | `#1e293b` | Disabled, tracks, subtle fills |
+| `--background` | `#edf3f8` | `#0b1420` | Solid app canvas |
+| `--primary` | `#4f46c7` | `#8b93ff` | Primary action, hero text |
+| `--secondary` | `#e3eaf2` | `#1c3042` | Quiet controls and secondary actions |
+| `--success` | `#16745b` | `#42c99f` | Occupied, released, positive |
+| `--warning` | `#b85c0a` | `#f2aa45` | Pending, attention-required |
+| `--info` | `#315bc7` | `#6d92ff` | Reports, trend data, informational actions |
+| `--highlight` | `#7652c8` | `#b19aff` | Transfers, secondary focal panels |
+| `--accent` | `#087f8c` | `#35c7d0` | Complementary accent surfaces |
+| `--muted` | `#e8f0f6` | `#193043` | Disabled, tracks, subtle fills |
 | `--muted-foreground` | `#475569` | `#94a3b8` | Labels, meta text |
-| `--border` | `#cbd5e1` | `#24324a` | All borders |
-| `--ring` | `#4338ca` | `#818cf8` | Focus rings |
+| `--border` | `#c6d5e1` | `#294158` | All borders |
+| `--ring` | `#4f46c7` | `#8b93ff` | Focus rings |
 | `--destructive` | `#dc2626` | `#ef4444` | Errors, delete |
 | `--chart-2` | `oklch(0.62 0.16 190)` | `oklch(0.78 0.16 190)` | Chart lines (admissions) |
 
