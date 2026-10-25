@@ -32,7 +32,18 @@ class Chamber extends Model
         'capacity',
         'notes',
         'service_id',
+        'branch_id',
     ];
+
+    /**
+     * The branch this chamber belongs to.
+     *
+     * @return BelongsTo<Branch, $this>
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
 
     /**
      * All deceased currently assigned to this chamber.

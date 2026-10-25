@@ -2,10 +2,11 @@
 
 namespace App\Actions;
 
+use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentMode;
-use Illuminate\Support\Str;
+use App\Support\DocumentNumber;
 
 class IssueRefund
 {
@@ -27,9 +28,14 @@ class IssueRefund
             return null;
         }
 
+        // Refund documents carry the branch slug of the branch the deceased
+        // was placed in (via its chamber), falling back to the default branch.
+        $deceased = Deceased::with('chamber.branch')->find($deceasedId);
+        $branchSlug = $deceased->chamber?->branch?->slug ?? null;
+
         $refund = Invoice::create([
             'deceased_id' => $deceasedId,
-            'invoice_number' => 'RFD-'.strtoupper(Str::random(8)),
+            'invoice_number' => DocumentNumber::refundInvoice($branchSlug),
             'subtotal' => -$surplus,
             'total_amount' => -$surplus,
             'paid_amount' => 0.00,
@@ -50,7 +56,7 @@ class IssueRefund
             'deceased_id' => $deceasedId,
             'invoice_id' => null,
             'payment_mode_id' => $mode?->id,
-            'receipt_number' => 'REF-'.strtoupper(Str::random(8)),
+            'receipt_number' => DocumentNumber::refund($branchSlug),
             'amount' => -$surplus,
             'payment_method' => $mode->name ?? 'Refund',
             'transaction_reference' => null,

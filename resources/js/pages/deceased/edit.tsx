@@ -32,6 +32,8 @@ interface Deceased {
 interface Chamber {
     id: string;
     name: string;
+    branch_id?: string | null;
+    branch?: string | null;
     available_spaces: number;
     is_current: boolean;
 }
@@ -41,15 +43,22 @@ interface ServiceCategory {
     name: string;
 }
 
+interface Branch {
+    id: string;
+    name: string;
+}
+
 interface Props {
     deceased: Deceased;
     chambers: Chamber[];
+    branches: Branch[];
     serviceCategories: ServiceCategory[];
 }
 
 export default function DeceasedEdit({
     deceased,
     chambers,
+    branches,
     serviceCategories,
 }: Props) {
     return (
@@ -72,6 +81,7 @@ export default function DeceasedEdit({
                     method="put"
                     submitLabel="Save Changes"
                     cancelHref={`/deceased/${deceased.id}`}
+                    branches={branches}
                     initialValues={{
                         first_name: deceased.first_name,
                         last_name: deceased.last_name,

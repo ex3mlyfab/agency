@@ -2,6 +2,7 @@ import { usePage, Link } from '@inertiajs/react';
 import {
     Building2,
     ClipboardList,
+    GitBranch,
     LayoutGrid,
     MoveRight,
     ScrollText,
@@ -74,6 +75,16 @@ export function AppSidebar() {
                               icon: Users,
                           },
                       ],
+                  },
+              ]
+            : []),
+        ...(can['branches.view'] !== true
+            ? [
+                  {
+                      title: 'Branches',
+                      href: '/branches',
+                      icon: GitBranch,
+                      tone: 'text-info',
                   },
               ]
             : []),

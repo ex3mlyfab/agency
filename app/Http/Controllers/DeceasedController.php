@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\BuildServiceInvoiceItems;
 use App\Actions\CreateStorageFeeInvoice;
 use App\Actions\IssueRefund;
+use App\Enums\BranchStatus;
 use App\Enums\DeceasedStatus;
 use App\Http\Requests\StoreDeceasedRequest;
 use App\Http\Requests\UpdateDeceasedRequest;
 use App\Models\ApplicationSetting;
+use App\Models\Branch;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Invoice;
@@ -18,6 +20,7 @@ use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\ServicePrice;
 use App\Models\Transfer;
+use App\Support\DocumentNumber;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +28,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -108,8 +110,10 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.create');
 
-        $chambers = Chamber::orderBy('name')
-            ->select(['id', 'name', 'capacity'])
+        $chambers = Chamber::with('branch:id,name')
+            ->whereHas('branch', fn ($query) => $query->where('status', BranchStatus::Active))
+            ->orderBy('name')
+            ->select(['id', 'name', 'branch_id', 'capacity'])
             ->get()
             ->filter(function (Chamber $chamber) {
                 return $chamber->occupants()->count() < $chamber->capacity;
@@ -118,6 +122,8 @@ class DeceasedController extends Controller
                 return [
                     'id' => $chamber->id,
                     'name' => $chamber->name,
+                    'branch_id' => $chamber->branch_id,
+                    'branch' => $chamber->branch?->name,
                     'available_spaces' => $chamber->capacity - $chamber->occupants()->count(),
                 ];
             })
@@ -126,6 +132,10 @@ class DeceasedController extends Controller
 
         return Inertia::render('deceased/create', [
             'chambers' => $chambers,
+            'branches' => Branch::query()
+                ->where('status', BranchStatus::Active)
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name'])->toArray(),
         ]);
     }
@@ -266,20 +276,25 @@ class DeceasedController extends Controller
     {
         Gate::authorize('deceased.edit');
 
-        $chambers = Chamber::orderBy('name')
-            ->select(['id', 'name', 'capacity'])
+        $chambers = Chamber::with('branch:id,name')
+            ->orderBy('name')
+            ->select(['id', 'name', 'branch_id', 'capacity'])
             ->get()
             ->filter(function (Chamber $chamber) use ($deceased) {
                 if ($chamber->id === $deceased->chamber_id) {
                     return true;
                 }
 
-                return $chamber->occupants()->count() < $chamber->capacity;
+                return $chamber->occupants()->count() < $chamber->capacity
+                    && $chamber->branch !== null
+                    && $chamber->branch->status === BranchStatus::Active;
             })
             ->map(function (Chamber $chamber) use ($deceased) {
                 return [
                     'id' => $chamber->id,
                     'name' => $chamber->name,
+                    'branch_id' => $chamber->branch_id,
+                    'branch' => $chamber->branch?->name,
                     'available_spaces' => $chamber->capacity - $chamber->occupants()->count(),
                     'is_current' => $chamber->id === $deceased->chamber_id,
                 ];
@@ -287,9 +302,24 @@ class DeceasedController extends Controller
             ->values()
             ->toArray();
 
+        $branches = Branch::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'status'])
+            ->filter(function (Branch $branch) use ($chambers) {
+                // Keep every operational branch, plus the branch of the
+                // deceased's current chamber so the select can display it.
+                if ($branch->status === BranchStatus::Active) {
+                    return true;
+                }
+
+                return in_array($branch->id, array_column($chambers, 'branch_id'));
+            })
+            ->values();
+
         return Inertia::render('deceased/edit', [
             'deceased' => $deceased,
             'chambers' => $chambers,
+            'branches' => $branches,
             'serviceCategories' => ServiceCategory::orderBy('name')->get(['id', 'name'])->toArray(),
         ]);
     }
@@ -585,7 +615,7 @@ class DeceasedController extends Controller
             if (! $invoice) {
                 $invoice = Invoice::create([
                     'deceased_id' => $deceased->id,
-                    'invoice_number' => 'INV-'.strtoupper(Str::random(8)),
+                    'invoice_number' => DocumentNumber::invoice($deceased->chamber?->branch?->slug),
                     'subtotal' => 0.00,
                     'discount' => 0.00,
                     'tax' => 0.00,
@@ -649,7 +679,7 @@ class DeceasedController extends Controller
         DB::transaction(function () use ($validated, $deceased) {
             $invoice = Invoice::create([
                 'deceased_id' => $deceased->id,
-                'invoice_number' => 'INV-'.strtoupper(Str::random(8)),
+                'invoice_number' => DocumentNumber::invoice($deceased->chamber?->branch?->slug),
                 'subtotal' => 0.00,
                 'discount' => 0.00,
                 'tax' => 0.00,

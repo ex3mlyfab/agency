@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
         $abilities = [
             'deceased.view',
             'chambers.view',
+            'branches.view',
             'transfers.view',
             'history.view',
             'reports.view',

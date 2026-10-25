@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ChamberController;
 use App\Http\Controllers\ChamberHistoryController;
 use App\Http\Controllers\DashboardController;
@@ -33,6 +34,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('deceased.storage-invoice.generate');
     Route::get('deceased/{deceased}/print', [DeceasedController::class, 'print'])
         ->name('deceased.print');
+
+    // Branches CRUD (top-level locations that own chambers)
+    Route::resource('branches', BranchController::class)->except(['show']);
 
     // Cold Rooms & Depositions
     Route::get('chambers/deposers', [ChamberController::class, 'deposers'])

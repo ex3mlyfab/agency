@@ -4,6 +4,8 @@ import { DeceasedForm } from '@/components/deceased-form';
 interface Chamber {
     id: string;
     name: string;
+    branch_id?: string | null;
+    branch?: string | null;
     available_spaces: number;
 }
 
@@ -12,12 +14,22 @@ interface ServiceCategory {
     name: string;
 }
 
+interface Branch {
+    id: string;
+    name: string;
+}
+
 interface Props {
     chambers: Chamber[];
+    branches: Branch[];
     serviceCategories: ServiceCategory[];
 }
 
-export default function DeceasedCreate({ chambers, serviceCategories }: Props) {
+export default function DeceasedCreate({
+    chambers,
+    branches,
+    serviceCategories,
+}: Props) {
     return (
         <>
             <Head title="New Deceased Record" />
@@ -38,6 +50,7 @@ export default function DeceasedCreate({ chambers, serviceCategories }: Props) {
                     submitLabel="Create Record"
                     dateInputMode="native"
                     chambers={chambers}
+                    branches={branches}
                     serviceCategories={serviceCategories}
                 />
             </div>

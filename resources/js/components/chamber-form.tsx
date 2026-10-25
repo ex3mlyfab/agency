@@ -12,12 +12,14 @@ interface ChamberFormData {
     capacity: string;
     notes: string;
     service_id: string;
+    branch_id: string;
     [key: string]: string;
 }
 
 interface ChamberFormProps {
     initialValues?: Partial<ChamberFormData>;
     services?: { id: string; name: string }[];
+    branches?: { id: string; name: string }[];
     action: string;
     method?: 'post' | 'put' | 'patch';
     submitLabel?: string;
@@ -26,6 +28,7 @@ interface ChamberFormProps {
 export function ChamberForm({
     initialValues = {},
     services = [],
+    branches = [],
     action,
     method = 'post',
     submitLabel = 'Save Chamber',
@@ -37,6 +40,7 @@ export function ChamberForm({
             capacity: initialValues.capacity ?? '1',
             notes: initialValues.notes ?? '',
             service_id: initialValues.service_id ?? '',
+            branch_id: initialValues.branch_id ?? '',
         });
 
     function handleSubmit(e: React.FormEvent) {
@@ -68,6 +72,28 @@ export function ChamberForm({
                             className={cn(errors.name && 'border-destructive')}
                         />
                         <InputError message={errors.name} />
+                    </div>
+
+                    {/* Branch */}
+                    <div className="space-y-1.5">
+                        <Label htmlFor="branch_id" className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Branch
+                        </Label>
+                        <select
+                            id="branch_id"
+                            value={data.branch_id}
+                            onChange={(e) => setData('branch_id', e.target.value)}
+                            disabled={processing}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="">-- Select Branch --</option>
+                            {branches.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                    {b.name}
+                                </option>
+                            ))}
+                        </select>
+                        <InputError message={errors.branch_id} />
                     </div>
 
                     {/* Location */}

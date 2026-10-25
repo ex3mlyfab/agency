@@ -13,7 +13,9 @@ import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
@@ -61,10 +63,13 @@ interface DeceasedFormProps {
     chambers?: {
         id: string;
         name: string;
+        branch_id?: string | null;
+        branch?: string | null;
         available_spaces: number;
         is_current?: boolean;
     }[];
     serviceCategories?: { id: string; name: string }[];
+    branches?: { id: string; name: string }[];
 }
 
 export function DeceasedForm({
@@ -76,6 +81,7 @@ export function DeceasedForm({
     dateInputMode = 'picker',
     chambers = [],
     serviceCategories = [],
+    branches = [],
 }: DeceasedFormProps) {
     const { data, setData, submit, processing, errors } =
         useForm<DeceasedFormData>({
@@ -115,6 +121,19 @@ export function DeceasedForm({
             ? `/storage/${initialValues.picture}`
             : null,
     );
+
+    // Track the chosen branch in the UI only — it drives the chamber list
+    // (and therefore the placement) but is not submitted itself.
+    const [selectedBranchId, setSelectedBranchId] = useState<string>(
+        () =>
+            chambers.find(
+                (chamber) => chamber.id === initialValues.chamber_id,
+            )?.branch_id ?? '',
+    );
+
+    const visibleChambers = selectedBranchId
+        ? chambers.filter((chamber) => chamber.branch_id === selectedBranchId)
+        : chambers;
 
     useEffect(() => {
         return () => {
@@ -635,6 +654,61 @@ export function DeceasedForm({
                         <InputError message={errors.picture} />
                     </div>
 
+                    {/* Branch Selection */}
+                    {branches.length > 0 && (
+                        <div className="space-y-1.5">
+                            <Label
+                                htmlFor="branch_id"
+                                className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
+                                Branch
+                            </Label>
+                            <Select
+                                value={selectedBranchId || 'all'}
+                                onValueChange={(val) => {
+                                    const branchId = val === 'all' ? '' : val;
+                                    setSelectedBranchId(branchId);
+
+                                    // Clear the chamber when it does not
+                                    // belong to the selected branch.
+                                    if (
+                                        data.chamber_id &&
+                                        !chambers.some(
+                                            (chamber) =>
+                                                chamber.id ===
+                                                    data.chamber_id &&
+                                                (chamber.branch_id ?? '') ===
+                                                    branchId,
+                                        )
+                                    ) {
+                                        setData('chamber_id', '');
+                                    }
+                                }}
+                                disabled={processing}
+                            >
+                                <SelectTrigger id="branch_id">
+                                    <SelectValue placeholder="All branches" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        All branches
+                                    </SelectItem>
+                                    {branches.map((branch) => (
+                                        <SelectItem
+                                            key={branch.id}
+                                            value={branch.id}
+                                        >
+                                            {branch.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                Choose a branch to narrow the chamber list.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Chamber Selection */}
                     <div className="space-y-1.5">
                         {chambers?.length === 0 && (
@@ -656,9 +730,20 @@ export function DeceasedForm({
                         </Label>
                         <Select
                             value={data.chamber_id || 'none'}
-                            onValueChange={(val) =>
-                                setData('chamber_id', val === 'none' ? '' : val)
-                            }
+                            onValueChange={(val) => {
+                                setData('chamber_id', val === 'none' ? '' : val);
+
+                                // Mirror the chamber's branch back into the
+                                // branch select so both stay in sync.
+                                if (val !== 'none') {
+                                    const chamber = chambers
+                                        .find((c) => c.id === val);
+
+                                    if (chamber?.branch_id) {
+                                        setSelectedBranchId(chamber.branch_id);
+                                    }
+                                }
+                            }}
                             disabled={processing}
                         >
                             <SelectTrigger
@@ -671,20 +756,78 @@ export function DeceasedForm({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">None</SelectItem>
-                                {chambers?.map((chamber) => (
-                                    <SelectItem
-                                        key={chamber.id}
-                                        value={chamber.id}
-                                    >
-                                        {chamber.name}
-                                        {!chamber.is_current && (
-                                            <span className="ml-2 text-xs text-muted-foreground">
-                                                ({chamber.available_spaces}{' '}
-                                                left)
-                                            </span>
-                                        )}
-                                    </SelectItem>
-                                ))}
+                                {(() => {
+                                    const withBranch = visibleChambers.some(
+                                        (chamber) => chamber.branch,
+                                    );
+
+                                    if (!visibleChambers.length) {
+                                        return null;
+                                    }
+
+                                    // Group chambers under their branch so
+                                    // placing a deceased also places them in
+                                    // that branch.
+                                    if (withBranch) {
+                                        const groups = new Map<
+                                            string,
+                                            typeof visibleChambers
+                                        >();
+                                        for (const chamber of visibleChambers) {
+                                            const label =
+                                                chamber.branch ?? 'Unassigned';
+                                            const list =
+                                                groups.get(label) ?? [];
+                                            list.push(chamber);
+                                            groups.set(label, list);
+                                        }
+
+                                        return [...groups.entries()].map(
+                                            ([branchLabel, list]) => (
+                                                <SelectGroup
+                                                    key={branchLabel}
+                                                >
+                                                    <SelectLabel>
+                                                        {branchLabel}
+                                                    </SelectLabel>
+                                                    {list.map((chamber) => (
+                                                        <SelectItem
+                                                            key={chamber.id}
+                                                            value={chamber.id}
+                                                        >
+                                                            {chamber.name}
+                                                            {!chamber.is_current && (
+                                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                                    (
+                                                                    {
+                                                                        chamber.available_spaces
+                                                                    }{' '}
+                                                                    left)
+                                                                </span>
+                                                            )}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            ),
+                                        );
+                                    }
+
+                                    return visibleChambers.map((chamber) => (
+                                        <SelectItem
+                                            key={chamber.id}
+                                            value={chamber.id}
+                                        >
+                                            {chamber.name}
+                                            {!chamber.is_current && (
+                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                    (
+                                                    {chamber.available_spaces}{' '}
+                                                    left)
+                                                </span>
+                                            )}
+                                        </SelectItem>
+                                    ));
+                                })()}
                             </SelectContent>
                         </Select>
                         <InputError message={errors.chamber_id} />

@@ -6,8 +6,8 @@ use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\ServicePrice;
 use App\Models\StorageFeeLog;
+use App\Support\DocumentNumber;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class CreateStorageFeeInvoice
 {
@@ -54,7 +54,7 @@ class CreateStorageFeeInvoice
         $invoice = DB::transaction(function () use ($deceased, $storageServiceId, $lastCoveredDay, $newDaysToBill, $charge, $createdBy, $servicePrice) {
             $invoice = Invoice::create([
                 'deceased_id' => $deceased->id,
-                'invoice_number' => 'STO-'.strtoupper(Str::random(8)),
+                'invoice_number' => DocumentNumber::storage($deceased->chamber->branch?->slug),
                 'subtotal' => $charge,
                 'discount' => 0.00,
                 'tax' => 0.00,

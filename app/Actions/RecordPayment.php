@@ -6,8 +6,8 @@ use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentMode;
+use App\Support\DocumentNumber;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class RecordPayment
@@ -27,6 +27,11 @@ class RecordPayment
                 abort(422, 'The selected invoice does not belong to the deceased record.');
             }
 
+            // Receipts carry the branch slug of the branch the deceased is
+            // placed in (via its chamber), falling back to the default branch.
+            $deceased = Deceased::with('chamber.branch')->find($validated['deceased_id']);
+            $branchSlug = $deceased->chamber?->branch?->slug ?? null;
+
             if ($invoice) {
                 $balance = (float) $invoice->total_amount - (float) $invoice->paid_amount - (float) $invoice->waived_amount;
 
@@ -42,7 +47,7 @@ class RecordPayment
                 'invoice_id' => $invoice?->id,
                 'payment_mode_id' => $paymentMode->id,
                 'payment_method' => $paymentMode->name,
-                'receipt_number' => 'REC-'.strtoupper(Str::random(8)),
+                'receipt_number' => DocumentNumber::receipt($branchSlug),
                 'amount' => $validated['amount'],
                 'transaction_reference' => $validated['transaction_reference'] ?? null,
                 'payment_date' => $validated['payment_date'],

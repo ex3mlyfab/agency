@@ -33,6 +33,10 @@ class PermissionSeeder extends Seeder
         'chambers.view',
         'chambers.manage',
 
+        // Branches
+        'branches.view',
+        'branches.manage',
+
         // Transfers
         'transfers.view',
         'transfers.create',

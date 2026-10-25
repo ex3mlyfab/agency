@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Branch;
 use App\Models\Chamber;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -25,6 +26,7 @@ class ChamberFactory extends Factory
             'location' => fake()->randomElement(['Wing A', 'Wing B', 'Ground Floor', 'Basement', 'Level 2']),
             'capacity' => 1,
             'notes' => fake()->optional()->sentence(),
+            'branch_id' => Branch::factory(),
         ];
     }
 }

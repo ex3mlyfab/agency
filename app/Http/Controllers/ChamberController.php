@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\DeceasedStatus;
 use App\Http\Requests\StoreChamberRequest;
 use App\Http\Requests\UpdateChamberRequest;
+use App\Models\Branch;
 use App\Models\Chamber;
 use App\Models\Deceased;
 use App\Models\Service;
@@ -131,6 +132,7 @@ class ChamberController extends Controller
 
         return Inertia::render('chambers/create', [
             'services' => Service::orderBy('name')->get(['id', 'name']),
+            'branches' => Branch::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -139,7 +141,12 @@ class ChamberController extends Controller
      */
     public function store(StoreChamberRequest $request): RedirectResponse
     {
-        Chamber::create($request->validated());
+        $data = $request->validated();
+
+        // Fall back to the first (default) branch when none is chosen.
+        $data['branch_id'] = $data['branch_id'] ?? Branch::query()->orderBy('created_at')->value('id');
+
+        Chamber::create($data);
 
         return redirect()->route('chambers.index')
             ->with('flash', ['type' => 'success', 'message' => 'Chamber created successfully.']);
@@ -155,6 +162,7 @@ class ChamberController extends Controller
         return Inertia::render('chambers/edit', [
             'chamber' => $chamber,
             'services' => Service::orderBy('name')->get(['id', 'name']),
+            'branches' => Branch::orderBy('name')->get(['id', 'name']),
         ]);
     }
 

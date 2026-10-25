@@ -3,9 +3,10 @@ import { ChamberForm } from '@/components/chamber-form';
 
 interface Props {
     services: { id: string; name: string }[];
+    branches: { id: string; name: string }[];
 }
 
-export default function ChamberCreate({ services }: Props) {
+export default function ChamberCreate({ services, branches }: Props) {
     return (
         <>
             <Head title="Add Rack" />
@@ -22,6 +23,7 @@ export default function ChamberCreate({ services }: Props) {
                     action="/chambers"
                     method="post"
                     services={services}
+                    branches={branches}
                     submitLabel="Create Rack"
                 />
             </div>

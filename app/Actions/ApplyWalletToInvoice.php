@@ -5,8 +5,8 @@ namespace App\Actions;
 use App\Models\Deceased;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Support\DocumentNumber;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ApplyWalletToInvoice
 {
@@ -19,6 +19,11 @@ class ApplyWalletToInvoice
             if ($invoice->deceased_id != $validated['deceased_id']) {
                 abort(422, 'The selected invoice does not belong to the deceased record.');
             }
+
+            // Receipts carry the branch slug of the branch the deceased is
+            // placed in (via its chamber), falling back to the default branch.
+            $deceased = Deceased::with('chamber.branch')->find($invoice->deceased_id);
+            $branchSlug = $deceased->chamber?->branch?->slug ?? null;
 
             $balance = (float) $invoice->total_amount - (float) $invoice->paid_amount - (float) $invoice->waived_amount;
 
@@ -69,7 +74,7 @@ class ApplyWalletToInvoice
                         'deceased_id' => $invoice->deceased_id,
                         'invoice_id' => $invoice->id,
                         'payment_mode_id' => $deposit->payment_mode_id,
-                        'receipt_number' => 'REC-'.strtoupper(Str::random(8)),
+                        'receipt_number' => DocumentNumber::receipt($branchSlug),
                         'amount' => $applyFromThis,
                         'payment_method' => $deposit->payment_method,
                         'transaction_reference' => $deposit->transaction_reference,
