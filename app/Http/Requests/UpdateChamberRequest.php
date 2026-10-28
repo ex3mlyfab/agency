@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,20 @@ class UpdateChamberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:100', Rule::unique('chambers', 'name')->ignore($this->route('chamber'))],
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('chambers', 'name')
+                    ->ignore($this->route('chamber'))
+                    ->where(function (Builder $query) {
+                        return $query->when(
+                            $this->filled('branch_id'),
+                            fn (Builder $q) => $q->where('branch_id', $this->input('branch_id')),
+                            fn (Builder $q) => $q->whereNull('branch_id'),
+                        );
+                    }),
+            ],
             'location' => ['nullable', 'string', 'max:150'],
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'notes' => ['nullable', 'string', 'max:1000'],
